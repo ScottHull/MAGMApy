@@ -2,6 +2,8 @@ from src.composition import Composition
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 
+temperature = 2000
+
 composition = {
     "SiO2": 62.93000,
     'MgO': 3.79000,
@@ -25,17 +27,25 @@ gas_ion_species = [
 c = Composition(
     composition=composition
 )
+print("Atoms Composition")
+print(c.atoms_composition)
+print("Oxide Mole Fraction (F) in Silicate")
+print(c.oxide_mole_fraction)
+print("RELATIVE ATOMIC ABUNDANCES OF METALS")
+print(c.cation_fraction)
 
 l = LiquidActivity(
     composition=c,
     complex_species="__all__"
 )
-l.calculate_activities(temperature=2500)
+l.calculate_activities(temperature=temperature)
+print(l.activity_coefficients)
+print(l.activities)
 
-g = GasPressure(
-    composition=c,
-    major_gas_species=major_gas_species,
-    minor_gas_species="__all__",
-    ion_gas_species=gas_ion_species
-)
-g.calculate_pressures(temperature=2500, liquid_system=l)
+# g = GasPressure(
+#     composition=c,
+#     major_gas_species=major_gas_species,
+#     minor_gas_species="__all__",
+#     ion_gas_species=gas_ion_species
+# )
+# g.calculate_pressures(temperature=temperature, liquid_system=l)

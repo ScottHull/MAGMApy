@@ -1,10 +1,12 @@
 from composition import get_element_in_base_oxide, get_molecule_stoichiometry
 
+
 class ThermoSystem:
     def __init__(self, composition, liquid_system, gas_system):
         self.composition = composition
         self.liquid_system = liquid_system
         self.gas_system = gas_system
+        self.weight_vaporized = 0.0
 
     def __calculate_size_step(self):
         """
@@ -57,7 +59,8 @@ class ThermoSystem:
     def vaporize(self):
         self.__calculate_size_step()  # calculate volatility
         # calculate fraction of vaporized materials
-        total_planetary_cations = sum(self.composition.planetary_abundances.values())  # sum of fractional cation abundances
+        total_planetary_cations = sum(
+            self.composition.planetary_abundances.values())  # sum of fractional cation abundances
         self.composition.planetary_cation_ratio = total_planetary_cations / self.composition.initial_planetary_cations
         self.vaporized_magma_fraction = 1.0 - self.composition.planetary_cation_ratio
 
@@ -69,4 +72,9 @@ class ThermoSystem:
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
             oxide_stoich = get_molecule_stoichiometry(molecule=oxide_mw)
             wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+        self.weight_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
+                                self.liquid_system.initial_melt_mass
 
+        self.composition.ca
+
+        return self.weight_vaporized

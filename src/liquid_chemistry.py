@@ -51,14 +51,37 @@ class LiquidActivity:
         self.partial_pressures = {}
         self.counter = 1  # for tracking Fe2O3
         self.iteration = 0  # for tracking the number of iterations in the activity convergence loop
+        self.initial_melt_mass = self.__get_initial_melt_mass()  # calculate the initial mass of the melt in order to calculate vapor%
+
+    def __get_initial_melt_mass(self):
+        """
+        Returns the initial mass of the melt for vaporization
+        :return:
+        """
+        initial_melt_mass = 0.0
+        for i in self.composition.cation_fraction.keys():
+            # get the base oxide for the elment (i.e. SiO2 for Si)
+            base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
+            oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
+            oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
+            initial_melt_mass += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+        return initial_melt_mass
 
     def __get_initial_activty_coefficients(self):
+        """
+        Assume initial activity coefficients are 1.
+        :return:
+        """
         coeffs = {}
         for i in self.composition.atoms_composition.keys():  # loop through all cations in composition
             coeffs.update({i: 1.0})  # assume initial ideal behavior (gamma = 1)
         return coeffs
 
     def __initial_activity_setup(self):
+        """
+        Placeholder values for the activities dictionary.
+        :return:
+        """
         activities = {}
         for i in self.composition.moles_composition:  # iterate through oxides
             activities.update({i: 0.0})  # set placeholder activities for oxides in melt
@@ -169,10 +192,10 @@ class LiquidActivity:
             elif 30 <= self.iteration < 500:
                 # adjust in a different way
                 self.activity_coefficients[i] = (self.activity_coefficients[i] * (
-                            self.previous_activities[i] ** 2)) ** (1 / 3)
+                        self.previous_activities[i] ** 2)) ** (1 / 3)
             else:
                 self.activity_coefficients[i] = (self.activity_coefficients[i] * (
-                            self.previous_activities[i] ** 4)) ** (1 / 5)
+                        self.previous_activities[i] ** 4)) ** (1 / 5)
         return self.activity_coefficients
 
     def calculate_activities(self, temperature):

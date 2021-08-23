@@ -112,6 +112,7 @@ class ConvertComposition:
     def mole_pct_to_atoms(self, moles_composition):
         """
         We normalize to Si = 10^6.  If no Si, then we do not normalize.
+        This corresponds to lines 186-204 in MAGMA during for AE variables.
         :param moles_composition:
         :param mole_pct_composition:
         :return:
@@ -168,20 +169,23 @@ class Composition(ConvertComposition):
             self.atoms_composition.values())  # total atoms of cations in composition.  if Si is present, this is normalized to Si
         self.total_atoms_oxide = self.get_molecular_abundance_si_normalized(composition=self.atoms_composition,
                                                                             molecules=self.moles_composition.keys())  # total molecules of oxides in composition
-        self.cation_fraction_by_molecules = self.get_cation_fraction_by_molecules()  # base oxide fraction
+        self.oxide_mole_fraction = self.get_molecule_fraction()  # base oxide fraction
         self.cation_fraction = self.get_cation_fraction()  # cation elemental fraction
         self.planetary_abundances = self.__initial_planetary_abundances()  # cation elemental fraction
 
-    def get_cation_fraction_by_molecules(self):
+    def get_molecule_fraction(self):
         """
-        Returns cation fraction relative to total oxides,
-        e.g. Si / (SiO2 + MgO + FeO + ...)
+        Returns oxide mole fraction.
+        e.g. SiO2 / (SiO2 + MgO + FeO + ...)
         :return:
         """
         fraction = {}
-        for i in self.atoms_composition:
-            fraction.update({i: self.atoms_composition[i] / self.total_atoms_oxide})
-        self.cation_fraction_by_molecules = fraction
+        for i in self.moles_composition:
+            stoich = get_molecule_stoichiometry(molecule=i)
+            for j in stoich.keys():
+                if j != "O" and i != "Fe2O3":
+                    fraction.update({i: (1.0 / stoich[j]) * self.atoms_composition[j] / self.total_atoms_oxide})
+        self.oxide_mole_fraction = fraction
         return fraction
 
     def get_cation_fraction(self):
