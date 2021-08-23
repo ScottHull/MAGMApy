@@ -260,11 +260,11 @@ class GasPressure:
         The total mole fraction of the element in the gas is its number density divided by the total number density.
         :return:
         """
-        self.total_number_density_elements = {}
+        self.total_mole_fraction = {}
         for i in self.number_densities_elements.keys():
-            self.total_number_density_elements.update(
+            self.total_mole_fraction.update(
                 {i: self.number_densities_elements[i] / self.total_number_density})
-        return self.total_number_density_elements
+        return self.total_mole_fraction
 
     def calculate_pressures(self, temperature, liquid_system):
         """
