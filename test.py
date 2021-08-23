@@ -38,4 +38,4 @@ g = GasPressure(
     minor_gas_species="__all__",
     ion_gas_species=gas_ion_species
 )
-g.calculate_gas_pressures(temperature=2500)
+g.calculate_pressures(temperature=2500, liquid_system=l)
