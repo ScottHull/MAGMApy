@@ -155,7 +155,7 @@ class ConvertComposition:
 class Composition(ConvertComposition):
 
     def __init__(self, composition):
-        super().__init__()
+        super().__init__()  # initialize base class so we can use its functions
         self.wt_pct_composition = normalize(
             composition=composition)  # the user inputs oxide weights, we normalize to wt%
         self.moles_composition = self.weight_pct_to_moles(
@@ -168,8 +168,9 @@ class Composition(ConvertComposition):
             self.atoms_composition.values())  # total atoms of cations in composition.  if Si is present, this is normalized to Si
         self.total_atoms_oxide = self.get_molecular_abundance_si_normalized(composition=self.atoms_composition,
                                                                             molecules=self.moles_composition.keys())  # total molecules of oxides in composition
-        self.cation_fraction_by_molecules = self.get_cation_fraction_by_molecules()
-        self.cation_fraction = self.get_cation_fraction()
+        self.cation_fraction_by_molecules = self.get_cation_fraction_by_molecules()  # base oxide fraction
+        self.cation_fraction = self.get_cation_fraction()  # cation elemental fraction
+        self.planetary_abundances = self.__initial_planetary_abundances()  # cation elemental fraction
 
     def get_cation_fraction_by_molecules(self):
         """
@@ -195,3 +196,20 @@ class Composition(ConvertComposition):
             fraction.update({i: self.atoms_composition[i] / total_cations})
         self.cation_fraction = fraction
         return fraction
+
+    def __initial_planetary_abundances(self):
+        """
+        Planetary elemental abundances, where we initially assume that the planetary abundances is equal to the
+        full system input composition.
+        Assume that initially, the planetary abundances are just equal to the elemental abundances
+        (i.e. cation fraction).
+        :return:
+        """
+        abundances = {}
+        for i in self.cation_fraction:
+            abundances.update({i: self.cation_fraction[i]})
+        total_planetary_cations = sum(abundances.values())  # sum of fractional cation abundances
+        self.initial_planetary_cations = total_planetary_cations  # the initial planetary cation abundance
+        # take the ratio of current planetary cations to initial cations, initially will be 1
+        self.planetary_cation_ratio = self.initial_planetary_cations / total_planetary_cations
+        return abundances
