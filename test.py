@@ -2,7 +2,7 @@ from src.composition import Composition
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 
-temperature = 2000
+temperature = 2500
 
 composition = {
     "SiO2": 62.93000,
@@ -39,10 +39,10 @@ l = LiquidActivity(
     complex_species="__all__"
 )
 l.calculate_activities(temperature=temperature)
-print("Activity Coefficients")
-print(l.activity_coefficients)
-print("Activities")
-print(l.activities)
+# print("Activity Coefficients")
+# print(l.activity_coefficients)
+# print("Activities")
+# print(l.activities)
 
 # g = GasPressure(
 #     composition=c,

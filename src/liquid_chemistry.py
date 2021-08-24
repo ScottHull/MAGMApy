@@ -48,7 +48,6 @@ class LiquidActivity:
         self.composition = composition
         self.activity_coefficients = self.__get_initial_activty_coefficients()
         self.activities = self.__initial_activity_setup()  # melt activities
-        self.partial_pressures = {}
         self.counter = 1  # for tracking Fe2O3
         self.iteration = 0  # for tracking the number of iterations in the activity convergence loop
         self.initial_melt_mass = self.__get_initial_melt_mass()  # calculate the initial mass of the melt in order to calculate vapor%
@@ -73,7 +72,7 @@ class LiquidActivity:
         :return:
         """
         coeffs = {}
-        for i in self.composition.atoms_composition.keys():  # loop through all cations in composition
+        for i in self.composition.oxide_mole_fraction.keys():  # loop through all cations in composition
             coeffs.update({i: 1.0})  # assume initial ideal behavior (gamma = 1)
         return coeffs
 
@@ -99,15 +98,14 @@ class LiquidActivity:
                 if self.counter == 1:
                     self.activities[i] = 0.0
                 else:
-                    self.activities[i] = self.activity_coefficients[i] * self.partial_pressures[i]
+                    self.activities[i] = self.activity_coefficients[i] * \
+                                         self.composition.oxide_mole_fraction[
+                                             i]
             else:
-                stoich = get_molecule_stoichiometry(molecule=i)  # get the stoich of the oxide
-                for j in stoich.keys():
-                    if j != "O":
-                        # Henrian Behavior... a_i = gamma_i * x_i
-                        self.activities[i] = self.activity_coefficients[j] * \
-                                             self.composition.cation_fraction[
-                                                 j]
+                # Henrian Behavior... a_i = gamma_i * x_i
+                self.activities[i] = self.activity_coefficients[i] * \
+                                     self.composition.oxide_mole_fraction[
+                                         i]
 
     def __calculate_complex_species_activities(self, temperature):
         """
@@ -169,15 +167,17 @@ class LiquidActivity:
         self.previous_activities = copy(
             self.activities)  # make a copy of old activities so that we can reference it for solution convergence later
         for i in self.activity_coefficients.keys():
-            base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.moles_composition)
-            # get the appearances of the element in all complex species
-            complex_appearances = get_species_with_element_appearance(element=i, species=self.complex_species)
-            sum_activities_complex = 0  # the sum of activities of all complex species containing element i
-            for j in complex_appearances.keys():
-                # the element stoich times the activity of the containing complex species
-                # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
-                sum_activities_complex += complex_appearances[j] * self.activities[j]
-            self.activity_coefficients[i] = self.activities[base_oxide] / sum_activities_complex
+            if self.activities[i] != 0:  # don't do anything if activity = 0 to avoid divide by 0 errors
+                stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=False)  # we want to get the base cation of the base oxide, i.e. Si from SiO2
+                for j in stoich.keys():
+                    # get the appearances of the element in all complex species
+                    complex_appearances = get_species_with_element_appearance(element=j, species=self.complex_species)
+                    sum_activities_complex = 0  # the sum of activities of all complex species containing element i
+                    for j in complex_appearances.keys():
+                        # the element stoich times the activity of the containing complex species
+                        # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
+                        sum_activities_complex += complex_appearances[j] * self.activities[j]
+                    self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
         return self.activity_coefficients
 
     def __adjust_activity_coefficients(self):
@@ -206,12 +206,15 @@ class LiquidActivity:
         print("[*] Solving for melt activities...")
         # run the initial activity calculation
         self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
+        self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
+        print(self.activities)
         self.__calculate_activity_coefficients()  # calculate activity coefficients
         has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
         while not has_converged:
             print("[~] At iteration {}...".format(self.iteration))
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
+            self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
             self.__calculate_activity_coefficients()  # calculate activity coefficients
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
             self.iteration += 1
