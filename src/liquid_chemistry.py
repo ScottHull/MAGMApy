@@ -169,22 +169,28 @@ class LiquidActivity:
         for i in self.activity_coefficients.keys():
             if self.activities[i] != 0:  # don't do anything if activity = 0 to avoid divide by 0 errors
                 stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=False)  # we want to get the base cation of the base oxide, i.e. Si from SiO2
+                sum_activities_complex = self.activities[i]  # the sum of activities of all complex species containing element i, including the base oxide
                 for j in stoich.keys():
                     # get the appearances of the element in all complex species
                     complex_appearances = get_species_with_element_appearance(element=j, species=self.complex_species)
-                    sum_activities_complex = 0  # the sum of activities of all complex species containing element i
                     for j in complex_appearances.keys():
                         # the element stoich times the activity of the containing complex species
                         # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
+
+                        print(i, j, complex_appearances[j], self.activities[j])
                         sum_activities_complex += complex_appearances[j] * self.activities[j]
-                    self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
+                print(i, self.activities[i], sum_activities_complex, self.activities[i] / sum_activities_complex)
+                self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
         return self.activity_coefficients
 
     def __adjust_activity_coefficients(self):
         """
         Adjust activity coefficients.
+        The activity coefficient for Fe2O3 is technically an adjustment factor and not a true activity coefficient
+        because the mole fraction of Fe2O3 in the melt is not known.
         :return:
         """
+        # TODO: check Fe2O3 as it should be included here.
         for i in self.activity_coefficients:
             if self.iteration < 30:
                 # adjust by geometric mean
@@ -205,13 +211,13 @@ class LiquidActivity:
         """
         print("[*] Solving for melt activities...")
         # run the initial activity calculation
+        # initially assume that the activity coefficients = 1
         self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
         self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
-        print(self.activities)
         self.__calculate_activity_coefficients()  # calculate activity coefficients
         has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
         while not has_converged:
-            print("[~] At iteration {}...".format(self.iteration))
+            print("[~] Solution has not converged (at iteration {}...)".format(self.iteration))
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
             self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
