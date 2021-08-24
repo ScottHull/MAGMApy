@@ -145,10 +145,12 @@ class LiquidActivity:
         :return:
         """
         ratios = {}
-        for i in self.activities:
+        for i in self.activity_coefficients:
             r = None
             if self.activities[i] != 0:  # some activities can be 0 and we want to zero division error
-                r = abs(log10(self.activities[i] / self.previous_activities[i]))
+                print("ratios", i, self.activity_coefficients[i] / self.previous_activity_coefficients[i])
+                r = abs(log10(self.activity_coefficients[i] / self.previous_activity_coefficients[i]))
+                print(i, self.activities[i], r)
             else:
                 r = 0.0
             passed = False
@@ -167,8 +169,8 @@ class LiquidActivity:
         activities containing that element.
         :return:
         """
-        self.previous_activities = copy(
-            self.activities)  # make a copy of old activities so that we can reference it for solution convergence later
+        self.previous_activity_coefficients = copy(
+            self.activity_coefficients)  # make a copy of old activities so that we can reference it for solution convergence later
         for i in self.activity_coefficients.keys():
             if self.activities[i] != 0:  # don't do anything if activity = 0 to avoid divide by 0 errors
                 stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=False)  # we want to get the base cation of the base oxide, i.e. Si from SiO2
@@ -177,8 +179,6 @@ class LiquidActivity:
                     # get the appearances of the element in all complex species
                     complex_appearances = get_species_with_element_appearance(element=j, species=self.complex_species)
                     for j in complex_appearances.keys():
-                        if i == "FeO":
-                            print(i, j, complex_appearances[j], self.activities[j])
                         # the element stoich times the activity of the containing complex species
                         # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
                         sum_activities_complex += complex_appearances[j] * self.activities[j]
@@ -196,14 +196,14 @@ class LiquidActivity:
         for i in self.activity_coefficients:
             if self.iteration < 30:
                 # adjust by geometric mean
-                self.activity_coefficients[i] = sqrt(self.activity_coefficients[i] * self.previous_activities[i])
+                self.activity_coefficients[i] = sqrt(self.activity_coefficients[i] * self.previous_activity_coefficients[i])
             elif 30 <= self.iteration < 500:
                 # adjust in a different way
                 self.activity_coefficients[i] = (self.activity_coefficients[i] * (
-                        self.previous_activities[i] ** 2)) ** (1 / 3)
+                        self.previous_activity_coefficients[i] ** 2)) ** (1 / 3)
             else:
                 self.activity_coefficients[i] = (self.activity_coefficients[i] * (
-                        self.previous_activities[i] ** 4)) ** (1 / 5)
+                        self.previous_activity_coefficients[i] ** 4)) ** (1 / 5)
         return self.activity_coefficients
 
     def calculate_activities(self, temperature):
