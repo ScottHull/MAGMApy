@@ -120,6 +120,9 @@ class LiquidActivity:
             for j in reactants.keys():
                 # i.e. for K_Mg2SiO4, we need to multiply it by MgO^2 and SiO2^1
                 tmp_activity *= self.activities[j] ** reactants[j]
+            #TODO: Figure out what to do with Fe2O3 here
+            if i == "Fe2O3":
+                tmp_activity = 0.0
             self.activities[i] = tmp_activity
         return self.activities
 
@@ -174,12 +177,11 @@ class LiquidActivity:
                     # get the appearances of the element in all complex species
                     complex_appearances = get_species_with_element_appearance(element=j, species=self.complex_species)
                     for j in complex_appearances.keys():
+                        if i == "FeO":
+                            print(i, j, complex_appearances[j], self.activities[j])
                         # the element stoich times the activity of the containing complex species
                         # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
-
-                        print(i, j, complex_appearances[j], self.activities[j])
                         sum_activities_complex += complex_appearances[j] * self.activities[j]
-                print(i, self.activities[i], sum_activities_complex, self.activities[i] / sum_activities_complex)
                 self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
         return self.activity_coefficients
 
@@ -215,6 +217,7 @@ class LiquidActivity:
         self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
         self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
         self.__calculate_activity_coefficients()  # calculate activity coefficients
+        print(self.activity_coefficients)
         has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
         while not has_converged:
             print("[~] Solution has not converged (at iteration {}...)".format(self.iteration))
