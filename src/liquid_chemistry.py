@@ -106,7 +106,7 @@ class LiquidActivity:
                     if j != "O":
                         # Henrian Behavior... a_i = gamma_i * x_i
                         self.activities[i] = self.activity_coefficients[j] * \
-                                             self.composition.cation_fraction_by_molecules[
+                                             self.composition.cation_fraction[
                                                  j]
 
     def __calculate_complex_species_activities(self, temperature):

@@ -124,18 +124,23 @@ class ConvertComposition:
         for i in cations:  # build the dictionary beforehand to avoid key errors
             atoms.update({i: 0})
         for i in moles_composition.keys():
-            stoich = get_molecule_stoichiometry(molecule=i)
-            if IS_SI:
-                if i.lower() == "sio2":
-                    atoms.update({"Si": si_normalize})  # we want abundance of Si to be normalized to 10^6
+            if i != "Fe2O3":  # want all Fe to be in FeO
+                stoich = get_molecule_stoichiometry(molecule=i)
+                if IS_SI:
+                    if i.lower() == "sio2":
+                        atoms.update({"Si": si_normalize})  # we want abundance of Si to be normalized to 10^6
+                    else:
+                        for j in stoich:
+                            if j != "O":
+                                cation_abundance = (moles_composition[i] * stoich[j])
+                                if j == "Fe":
+                                    cation_abundance = (moles_composition[i] * stoich[j]) + (
+                                    (moles_composition["Fe2O3"] * 2))
+                                atoms[j] += cation_abundance * si_normalize / moles_composition["SiO2"]
                 else:
                     for j in stoich:
                         if j != "O":
-                            atoms[j] += (moles_composition[i] * stoich[j]) * si_normalize / moles_composition["SiO2"]
-            else:
-                for j in stoich:
-                    if j != "O":
-                        atoms[j] += (moles_composition[i] * stoich[j]) * self.avogadro
+                            atoms[j] += (moles_composition[i] * stoich[j]) * self.avogadro
         return atoms
 
     def get_molecular_abundance_si_normalized(self, composition, molecules):
@@ -144,13 +149,15 @@ class ConvertComposition:
         If no Si, then this is simply the unnormalized molecular abundance.
         :return:
         """
+        # TODO: Make an function that returns molecules that excludes Fe2O3
         total = 0
         for i in molecules:
-            stoich = get_molecule_stoichiometry(molecule=i)
-            for j in stoich:
-                if j != "O":
-                    total += composition[j] / stoich[j]
-        return int(total)
+            if i != "Fe2O3":  # want all Fe as FeO
+                stoich = get_molecule_stoichiometry(molecule=i)
+                for j in stoich:
+                    if j != "O":
+                        total += composition[j] / stoich[j]
+        return total
 
 
 class Composition(ConvertComposition):

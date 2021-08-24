@@ -27,19 +27,21 @@ gas_ion_species = [
 c = Composition(
     composition=composition
 )
-print("Atoms Composition")
-print(c.atoms_composition)
-print("Oxide Mole Fraction (F) in Silicate")
-print(c.oxide_mole_fraction)
-print("RELATIVE ATOMIC ABUNDANCES OF METALS")
-print(c.cation_fraction)
+# print("Atoms Composition")
+# print(c.atoms_composition)
+# print("Oxide Mole Fraction (F) in Silicate")
+# print(c.oxide_mole_fraction)
+# print("RELATIVE ATOMIC ABUNDANCES OF METALS")
+# print(c.cation_fraction)
 
 l = LiquidActivity(
     composition=c,
     complex_species="__all__"
 )
 l.calculate_activities(temperature=temperature)
+print("Activity Coefficients")
 print(l.activity_coefficients)
+print("Activities")
 print(l.activities)
 
 # g = GasPressure(
