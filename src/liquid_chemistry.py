@@ -148,9 +148,7 @@ class LiquidActivity:
         for i in self.activity_coefficients:
             r = None
             if self.activities[i] != 0:  # some activities can be 0 and we want to zero division error
-                print("ratios", i, self.activity_coefficients[i] / self.previous_activity_coefficients[i])
                 r = abs(log10(self.activity_coefficients[i] / self.previous_activity_coefficients[i]))
-                print(i, self.activities[i], r)
             else:
                 r = 0.0
             passed = False
@@ -192,11 +190,12 @@ class LiquidActivity:
         because the mole fraction of Fe2O3 in the melt is not known.
         :return:
         """
-        # TODO: check Fe2O3 as it should be included here.
+        # TODO: check Fe2O3 as it should be included here.  In MAGMA it ends with 1 with no defined Fe2O3.
         for i in self.activity_coefficients:
             if self.iteration < 30:
                 # adjust by geometric mean
-                self.activity_coefficients[i] = sqrt(self.activity_coefficients[i] * self.previous_activity_coefficients[i])
+                self.activity_coefficients[i] = sqrt(self.activity_coefficients[i] *
+                                                     self.previous_activity_coefficients[i])
             elif 30 <= self.iteration < 500:
                 # adjust in a different way
                 self.activity_coefficients[i] = (self.activity_coefficients[i] * (
@@ -220,12 +219,14 @@ class LiquidActivity:
         print(self.activity_coefficients)
         has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
         while not has_converged:
+            self.iteration += 1  # increment the counter if it has not converged
             print("[~] Solution has not converged (at iteration {}...)".format(self.iteration))
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
             self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
             self.__calculate_activity_coefficients()  # calculate activity coefficients
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
-            self.iteration += 1
+            print(self.activity_coefficients)
         print("[*] Successfully converged on melt activities!")
+        print(self.activity_coefficients)
         self.iteration = 0  # reset the iteration count
