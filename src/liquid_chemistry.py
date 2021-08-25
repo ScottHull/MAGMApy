@@ -1,6 +1,7 @@
 import pandas as pd
 from copy import copy
 from math import sqrt, log10
+import sys
 
 from src.composition import *
 from src.k_constants import get_K
@@ -216,12 +217,15 @@ class LiquidActivity:
         self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
         self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
         self.__calculate_activity_coefficients()  # calculate activity coefficients
-        print(self.activity_coefficients)
         has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
         while not has_converged:
             self.iteration += 1  # increment the counter if it has not converged
             print("[~] Solution has not converged (at iteration {}...)".format(self.iteration))
             self.__adjust_activity_coefficients()  # bump the activity coefficients
+            if self.iteration < 2:
+                print(self.activity_coefficients)
+            if self.iteration == 2:
+                sys.exit()
             self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
             self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
             self.__calculate_activity_coefficients()  # calculate activity coefficients
