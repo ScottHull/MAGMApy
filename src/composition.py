@@ -17,7 +17,8 @@ def get_molecule_stoichiometry(molecule, return_oxygen=True):
             d[i[0]] = 1
         d[i[0]] = int(d[i[0]])
     if not return_oxygen:
-        del d["O"]
+        if "O" in d.keys():
+            del d["O"]
     return d
 
 
@@ -138,7 +139,7 @@ class ConvertComposition:
                                 cation_abundance = (moles_composition[i] * stoich[j])
                                 if j == "Fe":
                                     cation_abundance = (moles_composition[i] * stoich[j]) + (
-                                    (moles_composition["Fe2O3"] * 2))
+                                        (moles_composition["Fe2O3"] * 2))
                                 atoms[j] += cation_abundance * si_normalize / moles_composition["SiO2"]
                 else:
                     for j in stoich:

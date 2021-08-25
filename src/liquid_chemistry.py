@@ -74,7 +74,7 @@ class LiquidActivity:
         coeffs = {}
         for i in self.composition.oxide_mole_fraction.keys():  # loop through all cations in composition
             coeffs.update({i: 1.0})  # assume initial ideal behavior (gamma = 1)
-        #TODO: handle Fe2O3 better...
+        # TODO: handle Fe2O3 better...
         coeffs.update({"Fe2O3": 1.0})
         return coeffs
 
@@ -122,7 +122,7 @@ class LiquidActivity:
             for j in reactants.keys():
                 # i.e. for K_Mg2SiO4, we need to multiply it by MgO^2 and SiO2^1
                 tmp_activity *= self.activities[j] ** reactants[j]
-            #TODO: Figure out what to do with Fe2O3 here
+            # TODO: Figure out what to do with Fe2O3 here
             if i == "Fe2O3":
                 tmp_activity = 0.0
             self.activities[i] = tmp_activity
@@ -173,8 +173,10 @@ class LiquidActivity:
             self.activity_coefficients)  # make a copy of old activities so that we can reference it for solution convergence later
         for i in self.activity_coefficients.keys():
             if self.activities[i] != 0:  # don't do anything if activity = 0 to avoid divide by 0 errors
-                stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=False)  # we want to get the base cation of the base oxide, i.e. Si from SiO2
-                sum_activities_complex = self.activities[i]  # the sum of activities of all complex species containing element i, including the base oxide
+                stoich = get_molecule_stoichiometry(molecule=i,
+                                                    return_oxygen=False)  # we want to get the base cation of the base oxide, i.e. Si from SiO2
+                sum_activities_complex = self.activities[
+                    i]  # the sum of activities of all complex species containing element i, including the base oxide
                 for j in stoich.keys():
                     # get the appearances of the element in all complex species
                     complex_appearances = get_species_with_element_appearance(element=j, species=self.complex_species)
@@ -193,13 +195,12 @@ class LiquidActivity:
         :return:
         """
         # TODO: check Fe2O3 as it should be included here.  In MAGMA it ends with 1 with no defined Fe2O3.
+        # adjust activity coefficients by geometric means.
         for i in self.activity_coefficients:
             if self.iteration < 30:
-                # adjust by geometric mean
-                self.activity_coefficients[i] = sqrt(self.activity_coefficients[i] *
-                                                     self.previous_activity_coefficients[i])
+                self.activity_coefficients[i] = (self.activity_coefficients[i] *
+                                                 self.previous_activity_coefficients[i]) ** (1 / 2)
             elif 30 <= self.iteration < 500:
-                # adjust in a different way
                 self.activity_coefficients[i] = (self.activity_coefficients[i] * (
                         self.previous_activity_coefficients[i] ** 2)) ** (1 / 3)
             else:
@@ -220,10 +221,8 @@ class LiquidActivity:
             self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
             self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
             self.__calculate_activity_coefficients()  # calculate activity coefficients
-            print(self.activity_coefficients)
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.iteration += 1  # increment the counter if it has not converged
-        print("[*] Successfully converged on melt activities!")
-        print(self.activity_coefficients)
+        print("[*] Successfully converged on melt activities!  Took {} iterations.".format(self.iteration))
         self.iteration = 0  # reset the iteration count

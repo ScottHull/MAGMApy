@@ -44,10 +44,10 @@ l.calculate_activities(temperature=temperature)
 # print("Activities")
 # print(l.activities)
 
-# g = GasPressure(
-#     composition=c,
-#     major_gas_species=major_gas_species,
-#     minor_gas_species="__all__",
-#     ion_gas_species=gas_ion_species
-# )
-# g.calculate_pressures(temperature=temperature, liquid_system=l)
+g = GasPressure(
+    composition=c,
+    major_gas_species=major_gas_species,
+    minor_gas_species="__all__",
+    ion_gas_species=gas_ion_species
+)
+g.calculate_pressures(temperature=temperature, liquid_system=l)

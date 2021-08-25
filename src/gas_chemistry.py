@@ -12,6 +12,7 @@ def get_gas_reactants(df, species):
     :param species:
     :return:
     """
+    # TODO: have a way to handle gas vs. liquid reactants?
     headers = df.columns.tolist()[3:]
     row = df.loc[species].tolist()[3:]
     d = list(zip(headers, row))
@@ -23,6 +24,45 @@ def get_gas_reactants(df, species):
     for i in to_delete:
         del d[i]
     return d
+
+
+def get_major_gas_reactants(species, major_gasses):
+    """
+    Returns the stoichiometry of the species in terms of its major gas species,
+    i.e. SiO, O2, Ca, Fe, MgO, etc.
+    :param species:
+    :param major_gasses:
+    :return:
+    """
+    reactants = {}
+    stoich = get_molecule_stoichiometry(molecule=species)
+    for i in major_gasses:
+        is_O2 = False
+        if i == "O2":
+            is_O2 = True
+        for j in stoich:
+            major_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
+            if j in major_stoich.keys():
+                reactants.update({i: 1 / major_stoich[j]})
+    return reactants
+
+
+def get_gas_species_major_oxide(species, major_oxides):
+    """
+    Given a gas species, will return its major system oxide.
+    i.e. SiO will return SiO2, Fe will return FeO + Fe2O3, MgO will return MgO.
+    :param species:
+    :param major_oxides:
+    :return:
+    """
+    included_major_oxides = []
+    stoich = get_molecule_stoichiometry(molecule=species, return_oxygen=False)
+    for i in stoich:
+        for j in major_oxides:
+            oxide_stoich = get_molecule_stoichiometry(molecule=j, return_oxygen=False)
+            if i in oxide_stoich.keys():
+                included_major_oxides.append(j)
+    return included_major_oxides
 
 
 def get_most_abundance_gas_oxide(partial_pressures):
@@ -69,6 +109,7 @@ class GasPressure:
     def __calculate_major_gas_partial_pressures(self):
         """
         Calculates the partial pressures of the major gas species.
+        Here, it is just the former pressure times the adjustment factor.
         :return:
         """
         for i in self.major_gas_species:
@@ -83,15 +124,22 @@ class GasPressure:
         """
         for i in self.minor_gas_species:
             # for example, if we have MgSiO3, then we want MgO and SiO2
-            reactants = get_gas_reactants(df=self.minor_gas_species_data, species=i)
+            reactants = get_major_gas_reactants(species=i, major_gasses=self.major_gas_species)
+            print(i, reactants)
             tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature)
             for j in reactants.keys():
-                # i.e. for K_Mg2SiO4, we need to multiply it by MgO^2 and SiO2^1
-                tmp_activity *= self.partial_pressures_molecules[j] ** reactants[j]
+                # i.e. for K_SiO2
+                tmp_activity *= self.partial_pressures_molecules[j.replace("_g", "")] ** reactants[j]
             self.partial_pressures_molecules[i] = tmp_activity
         return self.partial_pressures_molecules
 
     def __calculate_ion_gas_partial_pressures(self, temperature):
+        """
+        Calculates partial pressures of ion species in the gas, i.e. e-, Na+, K+, ...
+        Note that PENEG = electron partial pressure, PNACAT = Na+ partial pressure, PKCAT = K+ partial pressure
+        :param temperature:
+        :return:
+        """
         pass
 
     def __calculate_number_density_molecules(self, temperature):
@@ -163,17 +211,22 @@ class GasPressure:
         # TODO: implement specific routines for each potential molecule.
         adjustment_factors = {}
         for i in self.partial_pressures_molecules.keys():
-            activity = None
-            cf = liquid_system.cation_fraction[i]  # cation fraction in composition
+            major_oxides = get_gas_species_major_oxide(species=i,
+                                                       major_oxides=self.composition.moles_composition.keys())[0]
+            cf = liquid_system.composition.cation_fraction[i]  # cation fraction in composition
             gamma = liquid_system.activity_coefficients[i]  # liquid activity coefficient
             pp = self.partial_pressures_molecules[i]
+            # calculate adjustment factors for major gas species
             if pp != 0.0:
-                activity = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
+                if i == "Fe":
+                    adjust = (cf * liquid_system.activity_coefficients["Fe"] + liquid_system.activities["Fe"]) / (self.partial_pressures_molecules['FeO'] + self.partial_pressures_molecules['Fe2O3'])
+                else:
+                    adjust = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
             elif cf == 0.0:
-                activity = 0.0
+                adjust = 0.0
             else:
-                activity = 1.0
-            adjustment_factors.update({i: activity})
+                adjust = 1.0
+            adjustment_factors.update({i: adjust})
         # BELOW IS ADJUSTMENT FACTOR CODE FOR O2, WHICH IS GOVERNED BY MOST ABUNDANT OXIDE
         # get most abundant oxide (mao) and use it to calculate adjustment factor for O2
         mao = get_most_abundance_gas_oxide(partial_pressures=self.partial_pressures_molecules)
@@ -273,6 +326,7 @@ class GasPressure:
         :param liquid_system:
         :return:
         """
+        print("[*] Solving for gas partial pressures...")
         self.__calculate_gas_molecules_pressures(temperature=temperature, liquid_system=liquid_system)
         self.total_pressure = sum(self.partial_pressures_elements.values())
         self.__calculate_gas_elements_pressures()
