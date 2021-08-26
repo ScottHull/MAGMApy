@@ -237,6 +237,8 @@ class GasPressure:
                                 self.partial_pressures_molecules['FeO'] + self.partial_pressures_molecules['Fe2O3'])
                     else:
                         adjust = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
+                        if i == "SIO":
+                            print(adjust, oxides_to_oxygen_ratio, self.partial_pressures_molecules['SiO2_l'])
                 elif cf == 0.0:
                     adjust = 0.0
                 else:
