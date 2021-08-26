@@ -86,7 +86,7 @@ class GasPressure:
 
     def __init__(self, composition, major_gas_species, minor_gas_species, ion_gas_species):
         self.composition = composition
-        self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 2",
+        self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 4",
                                                     index_col="Product")
         self.major_gas_species = major_gas_species
         self.minor_gas_species = minor_gas_species
@@ -135,15 +135,6 @@ class GasPressure:
                     print(get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas"), self.partial_pressures_molecules[j.replace("_g", "")], reactants[j])
             self.partial_pressures_molecules[i] = tmp_activity
         return self.partial_pressures_molecules
-
-    def __calculate_ion_gas_partial_pressures(self, temperature):
-        """
-        Calculates partial pressures of ion species in the gas, i.e. e-, Na+, K+, ...
-        Note that PENEG = electron partial pressure, PNACAT = Na+ partial pressure, PKCAT = K+ partial pressure
-        :param temperature:
-        :return:
-        """
-        pass
 
     def __calculate_number_density_molecules(self, temperature):
         """
@@ -291,7 +282,6 @@ class GasPressure:
         while has_converged is False:
             self.__calculate_major_gas_partial_pressures()
             self.__calculate_minor_gas_partial_pressures(temperature=temperature)
-            self.__calculate_ion_gas_partial_pressures(temperature=temperature)
             self.__calculate_number_densities(temperature=temperature)
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
@@ -354,5 +344,5 @@ class GasPressure:
         self.__calculate_gas_molecules_pressures(temperature=temperature, liquid_system=liquid_system)
         self.total_pressure = sum(self.partial_pressures_elements.values())
         self.__calculate_gas_elements_pressures()
-        self.__calculate_mole_fractions()
-        self.__calculate_total_mole_fractions()
+        # self.__calculate_mole_fractions()
+        # self.__calculate_total_mole_fractions()
