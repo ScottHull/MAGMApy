@@ -1,6 +1,7 @@
 import pandas as pd
 from copy import copy
 from math import sqrt, log10
+import sys
 
 from src.composition import *
 from src.k_constants import get_K
@@ -146,18 +147,21 @@ class LiquidActivity:
         :param criterion:
         :return:
         """
-        ratios = {}
+        self.ratios = {}
+        passed_ratios = {}
         for i in self.activity_coefficients:
             r = None
             if self.activities[i] != 0:  # some activities can be 0 and we want to zero division error
                 r = abs(log10(self.activity_coefficients[i] / self.previous_activity_coefficients[i]))
+                self.ratios.update({i: self.activity_coefficients[i] / self.previous_activity_coefficients[i]})
             else:
                 r = 0.0
+                self.ratios.update({i: 0})
             passed = False
             if r <= criterion:  # has the solution converged?
                 passed = True
-            ratios.update({i: passed})
-        if False in ratios.values():  # if the solution has NOT converged
+            passed_ratios.update({i: passed})
+        if False in passed_ratios.values():  # if the solution has NOT converged
             return False
         return True  # if the solution has converged
 
@@ -185,11 +189,13 @@ class LiquidActivity:
                         # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
                         sum_activities_complex += complex_appearances[j] * self.activities[j]
                 self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
+                if i == "SiO2":
+                    print("GAM SIO2", self.activities[i], sum_activities_complex, self.activity_coefficients[i])
         return self.activity_coefficients
 
     def __adjust_activity_coefficients(self):
         """
-        Adjust activity coefficients.
+        Adjust activity coefficients by their geometric means in order to achieve convergence.
         The activity coefficient for Fe2O3 is technically an adjustment factor and not a true activity coefficient
         because the mole fraction of Fe2O3 in the melt is not known.
         :return:
@@ -224,5 +230,9 @@ class LiquidActivity:
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.iteration += 1  # increment the counter if it has not converged
+            if self.iteration <= 3:
+                print(self.activity_coefficients['SiO2'], self.previous_activity_coefficients['SiO2'], self.ratios["SiO2"], self.activities['SiO2'])
+            if self.iteration == 3:
+                sys.exit()
         print("[*] Successfully converged on melt activities!  Took {} iterations.".format(self.iteration))
         self.iteration = 0  # reset the iteration count

@@ -1,5 +1,6 @@
 import pandas as pd
 from math import isnan, sqrt
+import sys
 
 from src.k_constants import get_K
 from src.composition import get_species_with_element_appearance, get_molecule_stoichiometry
@@ -202,14 +203,13 @@ class GasPressure:
         self.__calculate_number_density_elements()
         self.total_number_density = sum(self.number_densities_elements.values())
 
-    def __hack_most_abundanct_oxide(self, liquid_system, rat):
+    def __hack_most_abundant_oxide(self, liquid_system, rat):
         """
         Returns the adjustment factor for O2.
         This is a hack function.  Come back later and gut this thing.
         :return:
         """
-        # TODO: gut this thing
-        adjustment_O2 = None
+        # TODO: gut this thing and make it so that its not hardcoded
         order = ["SiO2", "MgO", "FeO", "CaO", "Al2O3", "TiO2", "Na2O", "K2O"]
         for i in order:
             mole_fraction = self.composition.oxide_mole_fraction[i]
@@ -255,7 +255,7 @@ class GasPressure:
         # BELOW IS ADJUSTMENT FACTOR CODE FOR O2, WHICH IS GOVERNED BY MOST ABUNDANT OXIDE
         # get most abundant oxide (mao) and use it to calculate adjustment factor for O2
         self.adjustment_factors.update(
-            {"O2": self.__hack_most_abundanct_oxide(rat=oxides_to_oxygen_ratio, liquid_system=liquid_system)})
+            {"O2": self.__hack_most_abundant_oxide(rat=oxides_to_oxygen_ratio, liquid_system=liquid_system)})
         return adjustment_factors
 
     def __have_adjustment_factors_converged(self):
@@ -294,7 +294,10 @@ class GasPressure:
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
                                                                           liquid_system=liquid_system)
+            print(self.adjustment_factors['SiO'], oxides_to_oxygen_ratio, self.partial_pressures_molecules['SiO'], self.composition.oxide_mole_fraction['SiO2'], liquid_system.activity_coefficients['SiO2'])
             has_converged = self.__have_adjustment_factors_converged()
+            sys.exit()
+
         # if this is the first run-through then we need to go back and do activity calculations for Fe2O3 and Fe3O4
         # 'count' tracks this
         if liquid_system.count == 1:
