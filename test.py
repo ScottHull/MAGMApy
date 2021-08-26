@@ -19,10 +19,6 @@ composition = {
 major_gas_species = [
     "SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K"
 ]
-gas_ion_species = [
-    "Na+", "K+", "e-"
-]
-
 
 c = Composition(
     composition=composition
@@ -48,6 +44,5 @@ g = GasPressure(
     composition=c,
     major_gas_species=major_gas_species,
     minor_gas_species="__all__",
-    ion_gas_species=gas_ion_species
 )
 g.calculate_pressures(temperature=temperature, liquid_system=l)

@@ -84,7 +84,7 @@ def get_most_abundant_gas_oxide(major_gas_species, partial_pressures):
 
 class GasPressure:
 
-    def __init__(self, composition, major_gas_species, minor_gas_species, ion_gas_species):
+    def __init__(self, composition, major_gas_species, minor_gas_species):
         self.composition = composition
         self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 4",
                                                     index_col="Product")
@@ -93,7 +93,6 @@ class GasPressure:
         if minor_gas_species == "__all__":
             self.minor_gas_species = [i for i in self.minor_gas_species_data.index.tolist() if
                                       i not in self.major_gas_species]
-        self.ion_gas_species = ion_gas_species
         self.partial_pressures_molecules = self.__initial_partial_pressure_setup()  # assume initial behavior of unity
         self.adjustment_factors = self.__initial_partial_pressure_setup()  # assume initial behavior of unity
         self.pressure_to_number_density = 1.01325e6 / 1.38046e-16  # (dyn/cm**2=>atm) / Boltzmann's constant (R/AVOG)
@@ -131,8 +130,6 @@ class GasPressure:
             for j in reactants.keys():
                 # i.e. for K_SiO2
                 tmp_activity *= self.partial_pressures_molecules[j.replace("_g", "")] ** reactants[j]
-                if i == "SiO2":
-                    print(get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas"), self.partial_pressures_molecules[j.replace("_g", "")], reactants[j])
             self.partial_pressures_molecules[i] = tmp_activity
         return self.partial_pressures_molecules
 
