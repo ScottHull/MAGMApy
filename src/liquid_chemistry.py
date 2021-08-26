@@ -245,9 +245,9 @@ class LiquidActivity:
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.iteration += 1  # increment the counter if it has not converged
-            if self.iteration <= 3:
-                print(self.activity_coefficients['SiO2'], self.previous_activity_coefficients['SiO2'], self.ratios["SiO2"], self.activities['SiO2'])
-            if self.iteration == 3:
-                sys.exit()
+            # if self.iteration <= 3:
+            #     pass
+            # if self.iteration == 3:
+            #     sys.exit()
         print("[*] Successfully converged on melt activities!  Took {} iterations.".format(self.iteration))
         self.iteration = 0  # reset the iteration count
