@@ -55,19 +55,20 @@ def get_gas_species_major_oxide(species, major_oxides):
     :param major_oxides:
     :return:
     """
-    included_major_oxides = []
+    included_major_oxides = None
     stoich = get_molecule_stoichiometry(molecule=species, return_oxygen=False)
     for i in stoich:
         for j in major_oxides:
             oxide_stoich = get_molecule_stoichiometry(molecule=j, return_oxygen=False)
             if i in oxide_stoich.keys():
-                included_major_oxides.append(j)
+                if i != "Fe2O3":
+                    included_major_oxides = j
     return included_major_oxides
 
 
-def get_most_abundance_gas_oxide(partial_pressures):
+def get_most_abundant_gas_oxide(major_gas_species, partial_pressures):
     most_abundant = {}
-    for i in partial_pressures.keys():  # loop through all species in partial pressure dict
+    for i in major_gas_species:  # loop through all species in partial pressure dict
         if len(i) > 2:  # make sure it is not O2 or an element...
             # if this is the first loop, set the first examined oxide as the most abundant by default
             if len(most_abundant.keys()) == 0:
@@ -125,8 +126,7 @@ class GasPressure:
         for i in self.minor_gas_species:
             # for example, if we have MgSiO3, then we want MgO and SiO2
             reactants = get_major_gas_reactants(species=i, major_gasses=self.major_gas_species)
-            print(i, reactants)
-            tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature)
+            tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas")
             for j in reactants.keys():
                 # i.e. for K_SiO2
                 tmp_activity *= self.partial_pressures_molecules[j.replace("_g", "")] ** reactants[j]
@@ -202,6 +202,28 @@ class GasPressure:
         self.__calculate_number_density_elements()
         self.total_number_density = sum(self.number_densities_elements.values())
 
+    def __hack_most_abundanct_oxide(self, liquid_system, rat):
+        """
+        Returns the adjustment factor for O2.
+        This is a hack function.  Come back later and gut this thing.
+        :return:
+        """
+        # TODO: gut this thing
+        adjustment_O2 = None
+        order = ["SiO2", "MgO", "FeO", "CaO", "Al2O3", "TiO2", "Na2O", "K2O"]
+        for i in order:
+            mole_fraction = self.composition.oxide_mole_fraction[i]
+            activity_coeff = liquid_system.activity_coefficients[i]
+            partial_pressure = self.partial_pressures_molecules[i]
+            if partial_pressure != 0 and mole_fraction != 0:
+                if i == "FeO":
+                    adjustment_fe2o3 = self.adjustment_factors['Fe2O3']
+                    partial_pressure_fe2o3 = self.partial_pressures_molecules['Fe2O3']
+                    return rat * (mole_fraction * activity_coeff + adjustment_fe2o3) / (
+                            partial_pressure + partial_pressure_fe2o3)
+                else:
+                    return rat * mole_fraction * activity_coeff / partial_pressure
+
     def __calculate_adjustment_factors(self, oxides_to_oxygen_ratio, liquid_system):
         """
         Calculates gas species adjustment factors.
@@ -210,33 +232,30 @@ class GasPressure:
         """
         # TODO: implement specific routines for each potential molecule.
         adjustment_factors = {}
-        for i in self.partial_pressures_molecules.keys():
-            major_oxides = get_gas_species_major_oxide(species=i,
-                                                       major_oxides=self.composition.moles_composition.keys())[0]
-            cf = liquid_system.composition.cation_fraction[i]  # cation fraction in composition
-            gamma = liquid_system.activity_coefficients[i]  # liquid activity coefficient
-            pp = self.partial_pressures_molecules[i]
-            # calculate adjustment factors for major gas species
-            if pp != 0.0:
-                if i == "Fe":
-                    adjust = (cf * liquid_system.activity_coefficients["Fe"] + liquid_system.activities["Fe"]) / (self.partial_pressures_molecules['FeO'] + self.partial_pressures_molecules['Fe2O3'])
+        for i in self.major_gas_species:
+            if i != "O2" and i != "Fe2O3":
+                major_oxide = get_gas_species_major_oxide(species=i,
+                                                          major_oxides=self.composition.moles_composition.keys())
+                cf = self.composition.oxide_mole_fraction[major_oxide]  # cation fraction in composition
+                gamma = liquid_system.activity_coefficients[major_oxide]  # liquid activity coefficient
+                pp = self.partial_pressures_molecules[i]
+                activity_liq = liquid_system.activities[major_oxide]
+                # calculate adjustment factors for major gas species
+                if pp != 0.0:
+                    if i == "Fe":
+                        adjust = (cf * liquid_system.activity_coefficients["FeO"] + liquid_system.activities["FeO"]) / (
+                                self.partial_pressures_molecules['FeO'] + self.partial_pressures_molecules['Fe2O3'])
+                    else:
+                        adjust = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
+                elif cf == 0.0:
+                    adjust = 0.0
                 else:
-                    adjust = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
-            elif cf == 0.0:
-                adjust = 0.0
-            else:
-                adjust = 1.0
-            adjustment_factors.update({i: adjust})
+                    adjust = 1.0
+                adjustment_factors.update({i: adjust})
         # BELOW IS ADJUSTMENT FACTOR CODE FOR O2, WHICH IS GOVERNED BY MOST ABUNDANT OXIDE
         # get most abundant oxide (mao) and use it to calculate adjustment factor for O2
-        mao = get_most_abundance_gas_oxide(partial_pressures=self.partial_pressures_molecules)
-        # get the name of the most abundant gas species and its partial pressure
-        mao_name, mao_partial_pressure = list(mao.keys())[0], list(mao.values())[0]
-        mao_stoich = get_molecule_stoichiometry(molecule=mao_name)
-        mao_main_cation = [i for i in mao_stoich.keys() if i != "O"][0]  # get the major cation, i.e. Si from SiO
-        cf = liquid_system.cation_fraction[mao_main_cation]  # cation fraction in composition
-        gamma = liquid_system.activity_coefficients[mao_main_cation]  # liquid activity coefficient
-        adjustment_factors.update({"O2": oxides_to_oxygen_ratio * cf * gamma / mao_partial_pressure})
+        self.adjustment_factors.update(
+            {"O2": self.__hack_most_abundanct_oxide(rat=oxides_to_oxygen_ratio, liquid_system=liquid_system)})
         return adjustment_factors
 
     def __have_adjustment_factors_converged(self):

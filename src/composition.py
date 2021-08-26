@@ -212,6 +212,26 @@ class Composition(ConvertComposition):
         self.cation_fraction = fraction
         return fraction
 
+    def get_major_oxides_by_abundance(self):
+        """
+        Returns a list of cations sorted from most to least abundant.
+        :return:
+        """
+        rank = []
+        for i in self.oxide_mole_fraction:
+            abun = self.oxide_mole_fraction[i]
+            if len(rank) == 0:
+                rank.append((i, abun))
+            else:
+                for index, j in enumerate(rank):
+                    if abun > j[1]:
+                        rank.insert(index, (i, abun))
+                        break
+                    elif index + 1 == len(rank):
+                        rank.append((i, abun))
+                        break
+        return rank
+
     def __initial_planetary_abundances(self):
         """
         Planetary elemental abundances, where we initially assume that the planetary abundances is equal to the
