@@ -189,8 +189,14 @@ class LiquidActivity:
                         # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
                         sum_activities_complex += complex_appearances[j] * self.activities[j]
                 self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
-                if i == "SiO2":
-                    print("GAM SIO2", self.activities[i], sum_activities_complex, self.activity_coefficients[i])
+                if i == "K2O":
+                    a = {i: self.activities[i]}
+                    for j in complex_appearances.keys():
+                        a.update({j: self.activities[j]})
+                    print(a)
+                    print(len(complex_appearances))
+                    print("GAM {}".format(i), self.activities[i], sum_activities_complex, self.activity_coefficients[i])
+        print("GAMMA ALL", self.activity_coefficients)
         return self.activity_coefficients
 
     def __adjust_activity_coefficients(self):
