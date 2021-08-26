@@ -131,6 +131,8 @@ class GasPressure:
             for j in reactants.keys():
                 # i.e. for K_SiO2
                 tmp_activity *= self.partial_pressures_molecules[j.replace("_g", "")] ** reactants[j]
+                if i == "SiO2":
+                    print(get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas"), self.partial_pressures_molecules[j.replace("_g", "")], reactants[j])
             self.partial_pressures_molecules[i] = tmp_activity
         return self.partial_pressures_molecules
 
@@ -294,7 +296,7 @@ class GasPressure:
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
                                                                           liquid_system=liquid_system)
-            print(self.adjustment_factors['SiO'], oxides_to_oxygen_ratio, self.partial_pressures_molecules['SiO'], self.composition.oxide_mole_fraction['SiO2'], liquid_system.activity_coefficients['SiO2'])
+            print("ASIO", self.adjustment_factors['SiO'], "RATSI", oxides_to_oxygen_ratio, "PSIOG2", self.partial_pressures_molecules['SiO2'], "FSIO2L", self.composition.oxide_mole_fraction['SiO2'], "Gamma SiO2L", liquid_system.activity_coefficients['SiO2'])
             has_converged = self.__have_adjustment_factors_converged()
             sys.exit()
 
