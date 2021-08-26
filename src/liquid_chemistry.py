@@ -35,6 +35,26 @@ def get_base_oxide_reactants(species, all_oxides):
     return reactants
 
 
+def get_base_oxide_in_complex_species_stoich(species, all_species):
+    """
+    Given a base species, returns the stoichiometry of that species in a different element.
+    For example, given K2O, it will return a stoichiometry for K2SiO3 of 1 because K2O appears in K2SiO3 1 time.
+    For KAlO2, this would be 0.5, since K2O appears in KAlO2 0.5 times.
+    The returned keys are the complex species, not the base species.
+    :param species:
+    :param all_species:
+    :return:
+    """
+    d = {}
+    species_stoich = get_molecule_stoichiometry(molecule=species, return_oxygen=False)
+    for i in species_stoich.keys():
+        for j in all_species:
+            stoich = get_molecule_stoichiometry(molecule=j, return_oxygen=False)
+            if i in stoich.keys():
+                d.update({j: stoich[i] / species_stoich[i]})
+    return d
+
+
 class LiquidActivity:
     """
     Handles activity calculates for all species in the liquid phase.
@@ -177,26 +197,15 @@ class LiquidActivity:
             self.activity_coefficients)  # make a copy of old activities so that we can reference it for solution convergence later
         for i in self.activity_coefficients.keys():
             if self.activities[i] != 0:  # don't do anything if activity = 0 to avoid divide by 0 errors
-                stoich = get_molecule_stoichiometry(molecule=i,
-                                                    return_oxygen=False)  # we want to get the base cation of the base oxide, i.e. Si from SiO2
                 sum_activities_complex = self.activities[
                     i]  # the sum of activities of all complex species containing element i, including the base oxide
-                for j in stoich.keys():
                     # get the appearances of the element in all complex species
-                    complex_appearances = get_species_with_element_appearance(element=j, species=self.complex_species)
-                    for j in complex_appearances.keys():
-                        # the element stoich times the activity of the containing complex species
-                        # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
-                        sum_activities_complex += complex_appearances[j] * self.activities[j]
+                base_oxide_appearances = get_base_oxide_in_complex_species_stoich(species=i, all_species=self.complex_species)
+                for j in base_oxide_appearances.keys():
+                    # the element stoich times the activity of the containing complex species
+                    # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
+                    sum_activities_complex += base_oxide_appearances[j] * self.activities[j]
                 self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
-                if i == "K2O":
-                    a = {i: self.activities[i]}
-                    for j in complex_appearances.keys():
-                        a.update({j: self.activities[j]})
-                    print(a)
-                    print(len(complex_appearances))
-                    print("GAM {}".format(i), self.activities[i], sum_activities_complex, self.activity_coefficients[i])
-        print("GAMMA ALL", self.activity_coefficients)
         return self.activity_coefficients
 
     def __adjust_activity_coefficients(self):
