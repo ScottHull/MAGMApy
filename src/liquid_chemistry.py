@@ -199,8 +199,9 @@ class LiquidActivity:
             if self.activities[i] != 0:  # don't do anything if activity = 0 to avoid divide by 0 errors
                 sum_activities_complex = self.activities[
                     i]  # the sum of activities of all complex species containing element i, including the base oxide
-                    # get the appearances of the element in all complex species
-                base_oxide_appearances = get_base_oxide_in_complex_species_stoich(species=i, all_species=self.complex_species)
+                # get the appearances of the element in all complex species
+                base_oxide_appearances = get_base_oxide_in_complex_species_stoich(species=i,
+                                                                                  all_species=self.complex_species)
                 for j in base_oxide_appearances.keys():
                     # the element stoich times the activity of the containing complex species
                     # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
