@@ -206,6 +206,8 @@ class GasPressure:
                     # We want to treat oxides on a single cation basis, i.e. Al2O3 -> AlO1.5
                     # Therefore, to get Al2O3 ->AlO1.5, we must multiply n_Al by (3/2 = 1.5)
                     total_oxide_number_density += (stoich["O"] / stoich[j]) * self.number_densities_elements[j]
+        print(self.number_densities_elements)
+        sys.exit()
         return total_oxide_number_density / self.number_densities_elements["O"]
 
     def __calculate_number_densities(self, temperature):
