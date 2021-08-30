@@ -27,24 +27,45 @@ def get_gas_reactants(df, species):
     return d
 
 
-def get_major_gas_reactants(species, major_gasses):
+def __gas_isnan(val):
+    try:
+        return isnan(val)
+    except:
+        return False
+
+
+def get_minor_gas_reactants(species, major_gasses, df):
     """
     Returns the stoichiometry of the species in terms of its major gas species,
     i.e. SiO, O2, Ca, Fe, MgO, etc.
+    Assume that unless specified in the spreadsheet that each species is composed of its major gas analog.
     :param species:
     :param major_gasses:
     :return:
     """
     reactants = {}
+    specified_reactants = df['Reactants'][species]
     stoich = get_molecule_stoichiometry(molecule=species)
-    for i in major_gasses:
-        is_O2 = False
-        if i == "O2":
-            is_O2 = True
-        for j in stoich:
-            major_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
-            if j in major_stoich.keys():
-                reactants.update({i: 1 / major_stoich[j]})
+    if __gas_isnan(
+            specified_reactants):  # if the reactants aren't specified in the spreadsheet, assume reactants are major gasses
+        for i in major_gasses:
+            is_O2 = False
+            if i == "O2":
+                is_O2 = True
+            for j in stoich:
+                major_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
+                if j in major_stoich.keys():
+                    reactants.update({i: 1 / major_stoich[j]})
+    else:  # if they are specified, then use them instead
+        all_reactants = specified_reactants.strip().split(",")
+        for i in all_reactants:
+            is_O2 = False
+            if i == "O2":
+                is_O2 = True
+            for j in stoich:
+                reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
+                if j in reactant_stoich.keys():
+                    reactants.update({i: 1 / reactant_stoich[j]})
     return reactants
 
 
@@ -139,7 +160,9 @@ class GasPressure:
         """
         for i in self.minor_gas_species:
             # for example, if we have MgSiO3, then we want MgO and SiO2
-            reactants = get_major_gas_reactants(species=i, major_gasses=self.major_gas_species)
+            reactants = get_minor_gas_reactants(species=i, major_gasses=self.major_gas_species,
+                                                df=self.minor_gas_species_data)
+            print(i, reactants)
             tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas")
             for j in reactants.keys():
                 # i.e. for K_SiO2
@@ -181,11 +204,13 @@ class GasPressure:
         :return:
         """
         self.number_densities_elements = {}
+        print(self.number_densities_gasses)
+        sys.exit()
         for i in self.number_densities_gasses.keys():
             stoich = get_molecule_stoichiometry(molecule=i)
             for j in stoich:
                 if j not in self.number_densities_elements.keys():
-                    self.number_densities_elements.update({j: 0})
+                    self.number_densities_elements.update({j: 0})  # if the cation is not already in the dict, add it
                 molecule_appearances = get_species_with_element_appearance(element=j,
                                                                            species=self.number_densities_gasses.keys())
                 for m in molecule_appearances.keys():
@@ -206,8 +231,6 @@ class GasPressure:
                     # We want to treat oxides on a single cation basis, i.e. Al2O3 -> AlO1.5
                     # Therefore, to get Al2O3 ->AlO1.5, we must multiply n_Al by (3/2 = 1.5)
                     total_oxide_number_density += (stoich["O"] / stoich[j]) * self.number_densities_elements[j]
-        print(self.number_densities_elements)
-        sys.exit()
         return total_oxide_number_density / self.number_densities_elements["O"]
 
     def __calculate_number_densities(self, temperature):
