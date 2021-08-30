@@ -59,17 +59,13 @@ def get_minor_gas_reactants(species, major_gasses, df):
     else:  # if they are specified, then use them instead
         all_reactants = specified_reactants.replace(" ", "").split(",")
         for i in all_reactants:
+            formatted_i = i.replace("_g", "").replace("_l", "")
             is_O2 = False
             if i == "O2":
                 is_O2 = True
-            reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
-            print(species, reactant_stoich)
-            if i in reactant_stoich.keys():
-                if i == "O":
-                    reactant_stoich[i] /= 2
-                    i = "O2"
-                reactants.update({i: 1 / reactant_stoich[j]})
-            print("asdf",species, reactants)
+            reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2, force_O2=is_O2)
+            if i.replace("_g", "").replace("_l", "") in reactant_stoich.keys():
+                reactants.update({i: 1 / reactant_stoich[formatted_i]})
     return reactants
 
 
@@ -175,7 +171,6 @@ class GasPressure:
         This follows the relation K = P_prod / prod(P_react) --> P_prod = K * prod(P_react)
         :return:
         """
-        print(self.minor_gas_species)
         for i in self.minor_gas_species:
             # for example, if we have MgSiO3, then we want MgO and SiO2
             reactants = get_minor_gas_reactants(species=i, major_gasses=self.major_gas_species,
@@ -184,8 +179,6 @@ class GasPressure:
             for j in reactants.keys():
                 # i.e. for K_SiO2
                 tmp_activity *= self.partial_pressures_minor_species[j] ** reactants[j]
-                if i == "Si_g":
-                    print("*",i, j, self.partial_pressures_minor_species[j])
             self.partial_pressures_minor_species[i] = tmp_activity
         return self.partial_pressures_minor_species
 
@@ -230,9 +223,12 @@ class GasPressure:
             molecule_appearances = get_species_with_element_appearance(element=i,
                                                                        species=self.number_densities_gasses.keys())
             for m in molecule_appearances.keys():
-                if i == "Si":
+                if i == "Al":
                     print(i, m, self.number_densities_gasses[m])
                 self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
+        print(self.number_densities_elements)
+        # TODO: Fix Ti, K, Na, O
+        # TODO: These are good: Si, Mg, Fe, Ca, Al
         sys.exit()
         return self.number_densities_elements
 
@@ -307,8 +303,6 @@ class GasPressure:
                             'Fe2O3_l'])
                     else:
                         adjust = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
-                        if i == "SIO":
-                            print(adjust, oxides_to_oxygen_ratio, self.partial_pressures_minor_species['SiO2_l'])
                 elif cf == 0.0:
                     adjust = 0.0
                 else:

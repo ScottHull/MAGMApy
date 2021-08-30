@@ -2,9 +2,10 @@ import re
 import pandas as pd
 
 
-def get_molecule_stoichiometry(molecule, return_oxygen=True):
+def get_molecule_stoichiometry(molecule, return_oxygen=True, force_O2=False):
     """
     Requires that molecule be formatted correctly with capitalization, i.e. SiO2, not sio2.
+    :param force_O2: Makes it so that it returns O2 instead of O if return_oxygen=True.
     :param return_oxygen:
     :param molecule:
     :return:
@@ -16,9 +17,14 @@ def get_molecule_stoichiometry(molecule, return_oxygen=True):
         if d[i[0]] == '':
             d[i[0]] = 1
         d[i[0]] = int(d[i[0]])
+        if force_O2:
+            d.update({"O2": d["O"] / 2})
+            del d["O"]
     if not return_oxygen:
         if "O" in d.keys():
             del d["O"]
+        if "O2" in d.keys():
+            del d["O2"]
     return d
 
 
