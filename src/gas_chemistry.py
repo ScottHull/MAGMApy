@@ -57,15 +57,19 @@ def get_minor_gas_reactants(species, major_gasses, df):
                 if j in major_stoich.keys():
                     reactants.update({i: 1 / major_stoich[j]})
     else:  # if they are specified, then use them instead
-        all_reactants = specified_reactants.strip().split(",")
+        all_reactants = specified_reactants.replace(" ", "").split(",")
         for i in all_reactants:
             is_O2 = False
             if i == "O2":
                 is_O2 = True
-            for j in stoich:
-                reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
-                if j in reactant_stoich.keys():
-                    reactants.update({i: 1 / reactant_stoich[j]})
+            reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
+            print(species, reactant_stoich)
+            if i in reactant_stoich.keys():
+                if i == "O":
+                    reactant_stoich[i] /= 2
+                    i = "O2"
+                reactants.update({i: 1 / reactant_stoich[j]})
+            print("asdf",species, reactants)
     return reactants
 
 
@@ -110,6 +114,19 @@ def get_element_appearances_in_gas_species(element, all_species):
         if element in stoich.keys():
             d.update({i: stoich[element]})
     return d
+
+def get_unique_gas_elements(all_species):
+    """
+    Returns a list of all unique elements contained in the gas system.
+    :param all_species:
+    :return:
+    """
+    d = []
+    for i in all_species:
+        stoich = get_molecule_stoichiometry(molecule=i)
+        for j in stoich.keys():
+            d.append(j)
+    return list(set(d))  # returns unique elements as a list.
 
 
 class GasPressure:
@@ -158,15 +175,17 @@ class GasPressure:
         This follows the relation K = P_prod / prod(P_react) --> P_prod = K * prod(P_react)
         :return:
         """
+        print(self.minor_gas_species)
         for i in self.minor_gas_species:
             # for example, if we have MgSiO3, then we want MgO and SiO2
             reactants = get_minor_gas_reactants(species=i, major_gasses=self.major_gas_species,
                                                 df=self.minor_gas_species_data)
-            print(i, reactants)
             tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas")
             for j in reactants.keys():
                 # i.e. for K_SiO2
                 tmp_activity *= self.partial_pressures_minor_species[j] ** reactants[j]
+                if i == "Si_g":
+                    print("*",i, j, self.partial_pressures_minor_species[j])
             self.partial_pressures_minor_species[i] = tmp_activity
         return self.partial_pressures_minor_species
 
@@ -204,17 +223,17 @@ class GasPressure:
         :return:
         """
         self.number_densities_elements = {}
-        print(self.number_densities_gasses)
+        unique_elements = get_unique_gas_elements(all_species=self.major_gas_species + self.minor_gas_species)
+        for i in unique_elements:
+            if i not in self.number_densities_elements.keys():
+                self.number_densities_elements.update({i: 0})  # if the cation is not already in the dict, add it
+            molecule_appearances = get_species_with_element_appearance(element=i,
+                                                                       species=self.number_densities_gasses.keys())
+            for m in molecule_appearances.keys():
+                if i == "Si":
+                    print(i, m, self.number_densities_gasses[m])
+                self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
         sys.exit()
-        for i in self.number_densities_gasses.keys():
-            stoich = get_molecule_stoichiometry(molecule=i)
-            for j in stoich:
-                if j not in self.number_densities_elements.keys():
-                    self.number_densities_elements.update({j: 0})  # if the cation is not already in the dict, add it
-                molecule_appearances = get_species_with_element_appearance(element=j,
-                                                                           species=self.number_densities_gasses.keys())
-                for m in molecule_appearances.keys():
-                    self.number_densities_elements[j] += molecule_appearances[m] * self.number_densities_gasses[m]
         return self.number_densities_elements
 
     def __ratio_number_density_to_oxygen(self):
