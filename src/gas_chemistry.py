@@ -183,10 +183,18 @@ class GasPressure:
             for j in reactants.keys():
                 # i.e. for K_SiO2, take product with partial pressures of Si and O2
                 tmp_activity *= self.partial_pressures_minor_species[j] ** reactants[j]
-                if "K" in i:
-                    print("***", i, j, self.partial_pressures_minor_species[j], reactants[j], get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas"))
             self.partial_pressures_minor_species[i] = tmp_activity
-            # TODO: Hardcoding in the
+        # TODO: Hardcoding in the ion species...fix this
+        ions = ["e-", "Na+", "K+"]  # must be in this order
+        for i in ions:
+            if i == "e-":
+                K_Na = get_K(df=self.minor_gas_species_data, species="Na+", temperature=temperature, phase="gas")
+                K_K = get_K(df=self.minor_gas_species_data, species="K+", temperature=temperature, phase="gas")
+                pp_Na = self.partial_pressures_minor_species['Na']
+                pp_K = self.partial_pressures_minor_species['K']
+                self.partial_pressures_minor_species[i] = sqrt((K_Na * pp_Na) + (K_K * pp_K))
+            else:
+                self.partial_pressures_minor_species[i] /= self.partial_pressures_minor_species["e-"]
         return self.partial_pressures_minor_species
 
     def __get_nd(self, pp, t):
@@ -231,10 +239,6 @@ class GasPressure:
                                                                        species=self.number_densities_gasses.keys())
             for m in molecule_appearances.keys():
                 self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
-        print(self.number_densities_elements)
-        # TODO: Fix K, Na, O
-        # TODO: These are good: Si, Mg, Fe, Ca, Al , Ti
-        sys.exit()
         return self.number_densities_elements
 
     def __ratio_number_density_to_oxygen(self):
