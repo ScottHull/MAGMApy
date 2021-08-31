@@ -179,6 +179,8 @@ class GasPressure:
             for j in reactants.keys():
                 # i.e. for K_SiO2
                 tmp_activity *= self.partial_pressures_minor_species[j] ** reactants[j]
+                if i == "Na2O_g":
+                    print(i, j, self.partial_pressures_minor_species[j], reactants[j])
             self.partial_pressures_minor_species[i] = tmp_activity
         return self.partial_pressures_minor_species
 
@@ -223,12 +225,12 @@ class GasPressure:
             molecule_appearances = get_species_with_element_appearance(element=i,
                                                                        species=self.number_densities_gasses.keys())
             for m in molecule_appearances.keys():
-                if i == "Al":
+                if i == "Na":
                     print(i, m, self.number_densities_gasses[m])
                 self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
         print(self.number_densities_elements)
-        # TODO: Fix Ti, K, Na, O
-        # TODO: These are good: Si, Mg, Fe, Ca, Al
+        # TODO: Fix K, Na, O
+        # TODO: These are good: Si, Mg, Fe, Ca, Al , Ti
         sys.exit()
         return self.number_densities_elements
 
