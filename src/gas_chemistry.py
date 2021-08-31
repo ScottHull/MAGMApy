@@ -55,7 +55,7 @@ def get_minor_gas_reactants(species, major_gasses, df):
             for j in stoich:
                 major_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
                 if j in major_stoich.keys():
-                    reactants.update({i: 1 / major_stoich[j]})
+                    reactants.update({i: stoich[j] / major_stoich[j]})
     else:  # if they are specified, then use them instead
         all_reactants = specified_reactants.replace(" ", "").split(",")
         for i in all_reactants:
@@ -69,6 +69,7 @@ def get_minor_gas_reactants(species, major_gasses, df):
                 has_O = True
             reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=has_O, force_O2=is_O2)
             if i.replace("_g", "").replace("_l", "") in reactant_stoich.keys():
+                # TODO: this should be stoich / reactant stoich, not 1 / reactant stoich
                 reactants.update({i: 1 / reactant_stoich[formatted_i]})
     return reactants
 
@@ -114,6 +115,7 @@ def get_element_appearances_in_gas_species(element, all_species):
         if element in stoich.keys():
             d.update({i: stoich[element]})
     return d
+
 
 def get_unique_gas_elements(all_species):
     """
@@ -169,6 +171,12 @@ class GasPressure:
                 i]
         return self.major_gas_species
 
+    def __get_phase(self, species):
+        if "_l" in species:
+            return "liquid"
+        else:
+            return "gas"
+
     def __calculate_minor_gas_partial_pressures(self, temperature):
         """
         Calculates the partial pressures of the minor gas species.
@@ -176,25 +184,28 @@ class GasPressure:
         :return:
         """
         for i in self.minor_gas_species:
+            # define if we have a liquid or gas component, important for getting K of Fe2O3_l
             # for example, if we have MgSiO3, then we want MgO and SiO2
             reactants = get_minor_gas_reactants(species=i, major_gasses=self.major_gas_species,
                                                 df=self.minor_gas_species_data)
-            tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas")
+            tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature,
+                                 phase=self.__get_phase(species=i))
             for j in reactants.keys():
                 # i.e. for K_SiO2, take product with partial pressures of Si and O2
                 tmp_activity *= self.partial_pressures_minor_species[j] ** reactants[j]
             self.partial_pressures_minor_species[i] = tmp_activity
         # TODO: Hardcoding in the ion species...fix this
-        ions = ["e-", "Na+", "K+"]  # must be in this order
-        for i in ions:
-            if i == "e-":
-                K_Na = get_K(df=self.minor_gas_species_data, species="Na+", temperature=temperature, phase="gas")
-                K_K = get_K(df=self.minor_gas_species_data, species="K+", temperature=temperature, phase="gas")
-                pp_Na = self.partial_pressures_minor_species['Na']
-                pp_K = self.partial_pressures_minor_species['K']
-                self.partial_pressures_minor_species[i] = sqrt((K_Na * pp_Na) + (K_K * pp_K))
-            else:
+        # calculate pp_e-
+        K_Na = get_K(df=self.minor_gas_species_data, species="Na+", temperature=temperature, phase="gas")
+        K_K = get_K(df=self.minor_gas_species_data, species="K+", temperature=temperature, phase="gas")
+        pp_Na = self.partial_pressures_minor_species['Na']
+        pp_K = self.partial_pressures_minor_species['K']
+        self.partial_pressures_minor_species["e-"] = sqrt((K_Na * pp_Na) + (K_K * pp_K))
+        # adjust ion species based on e-
+        for i in self.partial_pressures_minor_species.keys():
+            if "+" in i:
                 self.partial_pressures_minor_species[i] /= self.partial_pressures_minor_species["e-"]
+        # end hardcoding
         return self.partial_pressures_minor_species
 
     def __get_nd(self, pp, t):
@@ -294,7 +305,6 @@ class GasPressure:
         The abundance of O2 is governed by most abundance oxide in the melt (normally SiO2).  Once this oxide is
         completely vaporized, a_O2_g is computed from the remaining species in the melt.
         """
-        # TODO: implement specific routines for each potential molecule.
         adjustment_factors = {}
         for i in self.major_gas_species:
             if i != "O2" and i != "Fe2O3":
@@ -302,16 +312,24 @@ class GasPressure:
                                                           major_oxides=self.composition.moles_composition.keys())
                 cf = self.composition.oxide_mole_fraction[major_oxide]  # cation fraction in composition
                 gamma = liquid_system.activity_coefficients[major_oxide]  # liquid activity coefficient
-                pp = self.partial_pressures_minor_species[i]
+                # TODO: better way to get major oxide liquid?
+                pp = self.partial_pressures_minor_species[major_oxide + "_l"]
                 activity_liq = liquid_system.activities[major_oxide]
                 # calculate adjustment factors for major gas species
+                # TODO: fix this hack hardcoding
                 if pp != 0.0:
                     if i == "Fe":
-                        adjust = (cf * liquid_system.activity_coefficients["FeO"] + liquid_system.activities["FeO"]) / (
-                                self.partial_pressures_minor_species['FeO_l'] + self.partial_pressures_minor_species[
-                            'Fe2O3_l'])
-                    else:
+                        adjust = (cf * liquid_system.activity_coefficients["FeO"] + liquid_system.activities[
+                            "Fe2O3"]) / (
+                                         self.partial_pressures_minor_species['FeO_l'] +
+                                         self.partial_pressures_minor_species[
+                                             'Fe2O3_l'])
+                    elif i == "MgO":
+                        adjust = cf * gamma / pp
+                    elif i == "SiO":
                         adjust = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
+                    else:
+                        adjust = 1.0 / sqrt(pp / (cf * gamma))
                 elif cf == 0.0:
                     adjust = 0.0
                 else:
@@ -319,7 +337,7 @@ class GasPressure:
                 adjustment_factors.update({i: adjust})
         # BELOW IS ADJUSTMENT FACTOR CODE FOR O2, WHICH IS GOVERNED BY MOST ABUNDANT OXIDE
         # get most abundant oxide (mao) and use it to calculate adjustment factor for O2
-        self.adjustment_factors.update(
+        adjustment_factors.update(
             {"O2": self.__hack_most_abundant_oxide(rat=oxides_to_oxygen_ratio, liquid_system=liquid_system)})
         return adjustment_factors
 
@@ -350,26 +368,25 @@ class GasPressure:
         :param temperature:
         :return:
         """
+        print("[*] Calculating gas partial pressures...")
+        iteration = 1
         has_converged = False
         while has_converged is False:
+            print("At iteration: {}".format(iteration))
             self.__calculate_major_gas_partial_pressures()
             self.__calculate_minor_gas_partial_pressures(temperature=temperature)
             self.__calculate_number_densities(temperature=temperature)
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
                                                                           liquid_system=liquid_system)
-            print("ASIO", self.adjustment_factors['SiO'], "RATSI", oxides_to_oxygen_ratio, "PSIOG2",
-                  self.partial_pressures_minor_species['SiO2_l'], "FSIO2L",
-                  self.composition.oxide_mole_fraction['SiO2'],
-                  "Gamma SiO2L", liquid_system.activity_coefficients['SiO2'])
             has_converged = self.__have_adjustment_factors_converged()
-            sys.exit()
-
+            iteration += 1
         # if this is the first run-through then we need to go back and do activity calculations for Fe2O3 and Fe3O4
         # 'count' tracks this
         if liquid_system.count == 1:
             # TODO: implement this
             liquid_system.count = 0
+        print("[*] Found gas partial pressures!  Took {} iterations.".format(iteration))
 
     def __calculate_gas_elements_pressures(self):
         """
@@ -417,7 +434,7 @@ class GasPressure:
         """
         print("[*] Solving for gas partial pressures...")
         self.__calculate_gas_molecules_pressures(temperature=temperature, liquid_system=liquid_system)
-        # self.total_pressure = sum(self.partial_pressures_elements.values())
+        self.total_pressure = sum(self.partial_pressures_elements.values())
         # self.__calculate_gas_elements_pressures()
         # self.__calculate_mole_fractions()
         # self.__calculate_total_mole_fractions()
