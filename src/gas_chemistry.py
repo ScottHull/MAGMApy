@@ -61,9 +61,13 @@ def get_minor_gas_reactants(species, major_gasses, df):
         for i in all_reactants:
             formatted_i = i.replace("_g", "").replace("_l", "")
             is_O2 = False
+            has_O = False
             if i == "O2":
                 is_O2 = True
-            reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2, force_O2=is_O2)
+                has_O = True
+            elif i == "O":
+                has_O = True
+            reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=has_O, force_O2=is_O2)
             if i.replace("_g", "").replace("_l", "") in reactant_stoich.keys():
                 reactants.update({i: 1 / reactant_stoich[formatted_i]})
     return reactants
@@ -177,11 +181,12 @@ class GasPressure:
                                                 df=self.minor_gas_species_data)
             tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas")
             for j in reactants.keys():
-                # i.e. for K_SiO2
+                # i.e. for K_SiO2, take product with partial pressures of Si and O2
                 tmp_activity *= self.partial_pressures_minor_species[j] ** reactants[j]
-                if i == "Na2O_g":
-                    print(i, j, self.partial_pressures_minor_species[j], reactants[j])
+                if "K" in i:
+                    print("***", i, j, self.partial_pressures_minor_species[j], reactants[j], get_K(df=self.minor_gas_species_data, species=i, temperature=temperature, phase="gas"))
             self.partial_pressures_minor_species[i] = tmp_activity
+            # TODO: Hardcoding in the
         return self.partial_pressures_minor_species
 
     def __get_nd(self, pp, t):
@@ -225,8 +230,6 @@ class GasPressure:
             molecule_appearances = get_species_with_element_appearance(element=i,
                                                                        species=self.number_densities_gasses.keys())
             for m in molecule_appearances.keys():
-                if i == "Na":
-                    print(i, m, self.number_densities_gasses[m])
                 self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
         print(self.number_densities_elements)
         # TODO: Fix K, Na, O

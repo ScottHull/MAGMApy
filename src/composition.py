@@ -41,10 +41,11 @@ def is_si(oxides):
     return False
 
 
-def get_species_with_element_appearance(element, species):
+def get_species_with_element_appearance(element, species, return_ions=True):
     """
     Returns the species in which an element appears.
     i.e. if given Si, would return MgSiO3, Mg2SIO4, etc. with stoichiometry.
+    :param return_ions: Will not return ion species if True
     :param element:
     :param species:
     :return:
@@ -54,6 +55,10 @@ def get_species_with_element_appearance(element, species):
         stoich = get_molecule_stoichiometry(molecule=i)
         if element in stoich.keys():  # if the element is in the species
             d.update({i: stoich[element]})  # return the species and the stoich of the element in the species
+    if return_ions is False:  # delete ion species if we don't want them returned
+        for i in list(d.keys()):
+            if "-" in i or "+" in i:
+                del d[i]
     return d
 
 
