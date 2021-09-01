@@ -3,7 +3,8 @@ from math import isnan, sqrt
 import sys
 
 from src.k_constants import get_K
-from src.composition import get_species_with_element_appearance, get_molecule_stoichiometry
+from src.composition import get_species_with_element_appearance, get_molecule_stoichiometry, \
+    get_species_stoich_in_molecule
 
 
 def get_gas_reactants(df, species):
@@ -60,18 +61,9 @@ def get_minor_gas_reactants(species, major_gasses, df):
         all_reactants = specified_reactants.replace(" ", "").split(",")
         for i in all_reactants:
             formatted_i = i.replace("_g", "").replace("_l", "")
-            is_O2 = False
-            has_O = False
-            if i == "O2":
-                is_O2 = True
-                has_O = True
-            elif i == "O":
-                has_O = True
-            reactant_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=has_O, force_O2=is_O2)
-            if formatted_i in reactant_stoich.keys():
-                # TODO: this should be stoich / reactant stoich, not 1 / reactant stoich
-                print(species, i, formatted_i, stoich, reactant_stoich)
-                reactants.update({i: stoich[formatted_i] / reactant_stoich[formatted_i]})
+            # TODO: this should be stoich / reactant stoich, not 1 / reactant stoich
+            reactants.update({i: get_species_stoich_in_molecule(species=formatted_i, molecule=species)})
+            print("Here", reactants)
     return reactants
 
 

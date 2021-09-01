@@ -28,6 +28,27 @@ def get_molecule_stoichiometry(molecule, return_oxygen=True, force_O2=False):
     return d
 
 
+def get_species_stoich_in_molecule(species, molecule):
+    """
+    Given an element, returns its stoichiometry in a molecule.
+    i.e. Given element Na and molecule Na2O, would return integer 2.
+    :param element:
+    :param molecule:
+    :param force_O2:
+    :return:
+    """
+    d = 0
+    stoich = get_molecule_stoichiometry(molecule=molecule)
+    element_stoich = re.findall(r'([A-Z][a-z]*)(\d*)', species)
+    print("sss", species, molecule, stoich, element_stoich)
+    for i in stoich.keys():
+        if element_stoich == i:
+            d = stoich[i] / element_stoich[i]
+    if molecule == "O2":
+        d /= 2
+    return d
+
+
 def is_si(oxides):
     """
     Returns True if there is Si in the composition.  Else, return False.
