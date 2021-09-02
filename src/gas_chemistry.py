@@ -393,9 +393,6 @@ class GasPressure:
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
                                                                           liquid_system=liquid_system)
-            if iteration == 1:
-                print("Adjustment Factors", self.adjustment_factors)
-                sys.exit()
             has_converged = self.__have_adjustment_factors_converged()
             iteration += 1
         # if this is the first run-through then we need to go back and do activity calculations for Fe2O3 and Fe3O4
