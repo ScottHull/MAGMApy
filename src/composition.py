@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+import sys
 
 
 def get_molecule_stoichiometry(molecule, return_oxygen=True, force_O2=False):
@@ -38,11 +39,16 @@ def get_species_stoich_in_molecule(species, molecule):
     :return:
     """
     d = 0
+    is_O = False
+    is_O2 = False
+    if species == "O" or species == "O2":
+        is_O = True
+    if species == "O2":
+        is_O2 = True
     stoich = get_molecule_stoichiometry(molecule=molecule)
-    element_stoich = re.findall(r'([A-Z][a-z]*)(\d*)', species)
-    print("sss", species, molecule, stoich, element_stoich)
+    element_stoich = get_molecule_stoichiometry(molecule=species, return_oxygen=is_O, force_O2=False)
     for i in stoich.keys():
-        if element_stoich == i:
+        if i in element_stoich.keys():
             d = stoich[i] / element_stoich[i]
     if molecule == "O2":
         d /= 2

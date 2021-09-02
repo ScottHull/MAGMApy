@@ -63,7 +63,6 @@ def get_minor_gas_reactants(species, major_gasses, df):
             formatted_i = i.replace("_g", "").replace("_l", "")
             # TODO: this should be stoich / reactant stoich, not 1 / reactant stoich
             reactants.update({i: get_species_stoich_in_molecule(species=formatted_i, molecule=species)})
-            print("Here", reactants)
     return reactants
 
 
@@ -187,6 +186,20 @@ class GasPressure:
             else:
                 self.partial_pressures_minor_species[i] = combined_dict[i]
 
+    def __calculate_ion_partial_pressures(self, temperature):
+        # TODO: Hardcoding in the ion species...fix this
+        # calculate pp_e-
+        K_Na = get_K(df=self.minor_gas_species_data, species="Na+", temperature=temperature, phase="gas")
+        K_K = get_K(df=self.minor_gas_species_data, species="K+", temperature=temperature, phase="gas")
+        pp_Na = self.partial_pressures_major_species['Na']
+        pp_K = self.partial_pressures_major_species['K']
+        self.partial_pressures_minor_species["e-"] = sqrt((K_Na * pp_Na) + (K_K * pp_K))
+        # adjust ion species based on e-
+        for i in self.partial_pressures_minor_species.keys():
+            if "+" in i:
+                self.partial_pressures_minor_species[i] /= self.partial_pressures_minor_species["e-"]
+        # end hardcoding
+
     def __calculate_minor_gas_partial_pressures(self, temperature):
         """
         Calculates the partial pressures of the minor gas species.
@@ -204,22 +217,9 @@ class GasPressure:
             for j in reactants.keys():
                 # i.e. for K_SiO2, take product with partial pressures of Si and O2
                 tmp_activity *= combined_partial_pressures[j] ** reactants[j]
-                if "Na" in i:
-                    print(i, j, combined_partial_pressures[j], reactants[j])
             combined_partial_pressures[i] = tmp_activity
         self.__reformat_dict(combined_dict=combined_partial_pressures)  # replace partial pressures with just calculated ones
-        # TODO: Hardcoding in the ion species...fix this
-        # calculate pp_e-
-        K_Na = get_K(df=self.minor_gas_species_data, species="Na+", temperature=temperature, phase="gas")
-        K_K = get_K(df=self.minor_gas_species_data, species="K+", temperature=temperature, phase="gas")
-        pp_Na = self.partial_pressures_major_species['Na']
-        pp_K = self.partial_pressures_major_species['K']
-        self.partial_pressures_minor_species["e-"] = sqrt((K_Na * pp_Na) + (K_K * pp_K))
-        # adjust ion species based on e-
-        for i in self.partial_pressures_minor_species.keys():
-            if "+" in i:
-                self.partial_pressures_minor_species[i] /= self.partial_pressures_minor_species["e-"]
-        # end hardcoding
+        self.__calculate_ion_partial_pressures(temperature=temperature)
         return self.partial_pressures_minor_species
 
     def __get_nd(self, pp, t):
@@ -388,15 +388,14 @@ class GasPressure:
         while has_converged is False:
             print("At iteration: {}".format(iteration))
             self.__calculate_major_gas_partial_pressures()
-            if iteration == 1:
-                print(self.partial_pressures_major_species)
-                sys.exit()
             self.__calculate_minor_gas_partial_pressures(temperature=temperature)
             self.__calculate_number_densities(temperature=temperature)
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
                                                                           liquid_system=liquid_system)
-            print("Adjustment Factors", self.adjustment_factors)
+            if iteration == 1:
+                print("Adjustment Factors", self.adjustment_factors)
+                sys.exit()
             has_converged = self.__have_adjustment_factors_converged()
             iteration += 1
         # if this is the first run-through then we need to go back and do activity calculations for Fe2O3 and Fe3O4
