@@ -57,11 +57,16 @@ def get_minor_gas_reactants(species, major_gasses, df):
                 major_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
                 if j in major_stoich.keys():
                     reactants.update({i: stoich[j] / major_stoich[j]})
+                    # TODO: fix this hardcode
+                    if species == "SiO2_l":
+                        if j == "Si":
+                            reactants[i] = 1
+                        else:
+                            reactants[i] = 0.5
     else:  # if they are specified, then use them instead
         all_reactants = specified_reactants.replace(" ", "").split(",")
         for i in all_reactants:
             formatted_i = i.replace("_g", "").replace("_l", "")
-            # TODO: this should be stoich / reactant stoich, not 1 / reactant stoich
             reactants.update({i: get_species_stoich_in_molecule(species=formatted_i, molecule=species)})
     return reactants
 
@@ -159,8 +164,7 @@ class GasPressure:
         :return:
         """
         for i in self.major_gas_species:
-            self.partial_pressures_major_species[i] = self.partial_pressures_major_species[i] * self.adjustment_factors[
-                i]
+            self.partial_pressures_major_species[i] *= self.adjustment_factors[i]
         return self.major_gas_species
 
     def __get_phase(self, species):
@@ -217,7 +221,11 @@ class GasPressure:
             for j in reactants.keys():
                 # i.e. for K_SiO2, take product with partial pressures of Si and O2
                 tmp_activity *= combined_partial_pressures[j] ** reactants[j]
+                if i == "SiO2_l":
+                    print("***", i, j, combined_partial_pressures[j], reactants[j])
             combined_partial_pressures[i] = tmp_activity
+            if i == "SiO2_l":
+                print(i, tmp_activity)
         self.__reformat_dict(combined_dict=combined_partial_pressures)  # replace partial pressures with just calculated ones
         self.__calculate_ion_partial_pressures(temperature=temperature)
         return self.partial_pressures_minor_species
@@ -395,11 +403,13 @@ class GasPressure:
                                                                           liquid_system=liquid_system)
             has_converged = self.__have_adjustment_factors_converged()
             iteration += 1
+            print(self.partial_pressures_major_species)
+            print(self.adjustment_factors)
         # if this is the first run-through then we need to go back and do activity calculations for Fe2O3 and Fe3O4
         # 'count' tracks this
-        if liquid_system.count == 1:
-            # TODO: implement this
-            liquid_system.count = 0
+        # if liquid_system.count == 1:
+        #     # TODO: implement this
+        #     liquid_system.count = 0
         print("[*] Found gas partial pressures!  Took {} iterations.".format(iteration))
 
     def __calculate_gas_elements_pressures(self):
@@ -448,7 +458,7 @@ class GasPressure:
         """
         print("[*] Solving for gas partial pressures...")
         self.__calculate_gas_molecules_pressures(temperature=temperature, liquid_system=liquid_system)
-        self.total_pressure = sum(self.partial_pressures_elements.values())
+        # self.total_pressure = sum(self.partial_pressures_elements.values())
         # self.__calculate_gas_elements_pressures()
         # self.__calculate_mole_fractions()
         # self.__calculate_total_mole_fractions()
