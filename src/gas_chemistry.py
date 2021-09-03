@@ -217,7 +217,7 @@ class GasPressure:
             reactants = get_minor_gas_reactants(species=i, major_gasses=self.major_gas_species,
                                                 df=self.minor_gas_species_data)
             tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature,
-                                 phase=self.__get_phase(species=i))
+                                 phase="gas")
             for j in reactants.keys():
                 # i.e. for K_SiO2, take product with partial pressures of Si and O2
                 tmp_activity *= combined_partial_pressures[j] ** reactants[j]
@@ -403,8 +403,6 @@ class GasPressure:
                                                                           liquid_system=liquid_system)
             has_converged = self.__have_adjustment_factors_converged()
             iteration += 1
-            print(self.partial_pressures_major_species)
-            print(self.adjustment_factors)
         # if this is the first run-through then we need to go back and do activity calculations for Fe2O3 and Fe3O4
         # 'count' tracks this
         # if liquid_system.count == 1:
