@@ -105,12 +105,27 @@ def get_most_abundant_gas_oxide(major_gas_species, partial_pressures):
     return most_abundant
 
 
-def get_element_appearances_in_gas_species(element, all_species):
+def get_element_appearances_in_gas_species(element, all_species, force_O=False):
+    """
+    Given an element, returns all gas species which contains it.
+    :param element:
+    :param all_species:
+    :param force_O: Will only return O and O2 if the given element is O.
+    :return:
+    """
     d = {}
     for i in all_species.keys():
-        stoich = get_molecule_stoichiometry(molecule=i)
-        if element in stoich.keys():
-            d.update({i: stoich[element]})
+        if "_l" not in i:
+            stoich = get_molecule_stoichiometry(molecule=i)
+            if element in stoich.keys():
+                d.update({i: stoich[element]})
+    if force_O and element == "O":
+        delete_these = []
+        for i in d.keys():
+            if i != "O" and i != "O2":
+                delete_these.append(i)
+        for i in delete_these:
+            del d[i]
     return d
 
 
@@ -216,17 +231,16 @@ class GasPressure:
             # for example, if we have MgSiO3, then we want MgO and SiO2
             reactants = get_minor_gas_reactants(species=i, major_gasses=self.major_gas_species,
                                                 df=self.minor_gas_species_data)
+            if i == "Mg_g" or i == "MgO_l":
+                print(i, reactants)
             tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature,
                                  phase="gas")
             for j in reactants.keys():
                 # i.e. for K_SiO2, take product with partial pressures of Si and O2
                 tmp_activity *= combined_partial_pressures[j] ** reactants[j]
-                if i == "SiO2_l":
-                    print("***", i, j, combined_partial_pressures[j], reactants[j])
             combined_partial_pressures[i] = tmp_activity
-            if i == "SiO2_l":
-                print(i, tmp_activity)
-        self.__reformat_dict(combined_dict=combined_partial_pressures)  # replace partial pressures with just calculated ones
+        self.__reformat_dict(
+            combined_dict=combined_partial_pressures)  # replace partial pressures with just calculated ones
         self.__calculate_ion_partial_pressures(temperature=temperature)
         return self.partial_pressures_minor_species
 
@@ -268,10 +282,12 @@ class GasPressure:
         for i in unique_elements:
             if i not in self.number_densities_elements.keys():
                 self.number_densities_elements.update({i: 0})  # if the cation is not already in the dict, add it
-            molecule_appearances = get_species_with_element_appearance(element=i,
-                                                                       species=self.number_densities_gasses.keys())
+            molecule_appearances = get_element_appearances_in_gas_species(element=i,
+                                                                       all_species=self.number_densities_gasses)
             for m in molecule_appearances.keys():
                 self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
+                # if i == "Mg":
+                    # print(i, m, self.number_densities_gasses[m], self.partial_pressures_major_species['MgO'], self.partial_pressures_minor_species["Mg_g"])
         return self.number_densities_elements
 
     def __ratio_number_density_to_oxygen(self):
@@ -298,7 +314,6 @@ class GasPressure:
         """
         self.__calculate_number_density_molecules(temperature=temperature)
         self.__calculate_number_density_elements()
-        self.total_number_density = sum(self.number_densities_elements.values())
 
     def __hack_most_abundant_oxide(self, liquid_system, rat):
         """
@@ -394,35 +409,17 @@ class GasPressure:
         iteration = 0
         has_converged = False
         while has_converged is False:
-            print("At iteration: {}".format(iteration))
             self.__calculate_major_gas_partial_pressures()
             self.__calculate_minor_gas_partial_pressures(temperature=temperature)
+            print(self.partial_pressures_major_species)
+            print(self.partial_pressures_minor_species)
             self.__calculate_number_densities(temperature=temperature)
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
                                                                           liquid_system=liquid_system)
             has_converged = self.__have_adjustment_factors_converged()
             iteration += 1
-        # if this is the first run-through then we need to go back and do activity calculations for Fe2O3 and Fe3O4
-        # 'count' tracks this
-        # if liquid_system.count == 1:
-        #     # TODO: implement this
-        #     liquid_system.count = 0
         print("[*] Found gas partial pressures!  Took {} iterations.".format(iteration))
-
-    def __calculate_gas_elements_pressures(self):
-        """
-        Calculate the partial pressures of individual elements as a sum of the gas species that contain them.
-        :return:
-        """
-        self.partial_pressures_elements = {}
-        for i in self.partial_pressures_minor_species.keys():
-            stoich = get_molecule_stoichiometry(molecule=i)
-            for j in stoich.keys():
-                if j not in self.partial_pressures_elements.keys():
-                    self.partial_pressures_elements.update({j: 0.0})
-                self.partial_pressures_elements[j] += self.partial_pressures_minor_species[i]
-        return self.partial_pressures_elements
 
     def __calculate_mole_fractions(self):
         """
@@ -432,8 +429,8 @@ class GasPressure:
         self.mole_fractions = {}
         for i in self.partial_pressures_minor_species.keys():
             self.mole_fractions.update({i: self.partial_pressures_minor_species[i] / self.total_pressure})
-        for i in self.partial_pressures_elements.keys():
-            self.mole_fractions.update({i: self.partial_pressures_elements[i] / self.total_pressure})
+        for i in self.partial_pressures_major_species.keys():
+            self.mole_fractions.update({i: self.partial_pressures_major_species[i] / self.total_pressure})
         return self.mole_fractions
 
     def __calculate_total_mole_fractions(self):
@@ -442,10 +439,44 @@ class GasPressure:
         :return:
         """
         self.total_mole_fraction = {}
+        self.cation_number_density = 0
+        # get number density of all cations.  we want to skip O
         for i in self.number_densities_elements.keys():
-            self.total_mole_fraction.update(
-                {i: self.number_densities_elements[i] / self.total_number_density})
+            # TODO: why not O?
+            if i != "O":
+                self.cation_number_density += self.number_densities_elements[i]
+        for i in self.number_densities_elements.keys():
+            # TODO: why not O?
+            if i != "O":
+                self.total_mole_fraction.update(
+                    {i: self.number_densities_elements[i] / self.cation_number_density})
+        print(self.cation_number_density)
         return self.total_mole_fraction
+
+    def __calculate_partial_pressure_elements(self):
+        """
+        Calculates the partial pressure of all elements
+        :return:
+        """
+        self.partial_pressure_elements = {}
+        elements = get_unique_gas_elements(all_species=self.major_gas_species)  # get all unique cations and anions
+        for i in elements:  # build the dictionary to old the unique elements
+            self.partial_pressure_elements.update({i: 0.0})
+            # TODO: make force_O into a separate function
+            force_O = False
+            if i == "O":
+                force_O = True
+            # get all of the species
+            element_appearances = get_element_appearances_in_gas_species(element=i, all_species={
+                **self.partial_pressures_major_species, **self.partial_pressures_minor_species}, force_O=force_O)
+            for j in element_appearances.keys():
+                # get the partial pressure of the species
+                if j in self.major_gas_species:
+                    pp = self.partial_pressures_major_species[j]
+                else:
+                    pp = self.partial_pressures_minor_species[j]
+                self.partial_pressure_elements[i] += pp  # add the partial pressure to the element total
+        return self.partial_pressure_elements
 
     def calculate_pressures(self, temperature, liquid_system):
         """
@@ -456,7 +487,8 @@ class GasPressure:
         """
         print("[*] Solving for gas partial pressures...")
         self.__calculate_gas_molecules_pressures(temperature=temperature, liquid_system=liquid_system)
-        # self.total_pressure = sum(self.partial_pressures_elements.values())
-        # self.__calculate_gas_elements_pressures()
-        # self.__calculate_mole_fractions()
-        # self.__calculate_total_mole_fractions()
+        self.__calculate_partial_pressure_elements()
+        self.total_pressure = sum(self.partial_pressure_elements.values())
+        self.__calculate_mole_fractions()
+        self.__calculate_total_mole_fractions()
+        print(self.total_mole_fraction)

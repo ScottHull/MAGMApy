@@ -2,11 +2,13 @@ from composition import get_element_in_base_oxide, get_molecule_stoichiometry
 
 
 class ThermoSystem:
+
     def __init__(self, composition, liquid_system, gas_system):
         self.composition = composition
         self.liquid_system = liquid_system
         self.gas_system = gas_system
         self.weight_vaporized = 0.0
+
 
     def __calculate_size_step(self):
         """
@@ -74,7 +76,5 @@ class ThermoSystem:
             wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         self.weight_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
                                 self.liquid_system.initial_melt_mass
-
-        self.composition.ca
 
         return self.weight_vaporized
