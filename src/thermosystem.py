@@ -1,4 +1,4 @@
-from composition import get_element_in_base_oxide, get_molecule_stoichiometry
+from src.composition import get_element_in_base_oxide, get_molecule_stoichiometry
 
 
 class ThermoSystem:
@@ -37,14 +37,14 @@ class ThermoSystem:
 
         # adjust system composition
         for i in self.composition.cation_fraction:
-            self.composition.cation_fraction[i] -= FACT * self.gas_system.total_number_density_elements[i]
+            self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
 
         # TODO: is this necessary?
         # adjust planetary composition
         ATMAX = 0.0
         for i in self.composition.planetary_abundances:
             if self.composition.planetary_abundances[i] > 0.01:
-                r = self.gas_system.total_number_density_elements[i] / self.composition.planetary_abundances[i]
+                r = self.gas_system.total_mole_fraction[i] / self.composition.planetary_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
         FACT1 = 0.05 / ATMAX  # most volatile element will be reduced by 5%
@@ -53,7 +53,7 @@ class ThermoSystem:
         for i in self.composition.planetary_abundances.keys():
             old_abun = self.composition.planetary_abundances[i]
             if old_abun != 0.0:  # if the previous abundance is 0, then no need to adjust it
-                self.composition.planetary_abundances[i] -= FACT1 * self.gas_system.total_number_density_elements[i]
+                self.composition.planetary_abundances[i] -= FACT1 * self.gas_system.total_mole_fraction[i]
                 if self.composition.planetary_abundances[i] <= 0.0:
                     self.composition.planetary_abundances[i] = 0.0
                     self.composition.cation_fraction[i] = 0.0
@@ -72,9 +72,10 @@ class ThermoSystem:
             # get the base oxide for the elment (i.e. SiO2 for Si)
             base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
-            oxide_stoich = get_molecule_stoichiometry(molecule=oxide_mw)
+            oxide_stoich = get_molecule_stoichiometry(molecule=i)
             wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         self.weight_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
                                 self.liquid_system.initial_melt_mass
+        print(self.weight_vaporized)
 
         return self.weight_vaporized

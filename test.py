@@ -1,6 +1,7 @@
 from src.composition import Composition
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
+from src.thermosystem import ThermoSystem
 
 temperature = 2500
 
@@ -46,3 +47,7 @@ g = GasPressure(
     minor_gas_species="__all__",
 )
 g.calculate_pressures(temperature=temperature, liquid_system=l)
+
+t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
+t.vaporize()
+
