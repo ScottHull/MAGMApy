@@ -1,7 +1,7 @@
 import re
+from math import isnan
 import pandas as pd
 import sys
-
 
 def get_molecule_stoichiometry(molecule, return_oxygen=True, force_O2=False):
     """
@@ -126,6 +126,26 @@ def normalize(composition):
     for i in composition.keys():
         composition[i] = composition[i] / total * 100.0
     return composition
+
+def __get_isnan(r):
+    try:
+        if isnan(r):
+            return True
+        else:
+            return False
+    except:
+        return False
+
+def get_stoich_from_sheet(molecule, df):
+    d = {}
+    reactants = df['Reactants'][molecule]
+    if not __get_isnan(r=reactants):
+        reactants = reactants.replace(" ", "").split(",")
+        for i in reactants:
+            stoich = i.split("*")
+            species, stoich = stoich[1], float(stoich[0])
+            d.update({species: stoich})
+    return d
 
 
 class ConvertComposition:

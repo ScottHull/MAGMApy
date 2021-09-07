@@ -3,9 +3,7 @@ from math import isnan, sqrt
 import sys
 
 from src.k_constants import get_K
-from src.composition import get_species_with_element_appearance, get_molecule_stoichiometry, \
-    get_species_stoich_in_molecule
-
+from src.composition import get_molecule_stoichiometry, get_stoich_from_sheet
 
 def get_gas_reactants(df, species):
     """
@@ -44,30 +42,7 @@ def get_minor_gas_reactants(species, major_gasses, df):
     :param major_gasses:
     :return:
     """
-    reactants = {}
-    specified_reactants = df['Reactants'][species]
-    stoich = get_molecule_stoichiometry(molecule=species)
-    if __gas_isnan(
-            specified_reactants):  # if the reactants aren't specified in the spreadsheet, assume reactants are major gasses
-        for i in major_gasses:
-            is_O2 = False
-            if i == "O2":
-                is_O2 = True
-            for j in stoich:
-                major_stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=is_O2)
-                if j in major_stoich.keys():
-                    reactants.update({i: stoich[j] / major_stoich[j]})
-                    # TODO: fix this hardcode
-                    if species == "SiO2_l":
-                        if j == "Si":
-                            reactants[i] = 1
-                        else:
-                            reactants[i] = 0.5
-    else:  # if they are specified, then use them instead
-        all_reactants = specified_reactants.replace(" ", "").split(",")
-        for i in all_reactants:
-            formatted_i = i.replace("_g", "").replace("_l", "")
-            reactants.update({i: get_species_stoich_in_molecule(species=formatted_i, molecule=species)})
+    reactants = get_stoich_from_sheet(molecule=species, df=df)
     return reactants
 
 
@@ -231,8 +206,6 @@ class GasPressure:
             # for example, if we have MgSiO3, then we want MgO and SiO2
             reactants = get_minor_gas_reactants(species=i, major_gasses=self.major_gas_species,
                                                 df=self.minor_gas_species_data)
-            if i == "Mg_g" or i == "MgO_l":
-                print(i, reactants)
             tmp_activity = get_K(df=self.minor_gas_species_data, species=i, temperature=temperature,
                                  phase="gas")
             for j in reactants.keys():
@@ -286,8 +259,6 @@ class GasPressure:
                                                                        all_species=self.number_densities_gasses)
             for m in molecule_appearances.keys():
                 self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
-                # if i == "Mg":
-                    # print(i, m, self.number_densities_gasses[m], self.partial_pressures_major_species['MgO'], self.partial_pressures_minor_species["Mg_g"])
         return self.number_densities_elements
 
     def __ratio_number_density_to_oxygen(self):
@@ -411,8 +382,6 @@ class GasPressure:
         while has_converged is False:
             self.__calculate_major_gas_partial_pressures()
             self.__calculate_minor_gas_partial_pressures(temperature=temperature)
-            print(self.partial_pressures_major_species)
-            print(self.partial_pressures_minor_species)
             self.__calculate_number_densities(temperature=temperature)
             oxides_to_oxygen_ratio = self.__ratio_number_density_to_oxygen()
             self.adjustment_factors = self.__calculate_adjustment_factors(oxides_to_oxygen_ratio=oxides_to_oxygen_ratio,
@@ -450,7 +419,6 @@ class GasPressure:
             if i != "O":
                 self.total_mole_fraction.update(
                     {i: self.number_densities_elements[i] / self.cation_number_density})
-        print(self.cation_number_density)
         return self.total_mole_fraction
 
     def __calculate_partial_pressure_elements(self):
@@ -491,4 +459,3 @@ class GasPressure:
         self.total_pressure = sum(self.partial_pressure_elements.values())
         self.__calculate_mole_fractions()
         self.__calculate_total_mole_fractions()
-        print(self.total_mole_fraction)
