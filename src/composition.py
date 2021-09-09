@@ -3,6 +3,7 @@ from math import isnan
 import pandas as pd
 import sys
 
+
 def get_molecule_stoichiometry(molecule, return_oxygen=True, force_O2=False):
     """
     Requires that molecule be formatted correctly with capitalization, i.e. SiO2, not sio2.
@@ -121,11 +122,12 @@ def get_list_of_cations(oxides):
     return set(cations)
 
 
-def normalize(composition, multiply_by_100=True):
+def normalize(composition):
     total = sum(composition.values())
     for i in composition.keys():
         composition[i] = composition[i] / total * 100.0
     return composition
+
 
 def __get_isnan(r):
     try:
@@ -135,6 +137,7 @@ def __get_isnan(r):
             return False
     except:
         return False
+
 
 def get_stoich_from_sheet(molecule, df):
     d = {}

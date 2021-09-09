@@ -5,6 +5,7 @@ import sys
 from src.k_constants import get_K
 from src.composition import get_molecule_stoichiometry, get_stoich_from_sheet
 
+
 def get_gas_reactants(df, species):
     """
     Gets the reactants of the gas product using the stoichiometry of Table 2 in the data Excel sheet.
@@ -256,7 +257,7 @@ class GasPressure:
             if i not in self.number_densities_elements.keys():
                 self.number_densities_elements.update({i: 0})  # if the cation is not already in the dict, add it
             molecule_appearances = get_element_appearances_in_gas_species(element=i,
-                                                                       all_species=self.number_densities_gasses)
+                                                                          all_species=self.number_densities_gasses)
             for m in molecule_appearances.keys():
                 self.number_densities_elements[i] += molecule_appearances[m] * self.number_densities_gasses[m]
         return self.number_densities_elements

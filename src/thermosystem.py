@@ -1,4 +1,5 @@
-from src.composition import get_element_in_base_oxide, get_molecule_stoichiometry, normalize
+from src.composition import get_element_in_base_oxide, get_molecule_stoichiometry
+import sys
 
 
 class ThermoSystem:
@@ -12,24 +13,32 @@ class ThermoSystem:
     def __renormalize_abundances(self):
         """
         Recalculates cation and oxide fractions following vaporization.
+        Note that in the original MAGMA code, FSI relates to oxide fraction of Si and CONSI is the
+        cation fraction of Si.
         :return:
         """
         # get total number of oxide molecules
-        total_oxide_molecules = sum(self.composition.oxide_mole_fraction.values())
+        total_cations = sum(self.composition.cation_fraction.values())
         # get the total number of cations in the oxide molecules
-        total_cations = 0
-        for i in self.composition.oxide_mole_fraction.keys():
-            stoich = get_molecule_stoichiometry(molecule=i)
-            for j in stoich.keys():  # should only have 1 cation in this loop
-                total_cations += self.composition.oxide_mole_fraction[i] * stoich[j]  # i.e. 2 Al in 1 Al2O3
-        # renormalize cation mole fractions
+        total_oxide_moles = 0
         for i in self.composition.cation_fraction.keys():
-            base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.oxide_mole_fraction)
-            stoich = get_molecule_stoichiometry(molecule=base_oxide)
-            self.composition.cation_fraction[i] = self.composition.oxide_mole_fraction[base_oxide] * stoich[i] / total_cations
-        # renormalize oxide mole fractions
+            base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
+            stoich = get_molecule_stoichiometry(molecule=base_oxide, return_oxygen=False)
+            print(stoich)
+            for j in stoich.keys():  # should only have 1 cation in this loop
+                total_oxide_moles += self.composition.cation_fraction[i] * (1.0 / stoich[j])  # i.e. 2 Al in 1 Al2O3
+        # renormalize cation mole fractions
         for i in self.composition.oxide_mole_fraction.keys():
-            self.composition.oxide_mole_fraction[i] /= total_oxide_molecules
+            stoich = get_molecule_stoichiometry(molecule=i, return_oxygen=False)
+            for j in stoich:  # should only contain 1 cation
+                self.composition.oxide_mole_fraction[i] = (self.composition.cation_fraction[j] * (1.0 / stoich[
+                    j])) / total_oxide_moles
+        # renormalize oxide mole fractions
+        for i in self.composition.cation_fraction.keys():
+            self.composition.cation_fraction[i] /= total_cations
+        print(self.composition.cation_fraction["Si"], self.composition.oxide_mole_fraction["SiO2"])
+        print(total_oxide_moles, total_cations)
+        sys.exit()
 
     def __calculate_size_step(self):
         """
@@ -49,7 +58,7 @@ class ThermoSystem:
         """
         # adjust system composition
         ATMAX = 0.0
-        for i in self.gas_system.total_mole_fraction:
+        for i in self.gas_system.total_mole_fraction.keys():
             if self.composition.cation_fraction[i] > 0.01:
                 r = self.gas_system.total_mole_fraction[i] / self.composition.cation_fraction[i]
                 if r > ATMAX:
@@ -57,9 +66,8 @@ class ThermoSystem:
         FACT = 0.05 / ATMAX  # most volatile element will be reduced by 5%
 
         # adjust system composition
-        for i in self.composition.cation_fraction:
+        for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
-
 
         # TODO: is this necessary?
         # adjust planetary composition
