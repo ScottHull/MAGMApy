@@ -1,4 +1,4 @@
-from src.composition import get_element_in_base_oxide, get_molecule_stoichiometry
+from src.composition import get_element_in_base_oxide, get_molecule_stoichiometry, normalize
 
 
 class ThermoSystem:
@@ -9,6 +9,27 @@ class ThermoSystem:
         self.gas_system = gas_system
         self.weight_vaporized = 0.0
 
+    def __renormalize_abundances(self):
+        """
+        Recalculates cation and oxide fractions following vaporization.
+        :return:
+        """
+        # get total number of oxide molecules
+        total_oxide_molecules = sum(self.composition.oxide_mole_fraction.values())
+        # get the total number of cations in the oxide molecules
+        total_cations = 0
+        for i in self.composition.oxide_mole_fraction.keys():
+            stoich = get_molecule_stoichiometry(molecule=i)
+            for j in stoich.keys():  # should only have 1 cation in this loop
+                total_cations += self.composition.oxide_mole_fraction[i] * stoich[j]  # i.e. 2 Al in 1 Al2O3
+        # renormalize cation mole fractions
+        for i in self.composition.cation_fraction.keys():
+            base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.oxide_mole_fraction)
+            stoich = get_molecule_stoichiometry(molecule=base_oxide)
+            self.composition.cation_fraction[i] = self.composition.oxide_mole_fraction[base_oxide] * stoich[i] / total_cations
+        # renormalize oxide mole fractions
+        for i in self.composition.oxide_mole_fraction.keys():
+            self.composition.oxide_mole_fraction[i] /= total_oxide_molecules
 
     def __calculate_size_step(self):
         """
@@ -39,6 +60,7 @@ class ThermoSystem:
         for i in self.composition.cation_fraction:
             self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
 
+
         # TODO: is this necessary?
         # adjust planetary composition
         ATMAX = 0.0
@@ -62,9 +84,9 @@ class ThermoSystem:
         self.__calculate_size_step()  # calculate volatility
         # calculate fraction of vaporized materials
         total_planetary_cations = sum(
-            self.composition.planetary_abundances.values())  # sum of fractional cation abundances
-        self.composition.planetary_cation_ratio = total_planetary_cations / self.composition.initial_planetary_cations
-        self.vaporized_magma_fraction = 1.0 - self.composition.planetary_cation_ratio
+            self.composition.planetary_abundances.values())  # sum of fractional cation abundances, PLAMANT
+        self.composition.planetary_cation_ratio = total_planetary_cations / self.composition.initial_planetary_cations  # PLANRAT
+        self.vaporized_magma_fraction = 1.0 - self.composition.planetary_cation_ratio  # VAP
 
         # calculate weight% vaporized each element
         wt_vaporized = 0.0
@@ -72,10 +94,12 @@ class ThermoSystem:
             # get the base oxide for the elment (i.e. SiO2 for Si)
             base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
-            oxide_stoich = get_molecule_stoichiometry(molecule=i)
+            oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
             wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         self.weight_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
                                 self.liquid_system.initial_melt_mass
-        print(self.weight_vaporized)
+
+        # renormalize abundances
+        self.__renormalize_abundances()
 
         return self.weight_vaporized

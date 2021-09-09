@@ -121,7 +121,7 @@ def get_list_of_cations(oxides):
     return set(cations)
 
 
-def normalize(composition):
+def normalize(composition, multiply_by_100=True):
     total = sum(composition.values())
     for i in composition.keys():
         composition[i] = composition[i] / total * 100.0
@@ -300,7 +300,7 @@ class Composition(ConvertComposition):
         """
         abundances = {}
         for i in self.cation_fraction:
-            abundances.update({i: self.cation_fraction[i]})
+            abundances.update({i: self.atoms_composition[i]})
         total_planetary_cations = sum(abundances.values())  # sum of fractional cation abundances
         self.initial_planetary_cations = total_planetary_cations  # the initial planetary cation abundance
         # take the ratio of current planetary cations to initial cations, initially will be 1

@@ -35,19 +35,17 @@ l = LiquidActivity(
     composition=c,
     complex_species="__all__"
 )
-l.calculate_activities(temperature=temperature)
-# print("Activity Coefficients")
-# print(l.activity_coefficients)
-# print("Activities")
-# print(l.activities)
-
 g = GasPressure(
     composition=c,
     major_gas_species=major_gas_species,
     minor_gas_species="__all__",
 )
-g.calculate_pressures(temperature=temperature, liquid_system=l)
-
 t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
-t.vaporize()
 
+count = 0
+while count < 1500:
+    l.calculate_activities(temperature=temperature)
+    g.calculate_pressures(temperature=temperature, liquid_system=l)
+    t.vaporize()
+    print(c.cation_fraction)
+    count += 1
