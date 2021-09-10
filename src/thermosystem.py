@@ -24,7 +24,6 @@ class ThermoSystem:
         for i in self.composition.cation_fraction.keys():
             base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
             stoich = get_molecule_stoichiometry(molecule=base_oxide, return_oxygen=False)
-            print(stoich)
             for j in stoich.keys():  # should only have 1 cation in this loop
                 total_oxide_moles += self.composition.cation_fraction[i] * (1.0 / stoich[j])  # i.e. 2 Al in 1 Al2O3
         # renormalize cation mole fractions
@@ -36,9 +35,6 @@ class ThermoSystem:
         # renormalize oxide mole fractions
         for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] /= total_cations
-        print(self.composition.cation_fraction["Si"], self.composition.oxide_mole_fraction["SiO2"])
-        print(total_oxide_moles, total_cations)
-        sys.exit()
 
     def __calculate_size_step(self):
         """

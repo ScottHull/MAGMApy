@@ -377,7 +377,6 @@ class GasPressure:
         :param temperature:
         :return:
         """
-        print("[*] Calculating gas partial pressures...")
         iteration = 0
         has_converged = False
         while has_converged is False:
