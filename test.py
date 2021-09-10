@@ -43,10 +43,13 @@ g = GasPressure(
 t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
 count = 0
-while count < 1500:
+while count < 1000:
     print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
     t.vaporize()
-    print(c.cation_fraction)
+    print("Gas Total Mole Fraction", g.total_mole_fraction)
+    print("Cation Fraction", c.cation_fraction)
+    print("Oxide Mole Fraction", c.oxide_mole_fraction)
+    print("Planetary", c.planetary_abundances)
     count += 1
