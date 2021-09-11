@@ -52,4 +52,5 @@ while count < 1000:
     print("Cation Fraction", c.cation_fraction)
     print("Oxide Mole Fraction", c.oxide_mole_fraction)
     print("Planetary", c.planetary_abundances)
+    print("Activity Coefficients", l.activity_coefficients)
     count += 1
