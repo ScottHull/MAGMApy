@@ -60,7 +60,7 @@ class LiquidActivity:
     Handles activity calculates for all species in the liquid phase.
     """
 
-    def __init__(self, composition, complex_species):
+    def __init__(self, composition, complex_species, gas_system):
         self.complex_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 3",
                                                   index_col="Product")
         self.complex_species = complex_species  # a list of complex species to consider in the model
@@ -69,9 +69,10 @@ class LiquidActivity:
         self.composition = composition
         self.activity_coefficients = self.__get_initial_activty_coefficients()
         self.activities = self.__initial_activity_setup()  # melt activities
-        self.counter = 1  # for tracking Fe2O3
+        self.counter = 0  # for tracking Fe2O3
         self.iteration = 0  # for tracking the number of iterations in the activity convergence loop
         self.initial_melt_mass = self.__get_initial_melt_mass()  # calculate the initial mass of the melt in order to calculate vapor%
+        self.gas_system = gas_system
 
     def __get_initial_melt_mass(self):
         """
@@ -121,14 +122,11 @@ class LiquidActivity:
                 if self.counter == 1:
                     self.activities[i] = 0.0
                 else:
-                    self.activities[i] = self.activity_coefficients[i] * \
-                                         self.composition.oxide_mole_fraction[
-                                             i]
+                    # use gas chemistry to estimate Fe2O3
+                    self.activities[i] = self.activity_coefficients[i] * self.gas_system.partial_pressures_minor_species[i + "_l"]
             else:
                 # Henrian Behavior... a_i = gamma_i * x_i
-                self.activities[i] = self.activity_coefficients[i] * \
-                                     self.composition.oxide_mole_fraction[
-                                         i]
+                self.activities[i] = self.activity_coefficients[i] * self.composition.oxide_mole_fraction[i]
 
     def __calculate_complex_species_activities(self, temperature):
         """
@@ -246,9 +244,5 @@ class LiquidActivity:
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.iteration += 1  # increment the counter if it has not converged
-            # if self.iteration <= 3:
-            #     pass
-            # if self.iteration == 3:
-            #     sys.exit()
         print("[*] Successfully converged on melt activities!  Took {} iterations.".format(self.iteration))
         self.iteration = 0  # reset the iteration count

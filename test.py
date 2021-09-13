@@ -32,28 +32,36 @@ c = Composition(
 # print("RELATIVE ATOMIC ABUNDANCES OF METALS")
 # print(c.cation_fraction)
 
-l = LiquidActivity(
-    composition=c,
-    complex_species="__all__"
-)
 g = GasPressure(
     composition=c,
     major_gas_species=major_gas_species,
     minor_gas_species="__all__",
 )
+
+l = LiquidActivity(
+    composition=c,
+    complex_species="__all__",
+    gas_system=g
+)
+
 t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
 reports = Report(composition=c, liquid_system=l, gas_system=g)
 
-count = 0
-while count < 1000:
+count = 1
+while count < 3:
     print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
+    if l.counter == 1:
+        l.calculate_activities(temperature=temperature)
+        g.calculate_pressures(temperature=temperature, liquid_system=l)
     t.vaporize()
+    l.counter = 0
     print("Gas Total Mole Fraction", g.total_mole_fraction)
     print("Cation Fraction", c.cation_fraction)
     print("Oxide Mole Fraction", c.oxide_mole_fraction)
     print("Planetary", c.planetary_abundances)
     print("Activity Coefficients", l.activity_coefficients)
+    print("Activities", l.activities)
     count += 1
