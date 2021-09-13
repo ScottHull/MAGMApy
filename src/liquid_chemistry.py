@@ -123,7 +123,7 @@ class LiquidActivity:
         Calculates the activities of the base oxides in the melt (i.e. a_SiO2).
         :return:
         """
-        for i in self.composition.moles_composition:  # iterate through oxides
+        for i in self.composition.moles_composition.keys():  # iterate through oxides
             if i == "Fe2O3":
                 if self.counter == 1:
                     self.activities[i] = 0.0
@@ -142,16 +142,15 @@ class LiquidActivity:
         :return:
         """
         for i in self.complex_species:
-            # for example, if we have MgSiO3, then we want MgO and SiO2
-            reactants = get_base_oxide_reactants(species=i, all_oxides=self.composition.moles_composition.keys())
-            tmp_activity = get_K(df=self.complex_species_data, species=i, temperature=temperature)
-            for j in reactants.keys():
-                # i.e. for K_Mg2SiO4, we need to multiply it by MgO^2 and SiO2^1
-                tmp_activity *= self.activities[j] ** reactants[j]
-            # TODO: Figure out what to do with Fe2O3 here
-            if i == "Fe2O3" and self.counter == 1:
-                tmp_activity = 0.0
-            self.activities[i] = tmp_activity
+            # TODO: fix this Fe2O3 hardcoding
+            if i != "Fe2O3":
+                # for example, if we have MgSiO3, then we want MgO and SiO2
+                reactants = get_base_oxide_reactants(species=i, all_oxides=self.composition.moles_composition.keys())
+                tmp_activity = get_K(df=self.complex_species_data, species=i, temperature=temperature)
+                for j in reactants.keys():
+                    # i.e. for K_Mg2SiO4, we need to multiply it by MgO^2 and SiO2^1
+                    tmp_activity *= self.activities[j] ** reactants[j]
+                self.activities[i] = tmp_activity
         return self.activities
 
     def __calculate_activities(self, temperature):
@@ -250,7 +249,7 @@ class LiquidActivity:
         self.counter += 1  # for handing Fe2O3
         has_converged = False
         while not has_converged:
-            self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activities
+            self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activitiesƒ
             self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
             self.__calculate_activity_coefficients()  # calculate activity coefficients
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
