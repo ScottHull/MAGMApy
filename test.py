@@ -54,6 +54,7 @@ while count < 3:
     print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
+    # sys.exit()
     if l.counter == 1:
         l.calculate_activities(temperature=temperature)
         g.calculate_pressures(temperature=temperature, liquid_system=l)
