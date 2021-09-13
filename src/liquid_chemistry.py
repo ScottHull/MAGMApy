@@ -130,7 +130,6 @@ class LiquidActivity:
                 else:
                     # use gas chemistry to estimate Fe2O3
                     self.activities[i] = self.activity_coefficients[i] * self.gas_system.partial_pressures_minor_species[i + "_l"]
-                    print(i, self.activity_coefficients[i], self.gas_system.partial_pressures_minor_species[i + "_l"])
             else:
                 # Henrian Behavior... a_i = gamma_i * x_i
                 self.activities[i] = self.activity_coefficients[i] * self.composition.oxide_mole_fraction[i]
@@ -211,8 +210,6 @@ class LiquidActivity:
                     # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
                     sum_activities_complex += base_oxide_appearances[j] * self.activities[j]
                 self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
-                if i == "Fe2O3":
-                    print("***", i, self.activity_coefficients[i], self.activities[i], sum_activities_complex, base_oxide_appearances)
             if i == "Fe2O3" and self.counter == 1:
                 self.activity_coefficients[i] = 1.0
         return self.activity_coefficients

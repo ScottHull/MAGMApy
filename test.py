@@ -50,7 +50,7 @@ t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 reports = Report(composition=c, liquid_system=l, gas_system=g)
 
 count = 1
-while count < 1000:
+while count < 3:
     print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
@@ -58,7 +58,7 @@ while count < 1000:
         l.calculate_activities(temperature=temperature)
         g.calculate_pressures(temperature=temperature, liquid_system=l)
     t.vaporize()
-    l.counter = 0
+    l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
     print("Gas Total Mole Fraction", g.total_mole_fraction)
     print("Cation Fraction", c.cation_fraction)
     print("Oxide Mole Fraction", c.oxide_mole_fraction)

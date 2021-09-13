@@ -63,8 +63,6 @@ class ThermoSystem:
 
         # adjust system composition
         for i in self.composition.cation_fraction.keys():
-            if i == "Na":
-                print(i, self.composition.cation_fraction[i], FACT, self.gas_system.total_mole_fraction[i], self.composition.cation_fraction[i] - FACT * self.gas_system.total_mole_fraction[i])
             self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
 
         # TODO: is this necessary?
