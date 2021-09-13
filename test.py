@@ -2,6 +2,7 @@ from src.composition import Composition
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
+from src.report import Report
 
 temperature = 2500
 
@@ -41,6 +42,8 @@ g = GasPressure(
     minor_gas_species="__all__",
 )
 t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
+
+reports = Report(composition=c, liquid_system=l, gas_system=g)
 
 count = 0
 while count < 1000:
