@@ -3,6 +3,7 @@ from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
 from src.report import Report
+import sys
 
 temperature = 2500
 
