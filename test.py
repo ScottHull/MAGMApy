@@ -32,12 +32,6 @@ major_gas_species = [
 c = Composition(
     composition=composition
 )
-# print("Atoms Composition")
-# print(c.atoms_composition)
-# print("Oxide Mole Fraction (F) in Silicate")
-# print(c.oxide_mole_fraction)
-# print("RELATIVE ATOMIC ABUNDANCES OF METALS")
-# print(c.cation_fraction)
 
 g = GasPressure(
     composition=c,
@@ -55,11 +49,11 @@ t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
 reports = Report(composition=c, liquid_system=l, gas_system=g)
 
-cation_fractions = {}
-fraction_vaporized = []
+# cation_fractions = {}
+# fraction_vaporized = []
 
 count = 1
-while count < 60:
+while count < 2:
     print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
@@ -73,20 +67,20 @@ while count < 60:
     # print("Oxide Mole Fraction", c.oxide_mole_fraction)
     # print("Planetary", c.planetary_abundances)
     # print("Activity Coefficients", l.activity_coefficients)
-    # print("Activities", l.activities)
+    print("Activities", l.activities)
     count += 1
-    for j in l.activities.keys():
-        if j not in cation_fractions.keys():
-            cation_fractions.update({j: []})
-        cation_fractions[j].append(l.activities[j])
-    fraction_vaporized.append(t.vaporized_magma_fraction * 100)
-
-fig = plt.figure(figsize=(16, 9))
-ax = fig.add_subplot(111)
-for i in cation_fractions.keys():
-    ax.plot(fraction_vaporized, cation_fractions[i], label=i)
-ax.set_xlabel("Magma Fraction Vaporized (%)")
-ax.set_ylabel("Melt Species Activities")
-ax.grid()
-# ax.legend()
-plt.show()
+#     for j in l.activities.keys():
+#         if j not in cation_fractions.keys():
+#             cation_fractions.update({j: []})
+#         cation_fractions[j].append(l.activities[j])
+#     fraction_vaporized.append(t.vaporized_magma_fraction * 100)
+#
+# fig = plt.figure(figsize=(16, 9))
+# ax = fig.add_subplot(111)
+# for i in cation_fractions.keys():
+#     ax.plot(fraction_vaporized, cation_fractions[i], label=i)
+# ax.set_xlabel("Magma Fraction Vaporized (%)")
+# ax.set_ylabel("Melt Species Activities")
+# ax.grid()
+# # ax.legend()
+# plt.show()

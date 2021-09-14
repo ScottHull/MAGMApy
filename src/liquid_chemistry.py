@@ -50,7 +50,7 @@ def get_base_oxide_in_complex_species_stoich(species, all_species):
     :return:
     """
     if species == "Fe2O3":
-        return {"Fe2O3": 1, "Fe3O4": 1}
+        return {"Fe3O4": 1}  # the appearance of Fe2O3 is already accounted for in the activity coefficient function
     d = {}
     species_stoich = get_molecule_stoichiometry(molecule=species, return_oxygen=False)
     for i in species_stoich.keys():
