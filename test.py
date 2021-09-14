@@ -50,7 +50,7 @@ t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 reports = Report(composition=c, liquid_system=l, gas_system=g)
 
 count = 1
-while count < 3:
+while count < 2:
     print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
