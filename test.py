@@ -62,12 +62,6 @@ while count < 2:
         g.calculate_pressures(temperature=temperature, liquid_system=l)
     t.vaporize()
     l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
-    print("Gas Total Mole Fraction", g.total_mole_fraction)
-    print("Cation Fraction", c.cation_fraction)
-    print("Oxide Mole Fraction", c.oxide_mole_fraction)
-    print("Planetary", c.planetary_abundances)
-    print("Activity Coefficients", l.activity_coefficients)
-    print("Activities", l.activities)
     count += 1
 #     for j in l.activities.keys():
 #         if j not in cation_fractions.keys():
