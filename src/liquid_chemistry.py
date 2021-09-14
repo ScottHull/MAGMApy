@@ -240,7 +240,7 @@ class LiquidActivity:
         Master function that runs convergence solution on activity calculations.
         :return:
         """
-        print("[*] Solving for melt activities...")
+        # print("[*] Solving for melt activities...")
         # run the initial activity calculation
         # initially assume that the activity coefficients = 1
         self.counter += 1  # for handing Fe2O3
@@ -252,5 +252,5 @@ class LiquidActivity:
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
             self.__adjust_activity_coefficients()  # bump the activity coefficients
             self.iteration += 1  # increment the counter if it has not converged
-        print("[*] Successfully converged on melt activities!  Took {} iterations.".format(self.iteration))
+        # print("[*] Successfully converged on melt activities!  Took {} iterations.".format(self.iteration))
         self.iteration = 0  # reset the iteration count

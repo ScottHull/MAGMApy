@@ -388,7 +388,7 @@ class GasPressure:
                                                                           liquid_system=liquid_system)
             has_converged = self.__have_adjustment_factors_converged()
             iteration += 1
-        print("[*] Found gas partial pressures!  Took {} iterations.".format(iteration))
+        # print("[*] Found gas partial pressures!  Took {} iterations.".format(iteration))
 
     def __calculate_mole_fractions(self):
         """
@@ -453,7 +453,7 @@ class GasPressure:
         :param liquid_system:
         :return:
         """
-        print("[*] Solving for gas partial pressures...")
+        # print("[*] Solving for gas partial pressures...")
         self.__calculate_gas_molecules_pressures(temperature=temperature, liquid_system=liquid_system)
         self.__calculate_partial_pressure_elements()
         self.total_pressure = sum(self.partial_pressure_elements.values())

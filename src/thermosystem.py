@@ -54,11 +54,13 @@ class ThermoSystem:
         """
         # adjust system composition
         ATMAX = 0.0
+        MOST_ABUNDANT_FACT = None
         for i in self.gas_system.total_mole_fraction.keys():
-            if self.composition.cation_fraction[i] > 0.01:
+            if self.composition.cation_fraction[i] > 1 * 10 ** -20:
                 r = self.gas_system.total_mole_fraction[i] / self.composition.cation_fraction[i]
                 if r > ATMAX:
                     ATMAX = r
+                    MOST_ABUNDANT_FACT = i
         FACT = 0.05 / ATMAX  # most volatile element will be reduced by 5%
 
         # adjust system composition
@@ -68,12 +70,16 @@ class ThermoSystem:
         # TODO: is this necessary?
         # adjust planetary composition
         ATMAX = 0.0
+        MOST_ABUNDANT_FACT1 = None
         for i in self.composition.planetary_abundances:
-            if self.composition.planetary_abundances[i] > 0.01:
+            if self.composition.planetary_abundances[i] > 1 * 10 ** -20:
                 r = self.gas_system.total_mole_fraction[i] / self.composition.planetary_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
+                    MOST_ABUNDANT_FACT1 = i
         FACT1 = 0.05 / ATMAX  # most volatile element will be reduced by 5%
+
+        print(MOST_ABUNDANT_FACT, MOST_ABUNDANT_FACT1)
 
         # adjust planetary composition
         for i in self.composition.planetary_abundances.keys():

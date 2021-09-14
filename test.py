@@ -53,8 +53,8 @@ reports = Report(composition=c, liquid_system=l, gas_system=g)
 # fraction_vaporized = []
 
 count = 1
-while count < 2:
-    print("[!] At count {}".format(count))
+while count < 60:
+    # print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
     if l.counter == 1:
@@ -63,6 +63,7 @@ while count < 2:
     t.vaporize()
     l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
     count += 1
+    print(count, t.vaporized_magma_fraction, t.weight_vaporized)
 #     for j in l.activities.keys():
 #         if j not in cation_fractions.keys():
 #             cation_fractions.update({j: []})
