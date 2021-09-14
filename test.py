@@ -3,7 +3,13 @@ from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
 from src.report import Report
+
 import sys
+import matplotlib
+import matplotlib.pyplot as plt
+
+font = {'size': 18}
+matplotlib.rc('font', **font)
 
 temperature = 2500
 
@@ -49,8 +55,11 @@ t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
 reports = Report(composition=c, liquid_system=l, gas_system=g)
 
+cation_fractions = {}
+fraction_vaporized = []
+
 count = 1
-while count < 2:
+while count < 60:
     print("[!] At count {}".format(count))
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
@@ -59,10 +68,25 @@ while count < 2:
         g.calculate_pressures(temperature=temperature, liquid_system=l)
     t.vaporize()
     l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
-    print("Gas Total Mole Fraction", g.total_mole_fraction)
-    print("Cation Fraction", c.cation_fraction)
-    print("Oxide Mole Fraction", c.oxide_mole_fraction)
-    print("Planetary", c.planetary_abundances)
-    print("Activity Coefficients", l.activity_coefficients)
-    print("Activities", l.activities)
+    # print("Gas Total Mole Fraction", g.total_mole_fraction)
+    # print("Cation Fraction", c.cation_fraction)
+    # print("Oxide Mole Fraction", c.oxide_mole_fraction)
+    # print("Planetary", c.planetary_abundances)
+    # print("Activity Coefficients", l.activity_coefficients)
+    # print("Activities", l.activities)
     count += 1
+    for j in l.activities.keys():
+        if j not in cation_fractions.keys():
+            cation_fractions.update({j: []})
+        cation_fractions[j].append(l.activities[j])
+    fraction_vaporized.append(t.vaporized_magma_fraction * 100)
+
+fig = plt.figure(figsize=(16, 9))
+ax = fig.add_subplot(111)
+for i in cation_fractions.keys():
+    ax.plot(fraction_vaporized, cation_fractions[i], label=i)
+ax.set_xlabel("Magma Fraction Vaporized (%)")
+ax.set_ylabel("Melt Species Activities")
+ax.grid()
+# ax.legend()
+plt.show()
