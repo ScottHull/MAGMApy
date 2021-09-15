@@ -192,7 +192,9 @@ class GasPressure:
         # adjust ion species based on e-
         for i in self.partial_pressures_minor_species.keys():
             if "+" in i:
-                self.partial_pressures_minor_species[i] /= self.partial_pressures_minor_species["e-"]
+                base_species_pp = self.partial_pressures_major_species[i.replace("+", "")]
+                if base_species_pp != 0.0:
+                    self.partial_pressures_minor_species[i] /= self.partial_pressures_minor_species["e-"]
         # end hardcoding
 
     def __calculate_minor_gas_partial_pressures(self, temperature):
@@ -323,10 +325,9 @@ class GasPressure:
                 gamma = liquid_system.activity_coefficients[major_oxide]  # liquid activity coefficient
                 # TODO: better way to get major oxide liquid?
                 pp = self.partial_pressures_minor_species[major_oxide + "_l"]
-                activity_liq = liquid_system.activities[major_oxide]
                 # calculate adjustment factors for major gas species
                 # TODO: fix this hack hardcoding
-                if pp != 0.0:
+                if pp != 0 and cf != 0 and gamma != 0:
                     if i == "Fe":
                         adjust = (cf * liquid_system.activity_coefficients["FeO"] + liquid_system.activities[
                             "Fe2O3"]) / (
@@ -339,7 +340,7 @@ class GasPressure:
                         adjust = 1.0 / (oxides_to_oxygen_ratio * sqrt(pp / (cf * gamma)))
                     else:
                         adjust = 1.0 / sqrt(pp / (cf * gamma))
-                elif cf == 0.0:
+                elif cf == 0.0 or gamma == 0.0:
                     adjust = 0.0
                 else:
                     adjust = 1.0

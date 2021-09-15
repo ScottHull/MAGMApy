@@ -61,9 +61,12 @@ class ThermoSystem:
                     ATMAX = r
         FACT = 0.05 / ATMAX  # most volatile element will be reduced by 5%
 
-        # adjust system composition
+        # adjust system cation fractions
         for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
+            if self.composition.cation_fraction[i] <= 0.0:
+                self.composition.planetary_abundances[i] = 0.0
+                self.composition.cation_fraction[i] = 0.0
 
         # TODO: is this necessary?
         # adjust planetary composition
@@ -73,15 +76,14 @@ class ThermoSystem:
                 r = self.gas_system.total_mole_fraction[i] / self.composition.planetary_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
-                    MOST_ABUNDANT_FACT1 = i
         FACT1 = 0.05 / ATMAX  # most volatile element will be reduced by 5%
 
         # adjust planetary composition
         for i in self.composition.planetary_abundances.keys():
+            self.composition.planetary_abundances[i] -= FACT1 * self.gas_system.total_mole_fraction[i]
             if self.composition.planetary_abundances[i] <= 0.0:
                 self.composition.planetary_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
-                print("HERE", i)
 
     def vaporize(self):
         self.__calculate_size_step()  # calculate volatility
