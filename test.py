@@ -77,10 +77,7 @@ for i in list(sorted(data.keys())):
         if j not in y_data.keys():
             y_data.update({j: []})
         y_data[j].append(data[i][j])
-
-print(y_data)
-print(x_data)
-
+        
 make_figure(
     x_data=x_data,
     y_data=y_data,
