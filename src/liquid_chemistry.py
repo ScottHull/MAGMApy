@@ -200,8 +200,7 @@ class LiquidActivity:
         self.previous_activity_coefficients = copy(
             self.activity_coefficients)  # make a copy of old activities so that we can reference it for solution convergence later
         for i in self.activity_coefficients.keys():
-            if self.activities[i] != 0.0 or (
-                    i == "Fe2O3" and self.counter != 1):  # don't do anything if activity = 0 to avoid divide by 0 errors
+            if self.activities[i] != 0.0:  # don't do anything if activity = 0 to avoid divide by 0 errors
                 sum_activities_complex = self.activities[
                     i]  # the sum of activities of all complex species containing element i, including the base oxide
                 # get the appearances of the element in all complex species
