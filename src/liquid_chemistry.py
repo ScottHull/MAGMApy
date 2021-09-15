@@ -211,6 +211,8 @@ class LiquidActivity:
                     # i.e. for Si, you would need 2 * CaMgSi2O6 since Si has a stoich of 2
                     sum_activities_complex += base_oxide_appearances[j] * self.activities[j]
                 self.activity_coefficients[i] = self.activities[i] / sum_activities_complex
+            else:
+                self.activity_coefficients[i] = 0.0
             if i == "Fe2O3" and self.counter == 1:
                 self.activity_coefficients[i] = 1.0
         return self.activity_coefficients
