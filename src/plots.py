@@ -25,7 +25,7 @@ def collect_data(path, metadata_rows=2):
 def make_figure(x_data, y_data, x_label, y_label):
     fig = plt.figure(figsize=(16, 9))
     ax = fig.add_subplot(111)
-    for i in y_data.keys():
+    for i in list(sorted(y_data.keys())):
         ax.plot(
             x_data,
             y_data[i],
