@@ -460,3 +460,4 @@ class GasPressure:
         self.total_pressure = sum(self.partial_pressure_elements.values())
         self.__calculate_mole_fractions()
         self.__calculate_total_mole_fractions()
+        self.partial_pressures = {**self.partial_pressures_major_species, **self.partial_pressures_minor_species}

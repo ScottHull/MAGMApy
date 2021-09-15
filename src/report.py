@@ -6,38 +6,55 @@ import pandas as pd
 
 class Report:
 
-    def __init__(self, composition, liquid_system, gas_system, to_dir="reports"):
+    def __init__(self, composition, liquid_system, gas_system, thermosystem, to_dir="reports"):
         self.composition = composition
         self.liquid_system = liquid_system
         self.gas_system = gas_system
+        self.thermosystem = thermosystem
         self.to_dir = to_dir
         if os.path.exists(self.to_dir):
             shutil.rmtree(self.to_dir)
         os.mkdir(self.to_dir)
 
-    def __make_report(self, iteration, thermosystem):
-        outfile = open()
+    def __make_subdirs(self, paths):
+        for path in paths:
+            if not os.path.exists(path):
+                os.mkdir(path)
 
-    def create_composition_report(self, iteration, thermosystem):
+    def __get_metadata(self):
+        return "mass vaporized,{}\nmass fraction vaporized,{}\n".format(self.thermosystem.weight_vaporized,
+                                                                       self.thermosystem.vaporized_magma_fraction)
+
+    def __make_report(self, path, iteration, data):
+        outfile = open(path + "/{}.csv".format(iteration), 'w')
+        outfile.write(self.__get_metadata())
+        for i in data.keys():
+            outfile.write("{},{}\n".format(i, data[i]))
+        outfile.close()
+
+    def create_composition_report(self, iteration):
         paths = [
             self.to_dir + "/cation_fraction",
             self.to_dir + "/oxide_fraction",
             self.to_dir + "/magma_composition"
         ]
-        for path in paths:
-            if not os.path.exists(path):
-                os.mkdir(path)
+        self.__make_subdirs(paths=paths)
+        self.__make_report(path=paths[0], iteration=iteration, data=self.composition.cation_fraction)
+        self.__make_report(path=paths[1], iteration=iteration, data=self.composition.oxide_mole_fraction)
+        self.__make_report(path=paths[2], iteration=iteration, data=self.composition.planetary_abundances)
 
-        df_cation_fraction = pd.DataFrame(self.composition.cation_fraction)
-        df_oxide_fraction = pd.DataFrame(self.composition.oxide_mole_fraction)
-        df_planetary_abundances = pd.DataFrame(self.composition.planetary_abundances)
+    def create_liquid_report(self, iteration):
+        paths = [
+            self.to_dir + "/activities",
+            self.to_dir + "/activity_coefficients",
+        ]
+        self.__make_subdirs(paths=paths)
+        self.__make_report(path=paths[0], iteration=iteration, data=self.liquid_system.activities)
+        self.__make_report(path=paths[1], iteration=iteration, data=self.liquid_system.activity_coefficients)
 
-        df_cation_fraction.to_csv()
-
-    def create_liquid_report(self, iteration, thermosystem):
-        df_activity_coefficients = pd.DataFrame(self.liquid_system.activity_coefficients)
-        df_activities = pd.DataFrame(self.liquid_system.activities)
-
-    def create_gas_report(self, iteration, thermosystem):
-        df_gas_pressures = pd.DataFrame({**self.gas_system.partial_pressure_major_species,
-                                         **self.gas_system.partial_pressure_minor_species})
+    def create_gas_report(self, iteration):
+        paths = [
+            self.to_dir + "/partial_pressures",
+        ]
+        self.__make_subdirs(paths=paths)
+        self.__make_report(path=paths[0], iteration=iteration, data=self.gas_system.partial_pressures)
