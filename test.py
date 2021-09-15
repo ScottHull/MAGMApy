@@ -52,6 +52,8 @@ reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t)
 
 count = 1
 while count < 5001:
+    if count > 1:
+        prev_fraction = t.vaporized_magma_fraction
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
     if l.counter == 1:
@@ -60,7 +62,7 @@ while count < 5001:
     t.vaporize()
     l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
     print("[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(count, t.vaporized_magma_fraction * 100.0))
-    if count % 10 == 0:
+    if count % 5 == 0:
         reports.create_composition_report(iteration=count)
         reports.create_liquid_report(iteration=count)
         reports.create_gas_report(iteration=count)
@@ -75,6 +77,9 @@ for i in list(sorted(data.keys())):
         if j not in y_data.keys():
             y_data.update({j: []})
         y_data[j].append(data[i][j])
+
+print(y_data)
+print(x_data)
 
 make_figure(
     x_data=x_data,

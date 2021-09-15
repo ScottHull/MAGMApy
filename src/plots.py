@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 def collect_data(path, metadata_rows=2):
     data = {}
     metadata = {}
-    iterations = list(sorted([i.split("/")[-1].replace(".csv", "") for i in os.listdir(path)]))
+    iterations = list(sorted([int(i.split("/")[-1].replace(".csv", "")) for i in os.listdir(path)]))
     for i in iterations:
         data.update({i: {}})
         metadata.update({i: {}})
