@@ -64,7 +64,7 @@ class ThermoSystem:
         # adjust system cation fractions
         for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
-            if self.composition.cation_fraction[i] <= 0.0:
+            if self.composition.cation_fraction[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
                 self.composition.planetary_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 
@@ -81,7 +81,7 @@ class ThermoSystem:
         # adjust planetary composition
         for i in self.composition.planetary_abundances.keys():
             self.composition.planetary_abundances[i] -= FACT1 * self.gas_system.total_mole_fraction[i]
-            if self.composition.planetary_abundances[i] <= 0.0:
+            if self.composition.planetary_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
                 self.composition.planetary_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 

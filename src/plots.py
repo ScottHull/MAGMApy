@@ -2,9 +2,10 @@ import os
 import csv
 import matplotlib.pyplot as plt
 
-def collect_data(path, metadata_rows=2):
+def collect_data(path, x_header, metadata_rows=2):
     data = {}
     metadata = {}
+    ordered_data = {}
     iterations = list(sorted([int(i.split("/")[-1].replace(".csv", "")) for i in os.listdir(path)]))
     for i in iterations:
         data.update({i: {}})
@@ -18,7 +19,9 @@ def collect_data(path, metadata_rows=2):
             for j in range(metadata_rows, len(reader)):
                 line = reader[j]
                 data[i].update({line[0]: float(line[1])})
-    return data, metadata
+    for i in list(sorted(metadata.keys())):
+        ordered_data.update({metadata[i][x_header]: data[i]})
+    return ordered_data
 
 
 

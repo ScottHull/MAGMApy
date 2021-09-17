@@ -55,6 +55,10 @@ class Report:
     def create_gas_report(self, iteration):
         paths = [
             self.to_dir + "/partial_pressures",
+            self.to_dir + "/atmosphere_total_mole_fraction",
+            self.to_dir + "/atmosphere_mole_fraction",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.gas_system.partial_pressures)
+        self.__make_report(path=paths[1], iteration=iteration, data=self.gas_system.total_mole_fraction)
+        self.__make_report(path=paths[2], iteration=iteration, data=self.gas_system.mole_fractions)
