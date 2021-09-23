@@ -2,6 +2,7 @@ import os
 import csv
 import matplotlib.pyplot as plt
 
+
 def collect_data(path, x_header, metadata_rows=2):
     data = {}
     metadata = {}
@@ -22,7 +23,6 @@ def collect_data(path, x_header, metadata_rows=2):
     for i in list(sorted(metadata.keys())):
         ordered_data.update({metadata[i][x_header]: data[i]})
     return ordered_data
-
 
 
 def make_figure(x_data, y_data, x_label, y_label):

@@ -250,7 +250,7 @@ class LiquidActivity:
         has_converged = False
         while not has_converged:
             self.__calculate_activities(temperature=temperature)  # calculate base oxide and complex species activitiesƒ
-            self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
+            # self.__calculate_complex_species_activities(temperature=temperature)  # calculate complex species activities
             self.__calculate_activity_coefficients()  # calculate activity coefficients
             has_converged = self.__check_activity_coefficient_convergence()  # has the solution converged?
             self.__adjust_activity_coefficients()  # bump the activity coefficients

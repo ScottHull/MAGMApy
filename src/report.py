@@ -23,7 +23,7 @@ class Report:
 
     def __get_metadata(self):
         return "mass vaporized,{}\nmass fraction vaporized,{}\n".format(self.thermosystem.weight_vaporized,
-                                                                       self.thermosystem.vaporized_magma_fraction)
+                                                                        self.thermosystem.vaporized_magma_fraction)
 
     def __make_report(self, path, iteration, data):
         outfile = open(path + "/{}.csv".format(iteration), 'w')
