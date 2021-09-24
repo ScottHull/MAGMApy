@@ -1,21 +1,12 @@
 import matplotlib.pyplot as plt
 from math import log10
 from numpy import nan
+import numpy as np
 
 from src.plots import collect_data, make_figure
 
 species_to_plot = ["Na", "O", "SiO", "Mg_g", "O2", "Fe", "FeO_g", "SiO2_g", "FeO_g", "MgO"]
 data = collect_data(path="reports/atmosphere_mole_fraction", x_header='mass fraction vaporized')
-
-
-def median(lst):
-    lst.sort()  # Sort the list first
-    if len(lst) % 2 == 0:  # Checking if the length is even
-        # Applying formula which is sum of middle two divided by 2
-        return (lst[len(lst) // 2] + lst[(len(lst) - 1) // 2]) / 2
-    else:
-        # If length is odd then get middle value
-        return lst[len(lst) // 2]
 
 
 def get_annotation_location(x_data, y_data, x_range, y_range):
@@ -24,9 +15,10 @@ def get_annotation_location(x_data, y_data, x_range, y_range):
     for i in z:
         if (x_range[0] <= i[0] <= x_range[1]) and (y_range[0] <= i[1] <= y_range[1]):
             p.append(i)
-    m = median(lst=[i[0] for i in p])
-    index = [i[0] for i in p].index(m)
-    return p[index]
+    med_x = np.median([i[0] for i in p])
+    x_pos = np.where(x_data == med_x)
+    y_pos = y_data[x_pos]
+    return x_pos, y_pos
 
 
 fig = plt.figure()
