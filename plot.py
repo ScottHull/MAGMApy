@@ -9,16 +9,22 @@ species_to_plot = ["Na", "O", "SiO", "Mg_g", "O2", "Fe", "FeO_g", "SiO2_g", "FeO
 data = collect_data(path="reports/atmosphere_mole_fraction", x_header='mass fraction vaporized')
 
 
-def get_annotation_location(x_data, y_data, x_range, y_range):
-    z = zip(x_data, y_data)
-    p = []
-    for i in z:
-        if (x_range[0] <= i[0] <= x_range[1]) and (y_range[0] <= i[1] <= y_range[1]):
-            p.append(i)
-    med_x = np.median([i[0] for i in p])
-    x_pos = np.where(x_data == med_x)
-    y_pos = y_data[x_pos]
-    return x_pos, y_pos
+def get_annotation_location(species, x_data, y_data, target_x):
+    if species == "MgO":
+        target_x = 0.70
+    min_diff = 10 * 10 ** 10
+    x = None
+    y = None
+    for index, i in enumerate(x_data):
+        diff = abs(i - target_x)
+        if diff < min_diff:
+            min_diff = diff
+            x = i
+            y = y_data[index]
+    return x, y
+
+
+
 
 
 fig = plt.figure()
@@ -41,7 +47,7 @@ for i in species_to_plot:
         linewidth=2.0,
         label=i
     )
-    ax.annotate(i, get_annotation_location(x_data=x_data, y_data=y_data, x_range=(0, 0.8), y_range=(-3, 0)))
+    ax.annotate(i, get_annotation_location(species=i, x_data=x_data, y_data=y_data, target_x=0.4))
 ax.grid()
 # ax.legend()
 plt.show()
