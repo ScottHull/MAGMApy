@@ -12,6 +12,8 @@ data = collect_data(path="reports/atmosphere_mole_fraction", x_header='mass frac
 def get_annotation_location(species, x_data, y_data, target_x):
     if species == "MgO":
         target_x = 0.70
+    elif species == "Na":
+        target_x = 0.32
     min_diff = 10 * 10 ** 10
     x = None
     y = None
