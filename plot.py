@@ -20,7 +20,7 @@ def get_annotation_location(species, x_data, y_data, target_x):
         if diff < min_diff:
             min_diff = diff
             x = i
-            y = y_data[index]
+            y = y_data[index] + 0.05
     return x, y
 
 
@@ -47,7 +47,7 @@ for i in species_to_plot:
         linewidth=2.0,
         label=i
     )
-    ax.annotate(i, get_annotation_location(species=i, x_data=x_data, y_data=y_data, target_x=0.4))
+    ax.annotate(i, get_annotation_location(species=i, x_data=x_data, y_data=y_data, target_x=0.32))
 ax.grid()
 # ax.legend()
 plt.show()
