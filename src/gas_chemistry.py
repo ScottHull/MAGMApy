@@ -289,22 +289,38 @@ class GasPressure:
         self.__calculate_number_density_molecules(temperature=temperature)
         self.__calculate_number_density_elements()
 
-    def __get_most_abundant_oxide(self, liquid_system):
-        oxides = self.composition.oxide_mole_fraction.keys()
-        most_abundant_name = None
-        most_abundant_cf = 0
-        most_abudant_activity_coeff = 0
-        most_abundant_pp = 0
-        for i in oxides:
-            mole_fraction = self.composition.oxide_mole_fraction[i.replace("_l", "")]
-            activity_coeff = liquid_system.activity_coefficients[i.replace("_l", "")]
-            partial_pressure = self.partial_pressures_minor_species[i + "_l"]
-            if mole_fraction > most_abundant_cf:
-                most_abundant_name = i
-                most_abundant_cf = mole_fraction
-                most_abudant_activity_coeff = activity_coeff
-                most_abundant_pp = partial_pressure
-        return most_abundant_name, most_abundant_cf, most_abudant_activity_coeff, most_abundant_pp
+    # def __get_most_abundant_oxide(self, liquid_system):
+    #     oxides = self.composition.oxide_mole_fraction.keys()
+    #     most_abundant_name = None
+    #     most_abundant_cf = 0
+    #     most_abudant_activity_coeff = 0
+    #     most_abundant_pp = 0
+    #     for i in oxides:
+    #         mole_fraction = self.composition.oxide_mole_fraction[i.replace("_l", "")]
+    #         activity_coeff = liquid_system.activity_coefficients[i.replace("_l", "")]
+    #         partial_pressure = self.partial_pressures_minor_species[i + "_l"]
+    #         if mole_fraction > most_abundant_cf:
+    #             most_abundant_name = i
+    #             most_abundant_cf = mole_fraction
+    #             most_abudant_activity_coeff = activity_coeff
+    #             most_abundant_pp = partial_pressure
+    #     return most_abundant_name, most_abundant_cf, most_abudant_activity_coeff, most_abundant_pp
+    #
+    # def __hack_most_abundant_oxide(self, liquid_system, rat):
+    #     """
+    #     Returns the adjustment factor for O2.
+    #     This is a hack function.  Come back later and gut this thing.
+    #     :return:
+    #     """
+    #     most_abundant_name, most_abundant_cf, most_abudant_activity_coeff, most_abundant_pp = self.__get_most_abundant_oxide(
+    #         liquid_system=liquid_system)
+    #     if most_abundant_name == "FeO":
+    #         adjustment_fe2o3 = self.adjustment_factors['Fe2O3_l']
+    #         partial_pressure_fe2o3 = self.partial_pressures_minor_species['Fe2O3_l']
+    #         return rat * (most_abundant_cf * most_abudant_activity_coeff + adjustment_fe2o3) / (
+    #                 most_abundant_pp + partial_pressure_fe2o3)
+    #     else:
+    #         return rat * most_abundant_cf * most_abudant_activity_coeff / most_abundant_pp
 
     def __hack_most_abundant_oxide(self, liquid_system, rat):
         """
@@ -312,15 +328,20 @@ class GasPressure:
         This is a hack function.  Come back later and gut this thing.
         :return:
         """
-        most_abundant_name, most_abundant_cf, most_abudant_activity_coeff, most_abundant_pp = self.__get_most_abundant_oxide(
-            liquid_system=liquid_system)
-        if most_abundant_name == "FeO":
-            adjustment_fe2o3 = self.adjustment_factors['Fe2O3_l']
-            partial_pressure_fe2o3 = self.partial_pressures_minor_species['Fe2O3_l']
-            return rat * (most_abundant_cf * most_abudant_activity_coeff + adjustment_fe2o3) / (
-                    most_abundant_pp + partial_pressure_fe2o3)
-        else:
-            return rat * most_abundant_cf * most_abudant_activity_coeff / most_abundant_pp
+        # TODO: gut this thing and make it so that its not hardcoded
+        order = ["SiO2_l", "MgO_l", "FeO_l", "CaO_l", "Al2O3_l", "TiO2_l", "Na2O_l", "K2O_l"]
+        for i in order:
+            mole_fraction = self.composition.oxide_mole_fraction[i.replace("_l", "")]
+            activity_coeff = liquid_system.activity_coefficients[i.replace("_l", "")]
+            partial_pressure = self.partial_pressures_minor_species[i]
+            if partial_pressure != 0 and mole_fraction != 0:
+                if i == "FeO":
+                    adjustment_fe2o3 = self.adjustment_factors['Fe2O3_l']
+                    partial_pressure_fe2o3 = self.partial_pressures_minor_species['Fe2O3_l']
+                    return rat * (mole_fraction * activity_coeff + adjustment_fe2o3) / (
+                            partial_pressure + partial_pressure_fe2o3)
+                else:
+                    return rat * mole_fraction * activity_coeff / partial_pressure
 
     def __calculate_adjustment_factors(self, oxides_to_oxygen_ratio, liquid_system):
         """
