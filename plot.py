@@ -7,6 +7,18 @@ from src.plots import collect_data, make_figure
 species_to_plot = ["Na", "O", "SiO", "Mg_g", "O2", "Fe", "FeO_g", "SiO2_g", "FeO_g", "MgO"]
 data = collect_data(path="reports/atmosphere_mole_fraction", x_header='mass fraction vaporized')
 
+
+def get_annotation_location(x_data, y_data, x_range, y_range):
+    z = zip(x_data, y_data)
+    p = []
+    for i in z:
+        if (x_range[0] <= i[0] <= x_range[1]) and (y_range[0] <= i[1] <= y_range[1]):
+            p.append(i)
+    middle = int(len(p) / 2)
+    return p[middle]
+
+
+
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlabel("Mass Fraction Vaporized")
@@ -27,10 +39,7 @@ for i in species_to_plot:
         linewidth=2.0,
         label=i
     )
-    middle_index = int(len(x_data) / 2)
-    annotate_x_pos = x_data[middle_index]
-    annotate_y_pos = y_data[middle_index] + ((max(x_data) - min(x_data)) * 0.05)
-    ax.annotate(i, (annotate_x_pos, annotate_y_pos))
+    ax.annotate(i, get_annotation_location(x_data=x_data, y_data=y_data, x_range=(0, 0.8), y_range=(-3, 0)))
 ax.grid()
 # ax.legend()
 plt.show()
