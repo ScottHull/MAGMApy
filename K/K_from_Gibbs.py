@@ -1,6 +1,6 @@
-
 import pandas as pd
 import numpy as np
+from scipy.stats import linregress
 import matplotlib.pyplot as plt
 
 products = ["Si_g", "O_g"]
@@ -54,18 +54,39 @@ def get_reaction_thermo(products, reactants, temperature, standard_state_temp):
     for react in reactants:
         reactant_sum_deltaH += float(get_standard_state(react, standard_state_temp)["delta-f H"])
         reactant_sum_deltaS += float(get_standard_state(react, standard_state_temp)["-[G-H(Tr)]/T"])
-    deltaH = (product_sum_deltaH - reactant_sum_deltaH) * 1000
+    deltaH = (product_sum_deltaH - reactant_sum_deltaH) * 1000  # S in in J, and H is in kJ
     deltaS = product_sum_deltaS - reactant_sum_deltaS
     delta_G = deltaH - temperature * deltaS
     logK = -delta_G / (R * temperature) / 2.303  # lnK --> log10K to match JANAF
     return delta_G, deltaH, deltaS, logK
 
+def linear_regression(x, y):
+    """
+    y = mx + b
+    :param x:
+    :param y:
+    :return:
+    """
+    slope, intercept, r_value, p_value, std_err = linregress(x, y)
+    return slope, intercept
+
+def regress_temperature_against_logK(temperatures, logKs, temperature):
+    slope, intercept = linear_regression(1 / temperatures, logKs)
+    return slope / temperature + intercept
+
 
 # temperatures = get_temperatures_from_janaf(products[0])
+logKs = [get_reaction_thermo(products, reactants, t, standard_state_temp)[3] for t in temperatures]
+regressed_logKs = [regress_temperature_against_logK(temperatures, logKs, t) for t in temperatures]
+slope, intercept = linear_regression(1 / temperatures, logKs)
+
 fig = plt.figure(figsize=(16, 9))
 ax = fig.add_subplot(111)
 ax.plot(
-    temperatures, [get_reaction_thermo(products, reactants, t, standard_state_temp)[3] for t in temperatures], linewidth=2, label="Calculated"
+    temperatures,logKs, linewidth=2, label="Calculated"
+)
+ax.plot(
+    temperatures, regressed_logKs, linewidth=2, label="Regressed"
 )
 ax.plot(
     temperatures, [magma_code_SiO2_l(t) for t in temperatures], linewidth=2, label="MAGMA Code"
@@ -74,4 +95,12 @@ ax.set_xlabel("Temperature (K)")
 ax.set_ylabel("log K")
 ax.grid()
 ax.legend()
+
+x1, x2, y1, y2 = ax.axis()
+x_loc = x2 - (.4 * (x2 - x1))
+y_loc = y2 - (0.2 * (y2 - y1))
+y_loc2 = y2 - (0.25 * (y2 - y1))
+ax.text(x_loc, y_loc, "Mine: y = {}/T + {}".format(round(slope, 2), round(intercept, 2)), fontweight="bold", fontsize=16)
+ax.text(x_loc, y_loc2, "MAGMA: y = -94311.0/T + 22.13", fontweight="bold", fontsize=16)
+
 plt.show()
