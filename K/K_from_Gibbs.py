@@ -7,11 +7,13 @@ products = ["Si_g", "O_g"]
 reactants = ["SiO2_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
+# base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
+base_path = r"C:\Users\Scott\Documents\MAGMApy\K"
 
 def magma_code_SiO2_l(temperature):
-    return 22.13 - 94311.0 / temperature
+    return 22.13 - (94311.0 / temperature)
 
-def read_janaf_file(species, base_path="/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"):
+def read_janaf_file(species):
     path = base_path + "/" + species + ".dat"
     df = pd.read_csv(path, sep="\t", skiprows=1, index_col="T(K)")
     return df
@@ -26,7 +28,7 @@ def get_temperatures_from_janaf(products):
     :return:
     """
     t = list(read_janaf_file(products).index.values)
-    return [i for i in t if 2000 <= float(i) <= 3500]
+    return [i for i in t if 2000 <= float(i) <= 4000]
 
 def get_reaction_thermo(products, reactants, temperature, standard_state_temp):
     """
