@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-products = ["Si_g", "O2_g"]
+products = ["Si_g", "O_g"]
 reactants = ["SiO2_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
@@ -42,10 +42,9 @@ def get_reaction_thermo(products, reactants, temperature, standard_state_temp):
     product_sum_deltaS = 0
     reactant_sum_deltaS = 0
     for prod in products:
-        if prod == "O2_g":
-            print("here")
-            product_sum_deltaH += 0.5 * float(get_standard_state(prod, standard_state_temp)["delta-f H"])
-            product_sum_deltaS += 0.5 * float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
+        if prod == "O_g":
+            product_sum_deltaH += 2 * float(get_standard_state(prod, standard_state_temp)["delta-f H"])
+            product_sum_deltaS += 2 * float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
         else:
             product_sum_deltaH += float(get_standard_state(prod, standard_state_temp)["delta-f H"])
             product_sum_deltaS += float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
