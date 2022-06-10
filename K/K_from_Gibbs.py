@@ -7,8 +7,8 @@ products = ["Si_g", "O_g"]
 reactants = ["SiO2_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
-# base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
-base_path = r"C:\Users\Scott\Documents\MAGMApy\K"
+base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
+# base_path = r"C:\Users\Scott\Documents\MAGMApy\K"
 
 def magma_code_SiO2_l(temperature):
     return 22.13 - (94311.0 / temperature)
@@ -38,7 +38,8 @@ def get_reaction_thermo(products, reactants, temperature, standard_state_temp):
     :param reactants:
     :return:
     """
-    R = 8.314  # kJ/mol-K
+    R = 8.314  # J/Mol-K
+    # R = 0.008314 # kJ/mol-K
     product_sum_deltaH = 0
     reactant_sum_deltaH = 0
     product_sum_deltaS = 0
@@ -53,7 +54,7 @@ def get_reaction_thermo(products, reactants, temperature, standard_state_temp):
     for react in reactants:
         reactant_sum_deltaH += float(get_standard_state(react, standard_state_temp)["delta-f H"])
         reactant_sum_deltaS += float(get_standard_state(react, standard_state_temp)["-[G-H(Tr)]/T"])
-    deltaH = product_sum_deltaH - reactant_sum_deltaH
+    deltaH = (product_sum_deltaH - reactant_sum_deltaH) * 1000
     deltaS = product_sum_deltaS - reactant_sum_deltaS
     delta_G = deltaH - temperature * deltaS
     logK = -delta_G / (R * temperature) / 2.303  # lnK --> log10K to match JANAF
