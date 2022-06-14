@@ -3,8 +3,8 @@ import numpy as np
 from scipy.stats import linregress
 import matplotlib.pyplot as plt
 
-products = ["Si_g", "O_g"]
-reactants = ["SiO2_l"]
+products = ["SiO2_l", "MgO_l"]
+reactants = ["Mg2SiO4_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
 # base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
@@ -45,12 +45,9 @@ def get_reaction_thermo(products, reactants, temperature, standard_state_temp):
     product_sum_deltaS = 0
     reactant_sum_deltaS = 0
     for prod in products:
-        if prod == "O_g":
+        if prod == "MgO_l":
             product_sum_deltaH += 2 * float(get_standard_state(prod, standard_state_temp)["delta-f H"])
             product_sum_deltaS += 2 * float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
-        elif prod == "O2_g":
-            product_sum_deltaH += 0.5 * float(get_standard_state(prod, standard_state_temp)["delta-f H"])
-            product_sum_deltaS += 0.5 * float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
         else:
             product_sum_deltaH += float(get_standard_state(prod, standard_state_temp)["delta-f H"])
             product_sum_deltaS += float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
@@ -79,7 +76,7 @@ def regress_temperature_against_logK(temperatures, logKs, temperature):
 
 
 # temperatures = get_temperatures_from_janaf(products[0])
-logKs = [1 / get_reaction_thermo(products, reactants, t, standard_state_temp)[3] for t in temperatures]
+logKs = [get_reaction_thermo(products, reactants, t, standard_state_temp)[3] for t in temperatures]
 regressed_logKs = [regress_temperature_against_logK(temperatures, logKs, t) for t in temperatures]
 slope, intercept = linear_regression(1 / temperatures, logKs)
 
@@ -104,6 +101,5 @@ x_loc = x2 - (.4 * (x2 - x1))
 y_loc = y2 - (0.2 * (y2 - y1))
 y_loc2 = y2 - (0.25 * (y2 - y1))
 ax.text(x_loc, y_loc, "Mine: y = {}/T + {}".format(round(slope, 2), round(intercept, 2)), fontweight="bold", fontsize=16)
-ax.text(x_loc, y_loc2, "MAGMA: y = -94311.0/T + 22.13", fontweight="bold", fontsize=16)
 
 plt.show()
