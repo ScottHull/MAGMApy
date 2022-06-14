@@ -22,8 +22,13 @@ class Report:
                 os.mkdir(path)
 
     def __get_metadata(self):
-        return "mass vaporized,{}\nmass fraction vaporized,{}\n".format(self.thermosystem.weight_vaporized,
-                                                                        self.thermosystem.vaporized_magma_fraction)
+        return "mass vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\n,liquid mass fraction,{}\n,temperature (K),{}\n".format(
+            self.thermosystem.weight_vaporized,
+            self.liquid_system.initial_melt_mass - self.thermosystem.weight_vaporized,
+            self.thermosystem.vaporized_magma_fraction,
+            1 - self.thermosystem.vaporized_magma_fraction,
+            self.liquid_system.temperature
+        )
 
     def __make_report(self, path, iteration, data):
         outfile = open(path + "/{}.csv".format(iteration), 'w')
