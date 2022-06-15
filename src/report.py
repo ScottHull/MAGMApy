@@ -22,11 +22,11 @@ class Report:
                 os.mkdir(path)
 
     def __get_metadata(self):
-        return "mass vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\n,liquid mass fraction,{}\n,temperature (K),{}\n".format(
-            self.thermosystem.weight_vaporized,
+        return "atomic fraction vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\nliquid mass fraction,{}\ntemperature (K),{}\n".format(
+            self.thermosystem.atomic_fraction_vaporized,
             self.liquid_system.initial_melt_mass - self.thermosystem.weight_vaporized,
-            self.thermosystem.vaporized_magma_fraction,
-            1 - self.thermosystem.vaporized_magma_fraction,
+            self.thermosystem.weight_fraction_vaporized,
+            1 - self.thermosystem.weight_fraction_vaporized,
             self.liquid_system.temperature
         )
 

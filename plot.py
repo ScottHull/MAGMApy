@@ -26,14 +26,12 @@ def get_annotation_location(species, x_data, y_data, target_x):
     return x, y
 
 
-
-
-
-fig = plt.figure()
+fig = plt.figure(figsize=(16, 9))
 ax = fig.add_subplot(111)
 ax.set_xlabel("Mass Fraction Vaporized")
 ax.set_ylabel("log Mole Fraction")
-ax.set_ylim(-3, 0)
+ax.set_title("Vapor Composition")
+# ax.set_ylim(-3, 0)
 for i in species_to_plot:
     x_data = [j for j in data.keys() if j <= 0.8]
     y_data = []

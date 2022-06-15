@@ -79,6 +79,7 @@ class LiquidActivity:
         self.iteration = 0  # for tracking the number of iterations in the activity convergence loop
         self.initial_melt_mass = self.__get_initial_melt_mass()  # calculate the initial mass of the melt in order to calculate vapor%
         self.gas_system = gas_system
+        self.temperature = -100000
 
     def __get_initial_melt_mass(self):
         """
@@ -246,6 +247,7 @@ class LiquidActivity:
         # print("[*] Solving for melt activities...")
         # run the initial activity calculation
         # initially assume that the activity coefficients = 1
+        self.temperature = temperature
         self.counter += 1  # for handing Fe2O3
         has_converged = False
         while not has_converged:

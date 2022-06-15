@@ -5,25 +5,25 @@ from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data, make_figure
 
-import sys
-import matplotlib
-import matplotlib.pyplot as plt
+"""
+This script shows how to run MAGMApy to a given vapor mass fraction (VMF) along an isotherm.
+"""
 
-font = {'size': 18}
-matplotlib.rc('font', **font)
+temperature = 3664.25  # K
+target_vmf = 19.21  # percent
 
-temperature = 2200
-
+# BSE composition, Visccher & Fegley 2013
 composition = {
-    "SiO2": 62.93000,
-    'MgO': 3.79000,
-    'Al2O3': 15.45000,
-    'TiO2': 0.70000,
+    "SiO2": 45.40,
+    'MgO': 36.76,
+    'Al2O3': 4.48,
+    'TiO2': 0.21,
     'Fe2O3': 0.00000,
-    'FeO': 5.78000,
-    'CaO': 5.63000,
-    'Na2O': 3.27000,
-    'K2O': 2.45000
+    'FeO': 8.10,
+    'CaO': 3.65,
+    'Na2O': 0.349,
+    'K2O': 0.031,
+    # 'ZnO': 6.7e-3,
 }
 
 major_gas_species = [
@@ -51,9 +51,7 @@ t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t)
 
 count = 1
-while count < 5001:
-    if count > 1:
-        prev_fraction = t.atomic_fraction_vaporized
+while t.weight_fraction_vaporized * 100 < target_vmf:
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
     if l.counter == 1:
@@ -61,7 +59,7 @@ while count < 5001:
         g.calculate_pressures(temperature=temperature, liquid_system=l)
     t.vaporize()
     l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
-    print("[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(count, t.atomic_fraction_vaporized * 100.0))
+    print("[~] At iteration: {} (Weight Fraction Vaporized: {} %)".format(count, t.weight_fraction_vaporized * 100.0))
     if count % 5 == 0 or count == 1:
         reports.create_composition_report(iteration=count)
         reports.create_liquid_report(iteration=count)

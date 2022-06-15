@@ -8,6 +8,8 @@ class ThermoSystem:
         self.composition = composition
         self.liquid_system = liquid_system
         self.gas_system = gas_system
+        self.weight_fraction_vaporized = 0.0
+        self.atomic_fraction_vaporized = 0.0
         self.weight_vaporized = 0.0
 
     def __renormalize_abundances(self):
@@ -91,7 +93,7 @@ class ThermoSystem:
         total_planetary_cations = sum(
             self.composition.planetary_abundances.values())  # sum of fractional cation abundances, PLAMANT
         self.composition.planetary_cation_ratio = total_planetary_cations / self.composition.initial_planetary_cations  # PLANRAT
-        self.vaporized_magma_fraction = 1.0 - self.composition.planetary_cation_ratio  # VAP
+        self.atomic_fraction_vaporized = 1.0 - self.composition.planetary_cation_ratio  # VAP
 
         # calculate weight% vaporized each element
         wt_vaporized = 0.0
@@ -101,10 +103,11 @@ class ThermoSystem:
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
             oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
             wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
-        self.weight_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
+        self.weight_fraction_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
                                 self.liquid_system.initial_melt_mass
+        self.weight_vaporized = self.liquid_system.initial_melt_mass - wt_vaporized
 
         # renormalize abundances
         self.__renormalize_abundances()
 
-        return self.weight_vaporized
+        return self.weight_fraction_vaporized
