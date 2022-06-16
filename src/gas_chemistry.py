@@ -3,6 +3,7 @@ from math import isnan, sqrt
 import sys
 
 from src.k_constants import get_K
+from src.fugacity import get_oxygen_fugacity, fO2_Buffer
 from src.composition import get_molecule_stoichiometry, get_stoich_from_sheet
 
 
@@ -121,7 +122,7 @@ def get_unique_gas_elements(all_species):
 
 class GasPressure:
 
-    def __init__(self, composition, major_gas_species, minor_gas_species):
+    def __init__(self, composition, major_gas_species, minor_gas_species, fO2_buffer="QFM"):
         self.composition = composition
         self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 4",
                                                     index_col="Product")
@@ -137,6 +138,9 @@ class GasPressure:
         self.adjustment_factors = self.__initial_partial_pressure_setup(
             species=self.major_gas_species)  # assume initial behavior of unity
         self.pressure_to_number_density = 1.01325e6 / 1.38046e-16  # (dyn/cm**2=>atm) / Boltzmann's constant (R/AVOG)
+        self.fO2_buffer = fO2_buffer
+        self._buffer = fO2_Buffer()
+        self.oxygen_fugacity = -10000000
 
     def __initial_partial_pressure_setup(self, species):
         """
@@ -494,3 +498,5 @@ class GasPressure:
         self.__calculate_mole_fractions()
         self.__calculate_total_mole_fractions()
         self.partial_pressures = {**self.partial_pressures_major_species, **self.partial_pressures_minor_species}
+        self.oxygen_fugacity = self._buffer.get_fO2_buffer(liquid_system.temperature, self.total_pressure,
+                                                           get_oxygen_fugacity(self), self.fO2_buffer)

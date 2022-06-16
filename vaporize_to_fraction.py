@@ -10,7 +10,7 @@ This script shows how to run MAGMApy to a given vapor mass fraction (VMF) along 
 """
 
 temperature = 3664.25  # K
-target_vmf = 19.21  # percent
+target_vmf = 27.34  # percent
 
 # BSE composition, Visccher & Fegley 2013
 composition = {

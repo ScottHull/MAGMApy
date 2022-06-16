@@ -3,7 +3,7 @@ import csv
 import matplotlib.pyplot as plt
 
 
-def collect_data(path, x_header, metadata_rows=5):
+def collect_data(path, x_header, metadata_rows=6, y_header=None):
     data = {}
     metadata = {}
     ordered_data = {}
@@ -16,10 +16,20 @@ def collect_data(path, x_header, metadata_rows=5):
             reader = list(csv.reader(infile))
             for j in range(0, metadata_rows):
                 line = reader[j]
-                metadata[i].update({line[0]: float(line[1])})
-            for j in range(metadata_rows, len(reader)):
-                line = reader[j]
-                data[i].update({line[0]: float(line[1])})
+                try:  # try to convert to float
+                    metadata[i].update({line[0]: float(line[1])})
+                except:  # probably a string
+                    metadata[i].update({line[0]: line[1]})
+            if y_header is None:  # get all rows from file if no y_header is given
+                for j in range(metadata_rows, len(reader)):
+                    line = reader[j]
+                    data[i].update({line[0]: float(line[1])})
+            else:  # get rows with y_header
+                for j in range(0, len(reader)):
+                    line = reader[j]
+                    if line[0] == y_header:
+                        data[i].update({line[0]: line[1]})
+                        break
     for i in list(sorted(metadata.keys())):
         ordered_data.update({metadata[i][x_header]: data[i]})
     return ordered_data

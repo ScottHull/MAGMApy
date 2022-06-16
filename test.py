@@ -62,7 +62,7 @@ while count < 5001:
     t.vaporize()
     l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
     print("[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(count, t.atomic_fraction_vaporized * 100.0))
-    if count % 5 == 0 or count == 1:
+    if count % 20 == 0 or count == 1:
         reports.create_composition_report(iteration=count)
         reports.create_liquid_report(iteration=count)
         reports.create_gas_report(iteration=count)
