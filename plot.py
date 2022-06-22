@@ -29,7 +29,7 @@ ax.set_xlabel("Mass Fraction Vaporized")
 ax.set_ylabel("Mole Fraction")
 ax.set_title("Vapor Composition")
 # ax.set_ylim(-3, 0)
-species_to_plot = ["Na", "O", "SiO", "Mg_g", "O2", "Fe", "FeO_g", "SiO2_g", "FeO_g", "MgO"]
+species_to_plot = ["Na", "O", "SiO", "Mg_g", "O2", "Fe", "FeO_g", "SiO2_g", "FeO_g", "MgO", "K2O_g"]
 data = collect_data(path="reports/atmosphere_mole_fraction", x_header='mass fraction vaporized')
 for i in species_to_plot:
     x_data = [j for j in data.keys() if j <= 0.8]

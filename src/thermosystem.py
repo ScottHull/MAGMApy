@@ -38,12 +38,12 @@ class ThermoSystem:
         for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] /= total_cations
 
-    def __calculate_size_step(self):
+    def __calculate_size_step(self, fraction=0.05):
         """
-        Computes the size step.
-        The most volatile element in the melt will be reduced by 5%.  This is done for both the mole fractions of the
-        elements AND the atomic abundances because once PLAN(element) becomes < 1e-35, it gets set to 0 to avoid
-        errors due to the small values.
+        Computes the size step for fractional volatilization.
+        The most volatile element in the melt will be reduced by 5% (Schafer & Fegley 2009).  This is done for both the
+        mole fractions of the elements AND the atomic abundances because once PLAN(element) becomes < 1e-35,
+        it gets set to 0 to avoid errors due to the small values.
         The mole fractions are renormalized below and are used to compute the oxide mole fractions.
         The PLAN(element) values are used to compute the fraction vaporized.
 
@@ -61,7 +61,7 @@ class ThermoSystem:
                 r = self.gas_system.total_mole_fraction[i] / self.composition.cation_fraction[i]
                 if r > ATMAX:
                     ATMAX = r
-        FACT = 0.05 / ATMAX  # most volatile element will be reduced by 5%
+        FACT = fraction / ATMAX  # most volatile element will be reduced by the given percentage
 
         # adjust system cation fractions
         for i in self.composition.cation_fraction.keys():
@@ -70,7 +70,6 @@ class ThermoSystem:
                 self.composition.planetary_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 
-        # TODO: is this necessary?
         # adjust planetary composition
         ATMAX = 0.0
         for i in self.composition.planetary_abundances:
@@ -78,7 +77,7 @@ class ThermoSystem:
                 r = self.gas_system.total_mole_fraction[i] / self.composition.planetary_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
-        FACT1 = 0.05 / ATMAX  # most volatile element will be reduced by 5%
+        FACT1 = fraction / ATMAX  # most volatile element will be reduced by the given percentage
 
         # adjust planetary composition
         for i in self.composition.planetary_abundances.keys():
@@ -88,7 +87,57 @@ class ThermoSystem:
                 self.composition.cation_fraction[i] = 0.0
 
     def vaporize(self):
-        self.__calculate_size_step()  # calculate volatility
+        self.__calculate_size_step()  # calculate volatility for fractional volatilization
+        # calculate fraction of vaporized materials
+        total_planetary_cations = sum(
+            self.composition.planetary_abundances.values())  # sum of fractional cation abundances, PLAMANT
+        self.composition.planetary_cation_ratio = total_planetary_cations / self.composition.initial_planetary_cations  # PLANRAT
+        self.atomic_fraction_vaporized = 1.0 - self.composition.planetary_cation_ratio  # VAP
+
+        # calculate weight% vaporized each element
+        wt_vaporized = 0.0
+        for i in self.composition.planetary_abundances.keys():
+            # get the base oxide for the elment (i.e. SiO2 for Si)
+            base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
+            oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
+            oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
+            # convert moles to mass
+            wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+        self.weight_fraction_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
+                                self.liquid_system.initial_melt_mass
+        self.weight_vaporized = self.liquid_system.initial_melt_mass - wt_vaporized
+
+        # renormalize abundances
+        self.__renormalize_abundances()
+
+        return self.weight_fraction_vaporized
+
+    def __calculate_size_step_thermal(self, fraction=0.05):
+        """
+        Computes the size step for fractional volatilization.
+        The most volatile element in the melt will be reduced by 5% (Schafer & Fegley 2009).  This is done for both the
+        mole fractions of the elements AND the atomic abundances because once PLAN(element) becomes < 1e-35,
+        it gets set to 0 to avoid errors due to the small values.
+        The mole fractions are renormalized below and are used to compute the oxide mole fractions.
+        The PLAN(element) values are used to compute the fraction vaporized.
+
+        Note that in original MAGMA code:
+            ATMSI = total mole fraction of element in the gas (i.e. not system, but GAS)
+                This is stored as self.gas_system.total_mole_fraction
+            CONSI = the total system relative abundances of the cations, as atom%
+                This is stored as self.composition.cation_fraction
+        :return:
+        """
+        # adjust planetary composition
+        for i in self.composition.planetary_abundances.keys():
+            partial_pressure_element = self.gas_system.number_densities_elements[i] * 8.314 * self.liquid_system.temperature
+            self.composition.planetary_abundances[i] -= (self.composition.planetary_abundances[i] / partial_pressure_element) * self.gas_system.total_pressure
+            if self.composition.planetary_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
+                self.composition.planetary_abundances[i] = 0.0
+                self.composition.cation_fraction[i] = 0.0
+
+    def vaporize_thermal(self):
+        # self.__calculate_size_step_thermal()  # calculate volatility for fractional volatilization
         # calculate fraction of vaporized materials
         total_planetary_cations = sum(
             self.composition.planetary_abundances.values())  # sum of fractional cation abundances, PLAMANT

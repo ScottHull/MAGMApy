@@ -123,6 +123,8 @@ def get_unique_gas_elements(all_species):
 class GasPressure:
 
     def __init__(self, composition, major_gas_species, minor_gas_species, fO2_buffer="QFM"):
+        self.total_pressure = None
+        self.partial_pressures = None
         self.composition = composition
         self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 4",
                                                     index_col="Product")
@@ -431,6 +433,7 @@ class GasPressure:
     def __calculate_mole_fractions(self):
         """
         The gas mole fractions are simply the partial pressures of each species divided by the total pressure.
+        This returns the fractions of the species, not the cations as in the "total mole fractions".
         :return:
         """
         self.mole_fractions = {}
@@ -443,6 +446,7 @@ class GasPressure:
     def __calculate_total_mole_fractions(self):
         """
         The total mole fraction of the element in the gas is its number density divided by the total number density.
+        Note that these are just for the cations in the system, not the molecular species.
         :return:
         """
         self.total_mole_fraction = {}

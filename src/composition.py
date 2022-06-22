@@ -140,6 +140,12 @@ def __get_isnan(r):
 
 
 def get_stoich_from_sheet(molecule, df):
+    """
+    Returns molecule stoichiometry from the master spreadsheet.
+    :param molecule:
+    :param df:
+    :return:
+    """
     d = {}
     reactants = df['Reactants'][molecule]
     if not __get_isnan(r=reactants):
