@@ -92,7 +92,7 @@ class LiquidActivity:
             base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
             oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
-            initial_melt_mass += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+            initial_melt_mass += self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         return initial_melt_mass
 
     def __get_initial_activty_coefficients(self):

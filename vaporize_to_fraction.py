@@ -23,11 +23,11 @@ composition = {
     'CaO': 3.65,
     'Na2O': 0.349,
     'K2O': 0.031,
-    # 'ZnO': 6.7e-3,
+    'ZnO': 6.7e-3,
 }
 
 major_gas_species = [
-    "SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K"
+    "SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K", "ZnO", "Zn"
 ]
 
 c = Composition(

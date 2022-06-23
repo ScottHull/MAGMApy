@@ -48,7 +48,7 @@ class Report:
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.composition.cation_fraction)
         self.__make_report(path=paths[1], iteration=iteration, data=self.composition.oxide_mole_fraction)
-        self.__make_report(path=paths[2], iteration=iteration, data=self.composition.planetary_abundances)
+        self.__make_report(path=paths[2], iteration=iteration, data=self.composition.liquid_abundances)
 
     def create_liquid_report(self, iteration):
         paths = [

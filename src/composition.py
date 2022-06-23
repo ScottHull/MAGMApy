@@ -232,6 +232,9 @@ class ConvertComposition:
 
 
 class Composition(ConvertComposition):
+    """
+    This class is used to track the composition of the liquid and the system.
+    """
 
     def __init__(self, composition):
         super().__init__()  # initialize base class so we can use its functions
@@ -249,7 +252,7 @@ class Composition(ConvertComposition):
                                                                             molecules=self.moles_composition.keys())  # total molecules of oxides in composition
         self.oxide_mole_fraction = self.get_molecule_fraction()  # base oxide fraction
         self.cation_fraction = self.get_cation_fraction()  # cation elemental fraction
-        self.planetary_abundances = self.__initial_planetary_abundances()  # cation elemental fraction
+        self.liquid_abundances = self.__initial_liquid_abundances()  # cation elemental fraction
 
     def get_molecule_fraction(self):
         """
@@ -299,19 +302,19 @@ class Composition(ConvertComposition):
                         break
         return rank
 
-    def __initial_planetary_abundances(self):
+    def __initial_liquid_abundances(self):
         """
-        Planetary elemental abundances, where we initially assume that the planetary abundances is equal to the
+        liquid elemental abundances, where we initially assume that the liquid abundances is equal to the
         full system input composition.
-        Assume that initially, the planetary abundances are just equal to the elemental abundances
+        Assume that initially, the liquid abundances are just equal to the elemental abundances
         (i.e. cation fraction).
         :return:
         """
         abundances = {}
         for i in self.cation_fraction:
             abundances.update({i: self.atoms_composition[i]})
-        total_planetary_cations = sum(abundances.values())  # sum of fractional cation abundances
-        self.initial_planetary_cations = total_planetary_cations  # the initial planetary cation abundance
-        # take the ratio of current planetary cations to initial cations, initially will be 1
-        self.planetary_cation_ratio = self.initial_planetary_cations / total_planetary_cations
+        total_liquid_cations = sum(abundances.values())  # sum of fractional cation abundances
+        self.initial_liquid_cations = total_liquid_cations  # the initial liquid cation abundance
+        # take the ratio of current liquid cations to initial cations, initially will be 1
+        self.liquid_cation_ratio = self.initial_liquid_cations / total_liquid_cations
         return abundances

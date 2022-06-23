@@ -67,42 +67,42 @@ class ThermoSystem:
         for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
             if self.composition.cation_fraction[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
-                self.composition.planetary_abundances[i] = 0.0
+                self.composition.liquid_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 
-        # adjust planetary composition
+        # adjust liquid composition
         ATMAX = 0.0
-        for i in self.composition.planetary_abundances:
-            if self.composition.planetary_abundances[i] > 1 * 10 ** -20:
-                r = self.gas_system.total_mole_fraction[i] / self.composition.planetary_abundances[i]
+        for i in self.composition.liquid_abundances:
+            if self.composition.liquid_abundances[i] > 1 * 10 ** -20:
+                r = self.gas_system.total_mole_fraction[i] / self.composition.liquid_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
         FACT1 = fraction / ATMAX  # most volatile element will be reduced by the given percentage
 
-        # adjust planetary composition
-        for i in self.composition.planetary_abundances.keys():
-            self.composition.planetary_abundances[i] -= FACT1 * self.gas_system.total_mole_fraction[i]
-            if self.composition.planetary_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
-                self.composition.planetary_abundances[i] = 0.0
+        # adjust liquid composition
+        for i in self.composition.liquid_abundances.keys():
+            self.composition.liquid_abundances[i] -= FACT1 * self.gas_system.total_mole_fraction[i]
+            if self.composition.liquid_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
+                self.composition.liquid_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 
     def vaporize(self):
         self.__calculate_size_step()  # calculate volatility for fractional volatilization
         # calculate fraction of vaporized materials
-        total_planetary_cations = sum(
-            self.composition.planetary_abundances.values())  # sum of fractional cation abundances, PLAMANT
-        self.composition.planetary_cation_ratio = total_planetary_cations / self.composition.initial_planetary_cations  # PLANRAT
-        self.atomic_fraction_vaporized = 1.0 - self.composition.planetary_cation_ratio  # VAP
+        total_liquid_cations = sum(
+            self.composition.liquid_abundances.values())  # sum of fractional cation abundances, PLAMANT
+        self.composition.liquid_cation_ratio = total_liquid_cations / self.composition.initial_liquid_cations  # PLANRAT
+        self.atomic_fraction_vaporized = 1.0 - self.composition.liquid_cation_ratio  # VAP
 
         # calculate weight% vaporized each element
         wt_vaporized = 0.0
-        for i in self.composition.planetary_abundances.keys():
+        for i in self.composition.liquid_abundances.keys():
             # get the base oxide for the elment (i.e. SiO2 for Si)
             base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
             oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
             # convert moles to mass
-            wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+            wt_vaporized += self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         self.weight_fraction_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
                                 self.liquid_system.initial_melt_mass
         self.weight_vaporized = self.liquid_system.initial_melt_mass - wt_vaporized
@@ -128,30 +128,30 @@ class ThermoSystem:
                 This is stored as self.composition.cation_fraction
         :return:
         """
-        # adjust planetary composition
-        for i in self.composition.planetary_abundances.keys():
+        # adjust liquid composition
+        for i in self.composition.liquid_abundances.keys():
             partial_pressure_element = self.gas_system.number_densities_elements[i] * 8.314 * self.liquid_system.temperature
-            self.composition.planetary_abundances[i] -= (self.composition.planetary_abundances[i] / partial_pressure_element) * self.gas_system.total_pressure
-            if self.composition.planetary_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
-                self.composition.planetary_abundances[i] = 0.0
+            self.composition.liquid_abundances[i] -= (self.composition.liquid_abundances[i] / partial_pressure_element) * self.gas_system.total_pressure
+            if self.composition.liquid_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
+                self.composition.liquid_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 
     def vaporize_thermal(self):
         # self.__calculate_size_step_thermal()  # calculate volatility for fractional volatilization
         # calculate fraction of vaporized materials
-        total_planetary_cations = sum(
-            self.composition.planetary_abundances.values())  # sum of fractional cation abundances, PLAMANT
-        self.composition.planetary_cation_ratio = total_planetary_cations / self.composition.initial_planetary_cations  # PLANRAT
-        self.atomic_fraction_vaporized = 1.0 - self.composition.planetary_cation_ratio  # VAP
+        total_liquid_cations = sum(
+            self.composition.liquid_abundances.values())  # sum of fractional cation abundances, PLAMANT
+        self.composition.liquid_cation_ratio = total_liquid_cations / self.composition.initial_liquid_cations  # PLANRAT
+        self.atomic_fraction_vaporized = 1.0 - self.composition.liquid_cation_ratio  # VAP
 
         # calculate weight% vaporized each element
         wt_vaporized = 0.0
-        for i in self.composition.planetary_abundances.keys():
+        for i in self.composition.liquid_abundances.keys():
             # get the base oxide for the elment (i.e. SiO2 for Si)
             base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
             oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
-            wt_vaporized += self.composition.planetary_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+            wt_vaporized += self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         self.weight_fraction_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
                                 self.liquid_system.initial_melt_mass
         self.weight_vaporized = self.liquid_system.initial_melt_mass - wt_vaporized
