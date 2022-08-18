@@ -123,6 +123,8 @@ def get_unique_gas_elements(all_species):
 class GasPressure:
 
     def __init__(self, composition, major_gas_species, minor_gas_species, fO2_buffer="QFM"):
+        self.cation_mass = None
+        self.cation_moles = None
         self.total_pressure = None
         self.partial_pressures = None
         self.composition = composition
@@ -142,7 +144,28 @@ class GasPressure:
         self.pressure_to_number_density = 1.01325e6 / 1.38046e-16  # (dyn/cm**2=>atm) / Boltzmann's constant (R/AVOG)
         self.fO2_buffer = fO2_buffer
         self._buffer = fO2_Buffer()
+        self.cation_mass_fraction = self.get_cation_fraction_from_moles(vapor_mass=0.0)  # mass fraction of cations in vapor
         self.oxygen_fugacity = -10000000
+
+    def get_cation_fraction_from_moles(self, vapor_mass, include_O=True):
+        """
+        Gets cation mass fraction of liquid from moles of cations in liquid.
+        :return:
+        """
+        initial_liquid_cations = self.composition.initial_liquid_number_of_moles
+        liquid_cations = self.composition.liquid_abundances
+        if vapor_mass == 0.0:  # return dictionary of 0 cation vapor mass if first iteration
+            return {i: 0 for i in liquid_cations.keys()}
+        self.cation_moles = {i: initial_liquid_cations[i] - liquid_cations[i] for i in liquid_cations.keys()}
+        self.cation_mass = {i: self.cation_moles[i] * self.composition.get_molecule_mass(molecule=i)
+                            for i in self.cation_moles.keys()}
+        if include_O:  # assume all missing mass between liquid mass and cation mass is due to O
+            if vapor_mass < 0:  # likely initial iteration where we dont yet know melt mass
+                self.cation_mass.update({"O": 1e-99})  # make it very small
+            else:
+                self.cation_mass.update({"O": vapor_mass - sum(self.cation_mass.values())})
+        self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in self.cation_mass.keys()}
+        return self.cation_mass_fraction
 
     def __initial_partial_pressure_setup(self, species):
         """

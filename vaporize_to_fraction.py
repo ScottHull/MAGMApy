@@ -58,7 +58,7 @@ while t.weight_fraction_vaporized * 100 < target_vmf:
         l.calculate_activities(temperature=temperature)
         g.calculate_pressures(temperature=temperature, liquid_system=l)
     t.vaporize()
-    l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
+    l.counter = 0  # reset Fe2O3 counter for next vaporization step
     print("[~] At iteration: {} (Weight Fraction Vaporized: {} %)".format(count, t.weight_fraction_vaporized * 100.0))
     if count % 5 == 0 or count == 1:
         reports.create_composition_report(iteration=count)

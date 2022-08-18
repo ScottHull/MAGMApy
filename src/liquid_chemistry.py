@@ -78,8 +78,27 @@ class LiquidActivity:
         self.counter = 0  # for tracking Fe2O3
         self.iteration = 0  # for tracking the number of iterations in the activity convergence loop
         self.initial_melt_mass = self.__get_initial_melt_mass()  # calculate the initial mass of the melt in order to calculate vapor%
+        self.melt_mass = -1e99  # absolute mass of the melt
+        self.cation_mass = {}  # mass of cations in the liquid
+        self.cation_mass_fraction = self.get_cation_fraction_from_moles()  # mass fraction of cations in liquid
         self.gas_system = gas_system
         self.temperature = -100000
+
+    def get_cation_fraction_from_moles(self, include_O=True):
+        """
+        Gets cation mass fraction of liquid from moles of cations in liquid.
+        :return:
+        """
+        cations = self.composition.liquid_abundances
+        self.cation_mass = {i: self.composition.liquid_abundances[i] * self.composition.get_molecule_mass(molecule=i)
+                            for i in cations.keys()}
+        if include_O:  # assume all missing mass between liquid mass and cation mass is due to O
+            if self.melt_mass < 0:  # likely initial iteration where we dont yet know melt mass
+                self.cation_mass.update({"O": 1e-99})  # make it very small
+            else:
+                self.cation_mass.update({"O": self.melt_mass - sum(self.cation_mass.values())})
+        self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in self.cation_mass.keys()}
+        return self.cation_mass_fraction
 
     def __get_initial_melt_mass(self):
         """

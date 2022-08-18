@@ -1,7 +1,7 @@
 import re
 from math import isnan
 import pandas as pd
-import sys
+from copy import copy
 
 
 def get_molecule_stoichiometry(molecule, return_oxygen=True, force_O2=False):
@@ -253,6 +253,7 @@ class Composition(ConvertComposition):
         self.oxide_mole_fraction = self.get_molecule_fraction()  # base oxide fraction
         self.cation_fraction = self.get_cation_fraction()  # cation elemental fraction
         self.liquid_abundances = self.__initial_liquid_abundances()  # cation elemental fraction
+        self.initial_liquid_number_of_moles = copy(self.liquid_abundances)  # cation elemental fraction
 
     def get_molecule_fraction(self):
         """

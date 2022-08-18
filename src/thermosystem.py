@@ -10,7 +10,8 @@ class ThermoSystem:
         self.gas_system = gas_system
         self.weight_fraction_vaporized = 0.0
         self.atomic_fraction_vaporized = 0.0
-        self.weight_vaporized = 0.0
+        self.weight_vaporized = 0.0  # mass of the vaporized system
+        self.melt_mass = 0.0  # mass of the melt
 
     def __renormalize_abundances(self):
         """
@@ -37,6 +38,12 @@ class ThermoSystem:
         # renormalize oxide mole fractions
         for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] /= total_cations
+        # get the absolute mass of the melt
+        self.liquid_system.melt_mass = self.liquid_system.initial_melt_mass - self.weight_vaporized
+        # get liquid cation mass %
+        self.liquid_system.get_cation_fraction_from_moles()
+        # get vapor cation mass %
+        self.gas_system.get_cation_fraction_from_moles(vapor_mass=self.weight_vaporized)
 
     def __calculate_size_step(self, fraction=0.05):
         """
@@ -58,6 +65,7 @@ class ThermoSystem:
         ATMAX = 0.0
         for i in self.gas_system.total_mole_fraction.keys():
             if self.composition.cation_fraction[i] > 1 * 10 ** -20:
+                # ratio of the element atomic fraction in the gas relative to the entire system (gas + liquid)
                 r = self.gas_system.total_mole_fraction[i] / self.composition.cation_fraction[i]
                 if r > ATMAX:
                     ATMAX = r
@@ -65,6 +73,7 @@ class ThermoSystem:
 
         # adjust system cation fractions
         for i in self.composition.cation_fraction.keys():
+            # system loses cations via fractional volatilization
             self.composition.cation_fraction[i] -= FACT * self.gas_system.total_mole_fraction[i]
             if self.composition.cation_fraction[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
                 self.composition.liquid_abundances[i] = 0.0
@@ -74,6 +83,7 @@ class ThermoSystem:
         ATMAX = 0.0
         for i in self.composition.liquid_abundances:
             if self.composition.liquid_abundances[i] > 1 * 10 ** -20:
+                # cation fraction in the gas relative to the liquid
                 r = self.gas_system.total_mole_fraction[i] / self.composition.liquid_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
@@ -81,13 +91,14 @@ class ThermoSystem:
 
         # adjust liquid composition
         for i in self.composition.liquid_abundances.keys():
+            # liquid loses cations via fractional volatilization
             self.composition.liquid_abundances[i] -= FACT1 * self.gas_system.total_mole_fraction[i]
             if self.composition.liquid_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
                 self.composition.liquid_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 
-    def vaporize(self):
-        self.__calculate_size_step()  # calculate volatility for fractional volatilization
+    def vaporize(self, fraction=0.05):
+        self.__calculate_size_step(fraction=fraction)  # calculate volatility for fractional volatilization
         # calculate fraction of vaporized materials
         total_liquid_cations = sum(
             self.composition.liquid_abundances.values())  # sum of fractional cation abundances, PLAMANT
@@ -104,11 +115,15 @@ class ThermoSystem:
             # convert moles to mass
             wt_vaporized += self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         self.weight_fraction_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
-                                self.liquid_system.initial_melt_mass
+                                         self.liquid_system.initial_melt_mass
         self.weight_vaporized = self.liquid_system.initial_melt_mass - wt_vaporized
 
         # renormalize abundances
         self.__renormalize_abundances()
+        # make sure the masses are equal
+        # if sum(self.liquid_system.cation_mass.values()) != self.liquid_system.melt_mass:
+        #     raise Exception("Error: liquid cation mass %s does not equal total melt mass %s" % (
+        #         sum(self.liquid_system.cation_mass.values()), self.liquid_system.melt_mass))
 
         return self.weight_fraction_vaporized
 
@@ -129,15 +144,25 @@ class ThermoSystem:
         :return:
         """
         # adjust liquid composition
+        ATMAX = 0.0
+        for i in self.composition.liquid_abundances:
+            if self.composition.liquid_abundances[i] > 1 * 10 ** -20:
+                # cation fraction in the gas relative to the liquid
+                r = self.gas_system.total_mole_fraction[i] / self.composition.liquid_abundances[i]
+                if r > ATMAX:
+                    ATMAX = r
+        FACT1 = fraction / ATMAX  # most volatile element will be reduced by the given percentage
+
+        # adjust liquid composition
         for i in self.composition.liquid_abundances.keys():
-            partial_pressure_element = self.gas_system.number_densities_elements[i] * 8.314 * self.liquid_system.temperature
-            self.composition.liquid_abundances[i] -= (self.composition.liquid_abundances[i] / partial_pressure_element) * self.gas_system.total_pressure
+            # liquid loses cations via fractional volatilization
+            self.composition.liquid_abundances[i] -= FACT1 * self.gas_system.total_mole_fraction[i]
             if self.composition.liquid_abundances[i] <= 1 * 10 ** -100:  # if the numbers approach 0, set them to 0
                 self.composition.liquid_abundances[i] = 0.0
                 self.composition.cation_fraction[i] = 0.0
 
     def vaporize_thermal(self):
-        # self.__calculate_size_step_thermal()  # calculate volatility for fractional volatilization
+        self.__calculate_size_step_thermal()  # calculate volatility for fractional volatilization
         # calculate fraction of vaporized materials
         total_liquid_cations = sum(
             self.composition.liquid_abundances.values())  # sum of fractional cation abundances, PLAMANT
@@ -153,8 +178,10 @@ class ThermoSystem:
             oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
             wt_vaporized += self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
         self.weight_fraction_vaporized = (self.liquid_system.initial_melt_mass - wt_vaporized) / \
-                                self.liquid_system.initial_melt_mass
+                                         self.liquid_system.initial_melt_mass
         self.weight_vaporized = self.liquid_system.initial_melt_mass - wt_vaporized
+        self.gas_system.vapor_mass = self.weight_vaporized
+        self.gas_system.vapor_mass_fraction = self.weight_fraction_vaporized
 
         # renormalize abundances
         self.__renormalize_abundances()

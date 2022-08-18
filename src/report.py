@@ -22,11 +22,12 @@ class Report:
                 os.mkdir(path)
 
     def __get_metadata(self):
-        return "atomic fraction vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\nliquid mass fraction,{}\ntemperature (K),{}\nfO2,{} {}\n".format(
+        return "atomic fraction vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\nliquid mass fraction,{}\ninitial liquid mass,{}\ntemperature (K),{}\nfO2,{} {}\n".format(
             self.thermosystem.atomic_fraction_vaporized,
             self.liquid_system.initial_melt_mass - self.thermosystem.weight_vaporized,
             self.thermosystem.weight_fraction_vaporized,
             1 - self.thermosystem.weight_fraction_vaporized,
+            self.liquid_system.initial_melt_mass,
             self.liquid_system.temperature,
             self.gas_system.fO2_buffer,
             self.gas_system.oxygen_fugacity
@@ -43,7 +44,7 @@ class Report:
         paths = [
             self.to_dir + "/cation_fraction",
             self.to_dir + "/oxide_fraction",
-            self.to_dir + "/magma_composition"
+            self.to_dir + "/magma_composition",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.composition.cation_fraction)
@@ -54,18 +55,24 @@ class Report:
         paths = [
             self.to_dir + "/activities",
             self.to_dir + "/activity_coefficients",
+            self.to_dir + "/magma_cation_mass_fraction",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.liquid_system.activities)
         self.__make_report(path=paths[1], iteration=iteration, data=self.liquid_system.activity_coefficients)
+        self.__make_report(path=paths[2], iteration=iteration, data=self.liquid_system.cation_mass_fraction)
 
     def create_gas_report(self, iteration):
         paths = [
             self.to_dir + "/partial_pressures",
             self.to_dir + "/atmosphere_total_mole_fraction",
             self.to_dir + "/atmosphere_mole_fraction",
+            self.to_dir + "/atmosphere_cation_moles",
+            self.to_dir + "/atmosphere_cation_mass_fraction",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.gas_system.partial_pressures)
         self.__make_report(path=paths[1], iteration=iteration, data=self.gas_system.total_mole_fraction)
         self.__make_report(path=paths[2], iteration=iteration, data=self.gas_system.mole_fractions)
+        self.__make_report(path=paths[3], iteration=iteration, data=self.gas_system.cation_moles)
+        self.__make_report(path=paths[4], iteration=iteration, data=self.gas_system.cation_mass_fraction)
