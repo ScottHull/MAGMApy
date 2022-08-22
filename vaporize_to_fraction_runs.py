@@ -124,6 +124,9 @@ for run in runs.keys():
     temperature = runs[run]["temperature"]
     count = 1
     while t.weight_fraction_vaporized * 100 < to_vmf:
+        output_interval = 50
+        if t.weight_fraction_vaporized * 100.0 > 5:  # vmf changes very fast towards end of simulation
+            output_interval = 5
         l.calculate_activities(temperature=temperature)
         g.calculate_pressures(temperature=temperature, liquid_system=l)
         if l.counter == 1:
@@ -132,8 +135,10 @@ for run in runs.keys():
         fraction = 0.05  # fraction of most volatile element to lose
         t.vaporize(fraction=fraction)
         l.counter = 0  # reset Fe2O3 counter for next vaporization step
-        print("[~] At iteration: {} (Weight Fraction Vaporized: {} %)".format(count, t.weight_fraction_vaporized * 100.0))
-        if count % 5 == 0 or count == 1:
+        print("[~] At iteration: {} (Weight Fraction Vaporized: {} %)".format(count,
+                                                                              round(t.weight_fraction_vaporized * 100.0,
+                                                                                    2)))
+        if count % output_interval == 0 or count == 1:
             reports.create_composition_report(iteration=count)
             reports.create_liquid_report(iteration=count)
             reports.create_gas_report(iteration=count)

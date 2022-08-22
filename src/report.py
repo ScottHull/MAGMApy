@@ -22,7 +22,7 @@ class Report:
                 os.mkdir(path)
 
     def __get_metadata(self):
-        return "atomic fraction vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\nliquid mass fraction,{}\ninitial liquid mass,{}\ntemperature (K),{}\nfO2,{} {}\n".format(
+        return "atomic fraction vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\nliquid mass fraction,{}\ninitial liquid mass,{}\ntemperature (K),{}\nfO2,{} {}\nmost volatile species,{}\n".format(
             self.thermosystem.atomic_fraction_vaporized,
             self.liquid_system.initial_melt_mass - self.thermosystem.weight_vaporized,
             self.thermosystem.weight_fraction_vaporized,
@@ -30,7 +30,8 @@ class Report:
             self.liquid_system.initial_melt_mass,
             self.liquid_system.temperature,
             self.gas_system.fO2_buffer,
-            self.gas_system.oxygen_fugacity
+            self.gas_system.oxygen_fugacity,
+            self.thermosystem.most_volatile_species
         )
 
     def __make_report(self, path, iteration, data):

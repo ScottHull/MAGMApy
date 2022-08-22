@@ -12,6 +12,7 @@ class ThermoSystem:
         self.atomic_fraction_vaporized = 0.0
         self.weight_vaporized = 0.0  # mass of the vaporized system
         self.melt_mass = 0.0  # mass of the melt
+        self.most_volatile_species = None  # most volatile species, which is fractionally depleted first
 
     def __renormalize_abundances(self):
         """
@@ -87,6 +88,7 @@ class ThermoSystem:
                 r = self.gas_system.total_mole_fraction[i] / self.composition.liquid_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
+                    self.most_volatile_species = i
         FACT1 = fraction / ATMAX  # most volatile element will be reduced by the given percentage
 
         # adjust liquid composition
