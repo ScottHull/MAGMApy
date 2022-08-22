@@ -20,6 +20,8 @@ runs = {
     },
 }
 
+isotopes = None
+
 def get_closest_header_output(data, target):
     """
     Takes the difference between the target and the data key.  Returns the closest key.
@@ -121,6 +123,21 @@ for run in runs.keys():
         ax.plot(np.array(vmf_evolution) * 100, np.array(element_evolution[element]) * 100, color=color_cycle[index], linewidth=2, label=element)
         ax.scatter(
             runs[run]["vmf"], interpolated_elements[element] * 100, color=color_cycle[index], marker='x', s=100
+        )
+
+    ax.set_xlabel("VMF (%)")
+    ax.set_ylabel("Liquid Element Fraction (%)")
+    ax.set_title("{} MAGMA Liquid Evolution".format(run))
+    ax.grid(alpha=0.4)
+    ax.legend()
+
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.add_subplot(111)
+    for index, element in enumerate(element_evolution.keys()):
+        ax.plot(np.array(vmf_evolution) * 100, np.array(element_evolution[element]) * 100, color=color_cycle[index],
+                linewidth=2, label=element)
+        ax.scatter(
+            runs[run]["vmf"], nie_and_dauphas_rayleigh_fractionation(interpolated_elements[element]), color=color_cycle[index], marker='x', s=100
         )
 
     ax.set_xlabel("VMF (%)")
