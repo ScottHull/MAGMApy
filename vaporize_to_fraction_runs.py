@@ -5,6 +5,8 @@ from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data, make_figure
 
+from scipy.interpolate import interp1d
+
 """
 This script shows how to run MAGMApy to a given vapor mass fraction (VMF) along an isotherm.
 """
@@ -93,6 +95,8 @@ composition = {
     'ZnO': 6.7e-3,
 }
 
+to_vmf = 60  # %
+
 major_gas_species = [
     "SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K", "ZnO", "Zn"
 ]
@@ -117,21 +121,21 @@ t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
 for run in runs.keys():
     reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir="{}_reports".format(run))
-    temperature, target_vmf = runs[run]["temperature"], runs[run]["vmf"]
+    temperature = runs[run]["temperature"]
     count = 1
-    while t.weight_fraction_vaporized * 100 < target_vmf:
+    while t.weight_fraction_vaporized * 100 < to_vmf:
         l.calculate_activities(temperature=temperature)
         g.calculate_pressures(temperature=temperature, liquid_system=l)
         if l.counter == 1:
             l.calculate_activities(temperature=temperature)
             g.calculate_pressures(temperature=temperature, liquid_system=l)
         fraction = 0.05  # fraction of most volatile element to lose
-        if abs(t.weight_fraction_vaporized * 100 - target_vmf) / target_vmf < 0.05:
-            fraction = 0.01  # slow down the vapor loss to get close to target VMF
         t.vaporize(fraction=fraction)
         l.counter = 0  # reset Fe2O3 counter for next vaporization step
         print("[~] At iteration: {} (Weight Fraction Vaporized: {} %)".format(count, t.weight_fraction_vaporized * 100.0))
-    reports.create_composition_report(iteration=count)
-    reports.create_liquid_report(iteration=count)
-    reports.create_gas_report(iteration=count)
-    count += 1
+        if count % 5 == 0 or count == 1:
+            reports.create_composition_report(iteration=count)
+            reports.create_liquid_report(iteration=count)
+            reports.create_gas_report(iteration=count)
+        count += 1
+    break
