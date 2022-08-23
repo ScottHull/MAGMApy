@@ -178,7 +178,7 @@ class GasPressure:
         """
         liquid_cations = self.composition.liquid_abundances
         vapor_cations = self.cation_moles
-        self.f = {i: vapor_cations[i] / (vapor_cations[i] + liquid_cations[i]) for i in vapor_cations.keys()}
+        self.f = {i: liquid_cations[i] / (vapor_cations[i] + liquid_cations[i]) for i in vapor_cations.keys()}
 
     def __initial_partial_pressure_setup(self, species):
         """

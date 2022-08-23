@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 
-font = {'size'   : 18}
+font = {'size': 18}
 
 matplotlib.rc('font', **font)
 
@@ -22,6 +22,7 @@ isotopes = {
         85: 84.911789
     },
 }  # dictionary of isotope masses
+
 
 def calculate_delta_kin(element):
     """

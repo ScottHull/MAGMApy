@@ -55,7 +55,8 @@ t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t)
 
 count = 1
-for temperature in reversed(np.arange(end_temperature, start_temperature - temperature_increment, temperature_increment)):
+for temperature in reversed(
+        np.arange(end_temperature, start_temperature - temperature_increment, temperature_increment)):
     l.calculate_activities(temperature=temperature)
     g.calculate_pressures(temperature=temperature, liquid_system=l)
     if l.counter == 1:
@@ -88,6 +89,7 @@ def get_annotation_location(species, x_data, y_data, target_x):
             x = i
             y = y_data[index] + .001
     return x, y
+
 
 fig = plt.figure()
 ax = fig.add_subplot(111)

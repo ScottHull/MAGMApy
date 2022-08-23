@@ -95,7 +95,7 @@ ax.plot(
     x_data,
     y_data,
     linewidth=2.0,
-    )
+)
 ax.grid()
 plt.tight_layout()
 plt.show()

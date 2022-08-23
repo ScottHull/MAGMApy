@@ -95,36 +95,36 @@ composition = {
     'ZnO': 6.7e-3,
 }
 
-to_vmf = 60  # %
+to_vmf = 90  # %
 
 major_gas_species = [
     "SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K", "ZnO", "Zn"
 ]
 
-c = Composition(
-    composition=composition
-)
-
-g = GasPressure(
-    composition=c,
-    major_gas_species=major_gas_species,
-    minor_gas_species="__all__",
-)
-
-l = LiquidActivity(
-    composition=c,
-    complex_species="__all__",
-    gas_system=g
-)
-
-t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
-
 for run in runs.keys():
+    c = Composition(
+        composition=composition
+    )
+
+    g = GasPressure(
+        composition=c,
+        major_gas_species=major_gas_species,
+        minor_gas_species="__all__",
+    )
+
+    l = LiquidActivity(
+        composition=c,
+        complex_species="__all__",
+        gas_system=g
+    )
+
+    t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
+
     reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir="{}_reports".format(run))
     temperature = runs[run]["temperature"]
     count = 1
     while t.weight_fraction_vaporized * 100 < to_vmf:
-        output_interval = 50
+        output_interval = 100
         if t.weight_fraction_vaporized * 100.0 > 5:  # vmf changes very fast towards end of simulation
             output_interval = 5
         l.calculate_activities(temperature=temperature)
@@ -137,10 +137,9 @@ for run in runs.keys():
         l.counter = 0  # reset Fe2O3 counter for next vaporization step
         print("[~] At iteration: {} (Weight Fraction Vaporized: {} %)".format(count,
                                                                               round(t.weight_fraction_vaporized * 100.0,
-                                                                                    2)))
+                                                                                    4)))
         if count % output_interval == 0 or count == 1:
             reports.create_composition_report(iteration=count)
             reports.create_liquid_report(iteration=count)
             reports.create_gas_report(iteration=count)
         count += 1
-    break
