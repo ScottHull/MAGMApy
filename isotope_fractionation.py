@@ -144,7 +144,7 @@ def nie_and_dauphas_rayleigh_fractionation(f, delta_kin, S=0.989, delta_eq=0.0):
 
 
 for run in runs.keys():
-    data = collect_data(path="{}_reports/magma_cation_mass_fraction".format(run), x_header='mass fraction vaporized')
+    data = collect_data(path="{}_reports/f".format(run), x_header='mass fraction vaporized')
     vmf_list, elements = return_vmf_and_element_lists(data)
     interpolated_elements = interpolate_elements_at_vmf(vmf_list, elements, runs[run]["vmf"] / 100)
 

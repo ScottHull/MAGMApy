@@ -45,6 +45,8 @@ class ThermoSystem:
         self.liquid_system.get_cation_fraction_from_moles()
         # get vapor cation mass %
         self.gas_system.get_cation_fraction_from_moles(vapor_mass=self.weight_vaporized)
+        # calculate f
+        self.gas_system.get_f()
 
     def __calculate_size_step(self, fraction=0.05):
         """

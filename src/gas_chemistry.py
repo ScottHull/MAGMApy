@@ -123,6 +123,7 @@ def get_unique_gas_elements(all_species):
 class GasPressure:
 
     def __init__(self, composition, major_gas_species, minor_gas_species, fO2_buffer="QFM"):
+        self.f = None
         self.cation_mass = None
         self.cation_moles = None
         self.total_pressure = None
@@ -166,6 +167,18 @@ class GasPressure:
                 self.cation_mass.update({"O": vapor_mass - sum(self.cation_mass.values())})
         self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in self.cation_mass.keys()}
         return self.cation_mass_fraction
+
+    def get_f(self):
+        """
+        Returns the cation fraction in the vapor relative to vapor + melt.
+        This is f in Nie and Dauphus 2019.
+        :param vapor_mass:
+        :param include_O:
+        :return:
+        """
+        liquid_cations = self.composition.liquid_abundances
+        vapor_cations = self.cation_moles
+        self.f = {i: vapor_cations[i] / (vapor_cations[i] + liquid_cations[i]) for i in vapor_cations.keys()}
 
     def __initial_partial_pressure_setup(self, species):
         """

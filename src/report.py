@@ -70,6 +70,7 @@ class Report:
             self.to_dir + "/atmosphere_mole_fraction",
             self.to_dir + "/atmosphere_cation_moles",
             self.to_dir + "/atmosphere_cation_mass_fraction",
+            self.to_dir + "/f",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.gas_system.partial_pressures)
@@ -77,3 +78,4 @@ class Report:
         self.__make_report(path=paths[2], iteration=iteration, data=self.gas_system.mole_fractions)
         self.__make_report(path=paths[3], iteration=iteration, data=self.gas_system.cation_moles)
         self.__make_report(path=paths[4], iteration=iteration, data=self.gas_system.cation_mass_fraction)
+        self.__make_report(path=paths[5], iteration=iteration, data=self.gas_system.f)
