@@ -81,7 +81,7 @@ runs = {
     },
 }
 
-# BSE composition, Visccher & Fegley 2013
+# BSE composition oxide wt%, Visccher & Fegley 2013
 composition = {
     "SiO2": 45.40,
     'MgO': 36.76,
