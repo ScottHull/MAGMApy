@@ -73,9 +73,9 @@ class LiquidActivity:
         self.complex_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 3",
                                                   index_col="Product")
         self.complex_species = complex_species  # a list of complex species to consider in the model
-        if complex_species == "__all__":
+        if complex_species == "__all__":  # include all complex species in the spreadsheet
             self.complex_species = self.complex_species_data.index.tolist()
-        self.composition = composition
+        self.composition = composition  # composition object
         self.activity_coefficients = self.__get_initial_activty_coefficients()
         self.activities = self.__initial_activity_setup()  # melt activities
         self.counter = 0  # for tracking Fe2O3
@@ -84,8 +84,8 @@ class LiquidActivity:
         self.melt_mass = -1e99  # absolute mass of the melt
         self.cation_mass = {}  # mass of cations in the liquid
         self.cation_mass_fraction = self.get_cation_fraction_from_moles()  # mass fraction of cations in liquid
-        self.gas_system = gas_system
-        self.temperature = -100000
+        self.gas_system = gas_system  # gas system object
+        self.temperature = -100000  # temperature of the liquid
 
     def get_cation_fraction_from_moles(self, include_O=True):
         """
@@ -117,8 +117,8 @@ class LiquidActivity:
         self.liquid_oxide_masses = self.composition.moles_to_mass(self.liquid_oxide_moles)
         # make sure mass has been conserved
         if abs(sum(self.liquid_oxide_masses.values()) - self.melt_mass) > 10 ** -4:
-            if "O" not in self.liquid_oxide_moles.keys():
-                pass
+            if "O" not in self.liquid_oxide_moles.keys():  # extra mass will be due to missing O in cation dict
+                pass  # I don't feel like dealing with this right now
             else:
                 raise Exception("Mass of liquid was conserved in liquid oxide calculation.")
         # convert absolute mass to mass fraction
