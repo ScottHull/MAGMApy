@@ -67,6 +67,9 @@ class LiquidActivity:
     """
 
     def __init__(self, composition, complex_species, gas_system):
+        self.liquid_oxide_mass_fraction = None  # wt% of the liquid oxide in the liquid phase
+        self.liquid_oxide_masses = None  # absolute mass of the liquid oxide composition
+        self.liquid_oxide_moles = None  # absolute molar abundances of liquid cations in the liquid
         self.complex_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 3",
                                                   index_col="Product")
         self.complex_species = complex_species  # a list of complex species to consider in the model
@@ -99,6 +102,27 @@ class LiquidActivity:
                 self.cation_mass.update({"O": self.melt_mass - sum(self.cation_mass.values())})
         self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in self.cation_mass.keys()}
         return self.cation_mass_fraction
+
+    def get_liquid_oxide_mass_fraction(self):
+        """
+        Returns a diction of the liquid cation moles, represented as oxide mass fraction.
+        :return:
+        """
+        liquid_moles = self.composition.liquid_abundances  # the absolute liquid molar abundances
+        # get the absolute oxide molar abundances
+        self.liquid_oxide_moles = self.composition.cations_to_oxides(liquid_moles,
+                                                                     list(self.composition.oxide_mole_fraction.keys()))
+        # convert absolute moles to absolute mass
+        self.liquid_oxide_masses = self.composition.moles_to_mass(self.liquid_oxide_moles)
+        # make sure mass has been conserved
+        if abs(sum(self.liquid_oxide_masses.values()) - self.melt_mass) > 10 ** -4:
+            if "O" not in self.liquid_oxide_moles.keys():
+                pass
+            else:
+                raise Exception("Mass of liquid was conserved in liquid oxide calculation.")
+        # convert absolute mass to mass fraction
+        self.liquid_oxide_mass_fraction = self.composition.mass_to_mass_percent(self.liquid_oxide_masses)
+        return self.liquid_oxide_mass_fraction
 
     def __get_initial_melt_mass(self):
         """

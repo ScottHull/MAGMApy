@@ -230,6 +230,38 @@ class ConvertComposition:
                         total += composition[j] / stoich[j]
         return total
 
+    def cations_to_oxides(self, cations: dict, oxides: list):
+        """
+        Takes absolute cation molar abundances, finds their corresponding oxide, and returns the oxide molar abundance.
+        :param cations:
+        :return:
+        """
+        oxides_moles = {i: 0 for i in oxides}
+        for c in cations:
+            abundance = cations[c]  # get the molar abundance of the cation
+            if c not in ["O", "O2"]:  # skip oxygen and oxygen dioxide if it's included in the cations list
+                corresponding_oxide = get_element_in_base_oxide(element=c, oxides=oxides)
+                oxide_stoich = get_molecule_stoichiometry(molecule=corresponding_oxide)  # get the molecule stoich
+                element_stoich_in_molecule = oxide_stoich[c]  # get the stoich of the element in the molecule
+                oxides_moles[corresponding_oxide] += abundance / element_stoich_in_molecule  # add the moles of the cation
+        return oxides_moles
+
+    def moles_to_mass(self, composition: dict):
+        """
+        Returns a dictionary of the absolute masses of the given molar compositions.
+        :param composition: The molar composition to be converted to absolute mass.
+        :return:
+        """
+        return {i: self.get_molecule_mass(molecule=i) * composition[i] for i in composition}  # mol * g/mol = g
+
+    def mass_to_mass_percent(self, composition: dict):
+        """
+        Returns a dictionary of the mass percentages of the given absolute masses.
+        :param composition: The absolute mass composition to be converted to mass percentages.
+        :return:
+        """
+        return {i: composition[i] / sum(composition.values()) for i in composition}
+
 
 class Composition(ConvertComposition):
     """

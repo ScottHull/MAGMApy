@@ -43,6 +43,8 @@ class ThermoSystem:
         self.liquid_system.melt_mass = self.liquid_system.initial_melt_mass - self.weight_vaporized
         # get liquid cation mass %
         self.liquid_system.get_cation_fraction_from_moles()
+        # convert liquid moles to oxides and get oxide mass %
+        self.liquid_system.get_liquid_oxide_mass_fraction()
         # get vapor cation mass %
         self.gas_system.get_cation_fraction_from_moles(vapor_mass=self.weight_vaporized)
         # calculate f

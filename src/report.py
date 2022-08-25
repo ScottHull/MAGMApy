@@ -34,11 +34,14 @@ class Report:
             self.thermosystem.most_volatile_species
         )
 
-    def __make_report(self, path, iteration, data):
+    def __make_report(self, path, iteration, data, round_digits=4):
         outfile = open(path + "/{}.csv".format(iteration), 'w')
         outfile.write(self.__get_metadata())
         for i in data.keys():
-            outfile.write("{},{}\n".format(i, data[i]))
+            if isinstance(data[i], float):  # round to 4 decimal places if float
+                outfile.write("{},{}\n".format(i, round(data[i], round_digits)))
+            else:
+                outfile.write("{},{}\n".format(i, data[i]))
         outfile.close()
 
     def create_composition_report(self, iteration):
@@ -57,11 +60,13 @@ class Report:
             self.to_dir + "/activities",
             self.to_dir + "/activity_coefficients",
             self.to_dir + "/magma_cation_mass_fraction",
+            self.to_dir + "/magma_oxide_mass_fraction",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.liquid_system.activities)
         self.__make_report(path=paths[1], iteration=iteration, data=self.liquid_system.activity_coefficients)
         self.__make_report(path=paths[2], iteration=iteration, data=self.liquid_system.cation_mass_fraction)
+        self.__make_report(path=paths[3], iteration=iteration, data=self.liquid_system.liquid_oxide_mass_fraction)
 
     def create_gas_report(self, iteration):
         paths = [
