@@ -100,7 +100,8 @@ class LiquidActivity:
                 self.cation_mass.update({"O": 1e-99})  # make it very small
             else:
                 self.cation_mass.update({"O": self.melt_mass - sum(self.cation_mass.values())})
-        self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in self.cation_mass.keys()}
+        self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in
+                                     self.cation_mass.keys()}
         return self.cation_mass_fraction
 
     def get_liquid_oxide_mass_fraction(self):

@@ -243,7 +243,8 @@ class ConvertComposition:
                 corresponding_oxide = get_element_in_base_oxide(element=c, oxides=oxides)
                 oxide_stoich = get_molecule_stoichiometry(molecule=corresponding_oxide)  # get the molecule stoich
                 element_stoich_in_molecule = oxide_stoich[c]  # get the stoich of the element in the molecule
-                oxides_moles[corresponding_oxide] += abundance / element_stoich_in_molecule  # add the moles of the cation
+                oxides_moles[
+                    corresponding_oxide] += abundance / element_stoich_in_molecule  # add the moles of the cation
         return oxides_moles
 
     def moles_to_mass(self, composition: dict):

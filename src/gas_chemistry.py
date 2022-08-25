@@ -145,7 +145,8 @@ class GasPressure:
         self.pressure_to_number_density = 1.01325e6 / 1.38046e-16  # (dyn/cm**2=>atm) / Boltzmann's constant (R/AVOG)
         self.fO2_buffer = fO2_buffer
         self._buffer = fO2_Buffer()
-        self.cation_mass_fraction = self.get_cation_fraction_from_moles(vapor_mass=0.0)  # mass fraction of cations in vapor
+        self.cation_mass_fraction = self.get_cation_fraction_from_moles(
+            vapor_mass=0.0)  # mass fraction of cations in vapor
         self.oxygen_fugacity = -10000000
 
     def get_cation_fraction_from_moles(self, vapor_mass, include_O=True):
@@ -165,7 +166,8 @@ class GasPressure:
                 self.cation_mass.update({"O": 1e-99})  # make it very small
             else:
                 self.cation_mass.update({"O": vapor_mass - sum(self.cation_mass.values())})
-        self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in self.cation_mass.keys()}
+        self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in
+                                     self.cation_mass.keys()}
         return self.cation_mass_fraction
 
     def get_f(self):

@@ -1,5 +1,6 @@
 from math import log
 
+
 def get_oxygen_fugacity(gas_system):
     """
     From Visscher and Fegley 2013.
@@ -12,6 +13,7 @@ def get_oxygen_fugacity(gas_system):
     """
     pp_O2 = gas_system.partial_pressures["O2"]
     return log(pp_O2)
+
 
 class fO2_Buffer:
     """
@@ -38,7 +40,6 @@ class fO2_Buffer:
         :return:
         """
         return C + 273.15
-
 
     def iron_wustite(self, temperature, pressure):
         """

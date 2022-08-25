@@ -1,6 +1,3 @@
-
-
-
 def calculate_delta_kin(element, beta=0.5):
     """
     Returns the kinetic fractation factor in Delta notation.
