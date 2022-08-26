@@ -127,6 +127,8 @@ for run in runs.keys():
         output_interval = 100
         if t.weight_fraction_vaporized * 100.0 > 5:  # vmf changes very fast towards end of simulation
             output_interval = 5
+        if 80 < t.weight_fraction_vaporized:
+            output_interval = 50
         l.calculate_activities(temperature=temperature)
         g.calculate_pressures(temperature=temperature, liquid_system=l)
         if l.counter == 1:
