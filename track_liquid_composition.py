@@ -198,6 +198,26 @@ def get_mg_si(vmfs: list, composition: dict, vmf: float):
     sio2_mol = sio2_wt / 60.08
     return mgo_mol / sio2_mol
 
+def force_mg_si(bulk_composition: dict, mg_si: float):
+    """
+    Takes the bulk composition dictionary and forces a molar Mg/Si ratio while retaining other
+    molecular relative ratios.
+    :param bulk_composition:
+    :param mg_si: Desired molar ratio of Mg/Si
+    :return:
+    """
+    molar_masses = pd.read_csv("data/periodic_table.csv", index_col="element")
+    # keep sum of all other oxides constant so that we ONLY change Mg/Si
+    safe_masses = {i: bulk_composition[i] for i in bulk_composition.keys() if i not in ['MgO', 'SiO2']}
+    # these are the masses we want to change
+    unsafe_masses = {i: bulk_composition[i] for i in bulk_composition.keys() if i in ['MgO', 'SiO2']}
+    # get the molar abundances of the unsafe elements
+    unsafe_molar_abundances = {i: unsafe_masses[i] / molar_masses.loc[i, 'atomic_mass'] for i in unsafe_masses.keys()}
+    # molar weights of Mg/Si
+    mg_mol_mass = molar_masses.loc['Mg', 'atomic_mass']
+    si_mol_mass = molar_masses.loc['Si', 'atomic_mass']
+
+
 
 fig, axs = plt.subplots(nrows=2, ncols=8, figsize=(32, 8), sharex="all", sharey="all")
 axs = axs.flatten()
