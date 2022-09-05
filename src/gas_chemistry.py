@@ -127,7 +127,7 @@ class GasPressure:
         self.cation_mass = None
         self.cation_moles = None
         self.total_pressure = None
-        self.partial_pressures = None
+        self.partial_pressures = None  # all species partial pressures
         self.composition = composition
         self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 4",
                                                     index_col="Product")
