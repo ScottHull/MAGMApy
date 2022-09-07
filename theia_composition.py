@@ -5,7 +5,7 @@ from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data
 
-from monte_carlo.monte_carlo import run_monte_carlo, write_file
+from monte_carlo.monte_carlo import run_monte_carlo, run_monte_carlo_mp, write_file
 
 import csv
 import numpy as np
@@ -346,6 +346,12 @@ for run in runs.keys():
                                                        target_composition=bsm_composition, temperature=temperature,
                                                        vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0)
 
+pool = mp.Pool(5)
+pool.map(run_monte_carlo_mp, [[bse_composition, bsm_composition, runs[run]['temperature'], runs[run]['vmf'],
+                            90.0, run, 0.50] for run in runs.keys()])
+pool.close()
+pool.join()
+
 
 fig = plt.figure(figsize=(16, 9))
 ax = fig.add_subplot(111)
@@ -378,7 +384,7 @@ for run in runs.keys():
         "mg/si": theia_mg_si,
         "mg/al": theia_mg_al,
     }
-    write_file(data=theia_weight_pct, metadata=metadata, filename=to_dir + "/theia_composition.csv")
+    write_file(data=theia_weight_pct, metadata=metadata, filename="theia_composition.csv", to_path=to_dir)
     ax.plot(theia_weight_pct.keys(), theia_weight_pct.values(), linewidth=2.0, label=to_dir)
 ax.legend()
 plt.savefig("theia_composition.png")

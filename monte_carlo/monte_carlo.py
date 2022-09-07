@@ -262,3 +262,52 @@ def run_monte_carlo(initial_composition: dict, target_composition: dict, tempera
                  to_path=full_report_path)
 
     return starting_composition
+
+def run_monte_carlo_mp(args):
+    initial_composition, target_composition, temperature, vmf, \
+    full_run_vmf, full_report_path, sum_residuals_for_success = args
+    # build report path
+    if os.path.exists(full_report_path):
+        shutil.rmtree(full_report_path)
+    os.mkdir(full_report_path)
+    # begin the Monte Carlo search
+    iteration = 0
+    residual_error = 1e99  # assign a large number to the initial residual error
+    starting_composition = initial_composition  # set the starting composition to the BSE composition
+    print("Starting Monte Carlo search...")
+    while abs(residual_error) > sum_residuals_for_success:  # while total residual error is greater than a small number
+        iteration += 1
+        composition_at_vmf, c, l, g, t = __monte_carlo_search(starting_composition, temperature,
+                                                              vmf)  # run the Monte Carlo search
+        # calculate the residuals
+        residuals = {oxide: target_composition[oxide] - composition_at_vmf[oxide] if oxide != "Fe2O3" else 0.0 for
+                     oxide
+                     in starting_composition.keys()}
+        # calculate the total residual error
+        residual_error = sum([abs(residuals[oxide]) for oxide in residuals.keys()])
+        # adjust the guess
+        starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
+        print(
+            f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nResiduals: {residuals}\n"
+            f"Residual error: {residual_error}"
+        )
+
+    print("FOUND SOLUTION!")
+    # write starting composition and metadata to file
+    print(f"Starting composition: {starting_composition}")
+    print("Running full solution...")
+    c, l, g, t, best_vmf = __run_full_MAGMApy(
+        composition=starting_composition, target_composition=target_composition, temperature=temperature,
+        to_vmf=full_run_vmf, to_dir=full_report_path
+    )
+    print("Finished full solution.")
+
+    metadata = {
+        "vmf": vmf,
+        "best vmf": best_vmf,
+        "temperature": temperature,
+    }
+    write_file(data=starting_composition, metadata=metadata, filename="starting_composition.csv",
+                 to_path=full_report_path)
+
+    return starting_composition
