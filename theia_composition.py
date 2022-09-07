@@ -5,10 +5,11 @@ from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data
 
-from monte_carlo.monte_carlo import run_monte_carlo
+from monte_carlo.monte_carlo import run_monte_carlo, write_file
 
 import csv
 import numpy as np
+import multiprocessing as mp
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
@@ -338,28 +339,49 @@ runs = {
     },
 }
 
-for run in runs:
-    print(run)
+for run in runs.keys():
     temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
     to_dir = run
     starting_composition = run_monte_carlo(initial_composition=bse_composition,
                                                        target_composition=bsm_composition, temperature=temperature,
                                                        vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0)
 
+
+fig = plt.figure(figsize=(16, 9))
+ax = fig.add_subplot(111)
+ax.set_xlabel("Oxide%")
+ax.set_ylabel("Oxide Wt. %")
+ax.set_title("Disk Bulk Composition")
+for run in runs.keys():
+    temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
+    to_dir = run
+    disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/starting_composition.csv")
+    ax.plot(disk_bulk_composition.keys(), disk_bulk_composition.values(), linewidth=2.0, label=to_dir)
+ax.legend()
+plt.savefig("disk_bulk_composition.png")
+
+fig = plt.figure(figsize=(16, 9))
+ax = fig.add_subplot(111)
+ax.set_xlabel("Oxide%")
+ax.set_ylabel("Oxide Wt. %")
+ax.set_title("Theia Composition")
+for run in runs.keys():
+    temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
+    to_dir = run
     disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/starting_composition.csv")
     theia_weight_pct, theia_moles, theia_cations, theia_mg_si, theia_mg_al = get_theia_composition(
         disk_bulk_composition, bse_composition, disk_mass, disk_mass * earth_mass_fraction / 100
     )
-
-    fig = plt.figure(figsize=(16, 9))
-    ax = fig.add_subplot(111)
-    ax.set_xlabel("Oxide%")
-    ax.set_ylabel("Oxide Wt. %")
-    ax.set_title("Disk Bulk Composition")
-    ax.grid(alpha=0.4)
-    ax.plot(disk_bulk_composition.keys(), disk_bulk_composition.values(), linewidth=2.0, label=to_dir)
-    ax.legend()
-    plt.savefig("disk_bulk_composition.png")
+    metadata = {
+        "temperature": temperature,
+        "vmf": vmf,
+        "mg/si": theia_mg_si,
+        "mg/al": theia_mg_al,
+    }
+    write_file(data=theia_weight_pct, metadata=metadata, filename=to_dir + "/theia_composition.csv")
+    ax.plot(theia_weight_pct.keys(), theia_weight_pct.values(), linewidth=2.0, label=to_dir)
+ax.legend()
+plt.savefig("theia_composition.png")
 
 # fig = plt.figure(figsize=(16, 9))
 # ax = fig.add_subplot(111)

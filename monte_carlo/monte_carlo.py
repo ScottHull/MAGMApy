@@ -90,7 +90,7 @@ def find_best_fit_vmf(vmfs: list, composition: dict, target_composition: dict, r
             best_vmf = vmf
     return best_vmf * 100
 
-def __write_file(data, metadata, to_path, filename):
+def write_file(data, metadata, to_path, filename):
     """
     Writes the metadata and data to a CSV file.
     :param data:
@@ -258,7 +258,7 @@ def run_monte_carlo(initial_composition: dict, target_composition: dict, tempera
         "best vmf": best_vmf,
         "temperature": temperature,
     }
-    __write_file(data=starting_composition, metadata=metadata, filename="starting_composition.csv",
+    write_file(data=starting_composition, metadata=metadata, filename="starting_composition.csv",
                  to_path=full_report_path)
 
     return starting_composition
