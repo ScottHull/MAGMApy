@@ -263,6 +263,30 @@ class ConvertComposition:
         """
         return {i: composition[i] / sum(composition.values()) for i in composition}
 
+    def mass_to_moles(self, composition: dict):
+        """
+        Returns a dictionary of the molar composition of the given absolute masses.
+        :param composition: The absolute mass composition to be converted to molar composition.
+        mol = g / g/mol
+        :return:
+        """
+        return {i: composition[i] / self.get_molecule_mass(molecule=i) for i in composition}
+
+    def oxide_to_cations(self, composition: dict):
+        """
+        Returns a dictionary of the cation composition of the given oxide composition.
+        :param composition: The oxide composition to be converted to cation composition.
+        :return:
+        """
+        cations = {}
+        for oxide in composition:
+            stoich = get_molecule_stoichiometry(molecule=oxide)
+            for cation in stoich:
+                if cation not in cations and cation != "O":  # do not include O
+                    cations[cation] = 0
+                if cation != "O":
+                    cations[cation] += stoich[cation] * composition[oxide]
+        return cations
 
 class Composition(ConvertComposition):
     """
