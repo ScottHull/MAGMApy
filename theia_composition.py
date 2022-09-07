@@ -346,7 +346,7 @@ for run in runs.keys():
                                                        target_composition=bsm_composition, temperature=temperature,
                                                        vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0)
 
-pool = mp.Pool(5)
+pool = mp.Pool(20)
 pool.map(run_monte_carlo_mp, [[bse_composition, bsm_composition, runs[run]['temperature'], runs[run]['vmf'],
                             90.0, run, 0.50] for run in runs.keys()])
 pool.close()
