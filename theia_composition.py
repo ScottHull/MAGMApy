@@ -364,7 +364,11 @@ for run in runs.keys():
         temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
         to_dir = run
         disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/starting_composition.csv")
-        ax.plot(disk_bulk_composition.keys(), disk_bulk_composition.values(), linewidth=2.0, label=to_dir)
+        linestyle = 'solid'
+        if "b073" not in run:
+            linestyle = '--'
+        ax.plot(disk_bulk_composition.keys(), disk_bulk_composition.values(), linestyle=linestyle,
+                linewidth=2.0, label=to_dir)
     except:
         print("{} failed".format(run))
 ax.legend()
@@ -391,7 +395,10 @@ for run in runs.keys():
             "mg/al": theia_mg_al,
         }
         write_file(data=theia_weight_pct, metadata=metadata, filename="theia_composition.csv", to_path=to_dir)
-        ax.plot(theia_weight_pct.keys(), theia_weight_pct.values(), linewidth=2.0, label=to_dir)
+        linestyle = 'solid'
+        if "b073" not in run:
+            linestyle = '--'
+        ax.plot(theia_weight_pct.keys(), theia_weight_pct.values(), linestyle=linestyle, linewidth=2.0, label=to_dir)
     except:
         print("{} failed".format(run))
 ax.legend()
