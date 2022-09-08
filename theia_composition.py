@@ -418,7 +418,7 @@ for run in runs.keys():
         linestyle = 'solid'
         if "b073" not in run:
             linestyle = '--'
-        ax.plot(disk_bulk_composition.keys(), [disk_bulk_composition[i] / bse_composition[i] for i in disk_bulk_composition.keys()], linestyle=linestyle,
+        ax.plot(disk_bulk_composition.keys(), [disk_bulk_composition[i] / bse_composition[i] for i in disk_bulk_composition.keys() if bse_composition[i] != 0], linestyle=linestyle,
                 linewidth=2.0, label=to_dir)
     except Exception as e:
         print(e)
@@ -450,7 +450,7 @@ for run in runs.keys():
         linestyle = 'solid'
         if "b073" not in run:
             linestyle = '--'
-        ax.plot(theia_weight_pct.keys(), [theia_weight_pct[i] / bse_composition[i] for i in theia_weight_pct.keys()], linestyle=linestyle, linewidth=2.0, label=to_dir)
+        ax.plot(theia_weight_pct.keys(), [theia_weight_pct[i] / bse_composition[i] for i in theia_weight_pct.keys() if bse_composition[i] != 0], linestyle=linestyle, linewidth=2.0, label=to_dir)
     except Exception as e:
         print(e)
         print("{} failed".format(run))
