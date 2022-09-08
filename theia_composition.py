@@ -423,6 +423,7 @@ for run in runs.keys():
     except Exception as e:
         print(e)
         print("{} failed".format(run))
+ax.axhline(y=1, linestyle='dotted', color='black', linewidth=3.0, label="BSE")
 ax.legend()
 ax.grid()
 plt.savefig("disk_bulk_composition_rel_bse.png")
@@ -454,6 +455,7 @@ for run in runs.keys():
     except Exception as e:
         print(e)
         print("{} failed".format(run))
+ax.axhline(y=1, linestyle='dotted', color='black', linewidth=3.0, label="BSE")
 ax.legend()
 ax.grid()
 plt.savefig("theia_composition_rel_bse.png")
