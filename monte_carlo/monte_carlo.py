@@ -98,6 +98,8 @@ def write_file(data, metadata, to_path, filename):
     :param to_path:
     :return:
     """
+    if os.path.exists(to_path + "/" + filename):
+        os.remove(to_path + "/" + filename)
     with open(to_path + "/" + filename, 'w') as f:
         for key, value in metadata.items():
             f.write(f"{key},{value}\n")

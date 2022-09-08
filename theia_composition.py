@@ -206,8 +206,6 @@ def get_theia_composition(starting_composition, earth_composition, disk_mass, ea
     return theia_weight_pct, theia_moles, theia_cations, theia_mg_si, theia_mg_al
 
 def read_composition_file(file_path: str, metadata_rows=3):
-    if os.path.exists(file_path):
-        os.remove(file_path)
     metadata = {}
     data = {}
     with open(file_path, 'r') as infile:
