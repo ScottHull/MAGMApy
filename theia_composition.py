@@ -7,6 +7,7 @@ from src.plots import collect_data
 
 from monte_carlo.monte_carlo import run_monte_carlo, run_monte_carlo_mp, write_file
 
+import os
 import csv
 import numpy as np
 import multiprocessing as mp
@@ -205,6 +206,8 @@ def get_theia_composition(starting_composition, earth_composition, disk_mass, ea
     return theia_weight_pct, theia_moles, theia_cations, theia_mg_si, theia_mg_al
 
 def read_composition_file(file_path: str, metadata_rows=3):
+    if os.path.exists(file_path):
+        os.remove(file_path)
     metadata = {}
     data = {}
     with open(file_path, 'r') as infile:
@@ -367,6 +370,7 @@ for run in runs.keys():
     except:
         print("{} failed".format(run))
 ax.legend()
+ax.grid()
 plt.savefig("disk_bulk_composition.png")
 
 fig = plt.figure(figsize=(16, 9))
@@ -393,6 +397,7 @@ for run in runs.keys():
     except:
         print("{} failed".format(run))
 ax.legend()
+ax.grid()
 plt.savefig("theia_composition.png")
 
 # fig = plt.figure(figsize=(16, 9))
