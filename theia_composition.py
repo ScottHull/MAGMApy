@@ -462,8 +462,8 @@ plt.savefig("theia_composition_rel_bse.png")
 
 fig = plt.figure(figsize=(16, 9))
 ax = fig.add_subplot(111)
-ax.set_xlabel("Mg/Al")
-ax.set_ylabel("Mg/Si")
+ax.set_xlabel("Mg/Si")
+ax.set_ylabel("Mg/Al")
 ax.set_title("Bulk Silicate Theia Mg/Si vs. Mg/Al")
 for run in runs.keys():
     try:
@@ -486,7 +486,6 @@ for run in runs.keys():
     except Exception as e:
         print(e)
         print("{} failed".format(run))
-ax.axhline(y=1, linestyle='dotted', color='black', linewidth=3.0, label="BSE")
 ax.legend()
 ax.grid()
 plt.savefig("bulk_sil_theia_mg_si.png")
