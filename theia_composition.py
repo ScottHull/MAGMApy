@@ -433,11 +433,6 @@ ax = fig.add_subplot(111)
 ax.set_xlabel("Oxide%")
 ax.set_ylabel("Oxide Wt. % (relative to BSE)")
 ax.set_title("Bulk Silicate Theia Composition Relative to BSE")
-fig2 = plt.figure(figsize=(16, 9))
-ax2 = fig.add_subplot(111)
-ax2.set_xlabel("Mg/Si")
-ax2.set_ylabel("Mg/Al")
-ax2.set_title("Bulk Silicate Theia Mg/Si vs Mg/Al")
 for run in runs.keys():
     try:
         temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
@@ -454,21 +449,47 @@ for run in runs.keys():
         }
         write_file(data=theia_weight_pct, metadata=metadata, filename="theia_composition.csv", to_path=to_dir)
         linestyle = 'solid'
-        marker = "o"
         if "b073" not in run:
             linestyle = '--'
-            marker = "x"
         ax.plot([i for i in theia_weight_pct.keys() if bse_composition[i] != 0], [theia_weight_pct[i] / bse_composition[i] for i in theia_weight_pct.keys() if bse_composition[i] != 0], linestyle=linestyle, linewidth=2.0, label=to_dir)
-        ax2.scatter(
-            theia_mg_si.values(), theia_mg_al.values(), marker=marker, s=100, label=to_dir
-        )
     except Exception as e:
         print(e)
         print("{} failed".format(run))
-ax2.axhline(y=1, linestyle='dotted', color='black', linewidth=3.0, label="BSE")
-ax2.legend()
-ax2.grid()
+ax.axhline(y=1, linestyle='dotted', color='black', linewidth=3.0, label="BSE")
+ax.legend()
+ax.grid()
 plt.savefig("theia_composition_rel_bse.png")
+
+fig = plt.figure(figsize=(16, 9))
+ax = fig.add_subplot(111)
+ax.set_xlabel("Mg/Al")
+ax.set_ylabel("Mg/Si")
+ax.set_title("Bulk Silicate Theia Mg/Si vs. Mg/Al")
+for run in runs.keys():
+    try:
+        temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
+        to_dir = run
+        disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/starting_composition.csv")
+        theia_weight_pct, theia_moles, theia_cations, theia_mg_si, theia_mg_al = get_theia_composition(
+            disk_bulk_composition, bse_composition, disk_mass, disk_mass * earth_mass_fraction / 100
+        )
+        metadata = {
+            "temperature": temperature,
+            "vmf": vmf,
+            "mg/si": theia_mg_si,
+            "mg/al": theia_mg_al,
+        }
+        marker = 'o'
+        if "b073" not in run:
+            marker = 'x'
+        ax.scatter(theia_mg_si, theia_mg_al, marker=marker, s=200, label=to_dir)
+    except Exception as e:
+        print(e)
+        print("{} failed".format(run))
+ax.axhline(y=1, linestyle='dotted', color='black', linewidth=3.0, label="BSE")
+ax.legend()
+ax.grid()
+plt.savefig("bulk_sil_theia_mg_si.png")
 
 # fig = plt.figure(figsize=(16, 9))
 # ax = fig.add_subplot(111)
