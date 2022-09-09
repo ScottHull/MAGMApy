@@ -201,9 +201,9 @@ def get_theia_composition(starting_composition, earth_composition, disk_mass, ea
                         theia_weights.keys()}
     theia_moles = ConvertComposition().mass_to_moles(theia_weights)
     theia_cations = ConvertComposition().oxide_to_cations(theia_moles)
-    theia_mg_si = {cation: theia_cations[cation] / theia_cations['Si'] for cation in theia_cations.keys()}
-    theia_mg_al = {cation: theia_cations[cation] / theia_cations['Al'] for cation in theia_cations.keys()}
-    return theia_weight_pct, theia_moles, theia_cations, theia_mg_si, theia_mg_al
+    theia_x_si = {cation: theia_cations[cation] / theia_cations['Si'] for cation in theia_cations.keys()}
+    theia_x_al = {cation: theia_cations[cation] / theia_cations['Al'] for cation in theia_cations.keys()}
+    return theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al
 
 def read_composition_file(file_path: str, metadata_rows=3):
     metadata = {}
@@ -470,19 +470,19 @@ for run in runs.keys():
         temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
         to_dir = run
         disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/starting_composition.csv")
-        theia_weight_pct, theia_moles, theia_cations, theia_mg_si, theia_mg_al = get_theia_composition(
+        theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
             disk_bulk_composition, bse_composition, disk_mass, disk_mass * earth_mass_fraction / 100
         )
         metadata = {
             "temperature": temperature,
             "vmf": vmf,
-            "mg/si": theia_mg_si,
-            "mg/al": theia_mg_al,
+            "mg/si": theia_x_si['Mg'],
+            "mg/al": theia_x_al['Mg'],
         }
         marker = 'o'
         if "b073" not in run:
             marker = 'x'
-        ax.scatter(theia_mg_si, theia_mg_al, marker=marker, s=200, label=to_dir)
+        ax.scatter(theia_x_si['Mg'], theia_x_al['Mg'], marker=marker, s=200, label=to_dir)
     except Exception as e:
         print(e)
         print("{} failed".format(run))
