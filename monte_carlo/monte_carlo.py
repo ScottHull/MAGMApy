@@ -218,7 +218,8 @@ def __run_full_MAGMApy(composition, target_composition, temperature, to_vmf=90.0
 
 
 def run_monte_carlo(initial_composition: dict, target_composition: dict, temperature: float, vmf: float,
-                    full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55):
+                    full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55,
+                    starting_comp_filename="starting_composition.csv"):
     # build report path
     if os.path.exists(full_report_path):
         shutil.rmtree(full_report_path)
@@ -248,21 +249,22 @@ def run_monte_carlo(initial_composition: dict, target_composition: dict, tempera
     print("FOUND SOLUTION!")
     # write starting composition and metadata to file
     print(f"Starting composition: {starting_composition}")
-    print("Running full solution...")
-    c, l, g, t, best_vmf = __run_full_MAGMApy(
-        composition=starting_composition, target_composition=target_composition, temperature=temperature,
-        to_vmf=full_run_vmf, to_dir=full_report_path
-    )
-    print("Finished full solution.")
+    best_vmf = None
+    if full_run_vmf is not None:
+        print("Running full solution...")
+        c, l, g, t, best_vmf = __run_full_MAGMApy(
+            composition=starting_composition, target_composition=target_composition, temperature=temperature,
+            to_vmf=full_run_vmf, to_dir=full_report_path
+        )
+        print("Finished full solution.")
 
     metadata = {
         "vmf": vmf,
         "best vmf": best_vmf,
         "temperature": temperature,
     }
-    write_file(data=starting_composition, metadata=metadata, filename="starting_composition.csv",
-                 to_path=full_report_path)
-
+    write_file(data=starting_composition, metadata=metadata, filename=starting_comp_filename,
+               to_path=full_report_path)
     return starting_composition
 
 def run_monte_carlo_mp(args):
@@ -297,12 +299,14 @@ def run_monte_carlo_mp(args):
     print("FOUND SOLUTION!")
     # write starting composition and metadata to file
     print(f"Starting composition: {starting_composition}")
-    print("Running full solution...")
-    c, l, g, t, best_vmf = __run_full_MAGMApy(
-        composition=starting_composition, target_composition=target_composition, temperature=temperature,
-        to_vmf=full_run_vmf, to_dir=full_report_path
-    )
-    print("Finished full solution.")
+    best_vmf = None
+    if full_run_vmf is not None:
+        print("Running full solution...")
+        c, l, g, t, best_vmf = __run_full_MAGMApy(
+            composition=starting_composition, target_composition=target_composition, temperature=temperature,
+            to_vmf=full_run_vmf, to_dir=full_report_path
+        )
+        print("Finished full solution.")
 
     metadata = {
         "vmf": vmf,
@@ -311,5 +315,4 @@ def run_monte_carlo_mp(args):
     }
     write_file(data=starting_composition, metadata=metadata, filename="starting_composition.csv",
                  to_path=full_report_path)
-
     return starting_composition
