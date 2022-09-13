@@ -340,6 +340,11 @@ runs = {
     # },
 }
 
+MASS_MOON = 7.34767309e22  # kg
+disk_mass = 1.0  # M_L
+earth_pct = 100.0  # %
+earth_mass_fraction = 30.0  # %
+
 def run_isotherm(args):
     temperature, to_dir = args
     for vmf in np.arange(10, 100, 10):
@@ -347,6 +352,19 @@ def run_isotherm(args):
                                                target_composition=bsm_composition, temperature=temperature,
                                                vmf=vmf, full_report_path=to_dir, full_run_vmf=None,
                                             starting_comp_filename="{}_{}_starting_comp.csv".format(temperature, vmf))
+        disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(
+            to_dir + "/starting_composition.csv")
+        theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
+            disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,
+                                                    disk_mass * MASS_MOON * earth_mass_fraction / 100
+        )
+        metadata = {
+            "temperature": temperature,
+            "vmf": vmf,
+            "mg/si": theia_x_si['Mg'],
+            "mg/al": theia_x_al['Mg'],
+        }
+        write_file(data=theia_weight_pct, metadata=metadata, filename="{}_{}_silicate_theia_composition.csv".format(temperature, vmf), to_path=to_dir)
 
 to_dir = "isotherm_initial_composition_solutions"
 if not os.path.exists(to_dir):
