@@ -219,11 +219,13 @@ def __run_full_MAGMApy(composition, target_composition, temperature, to_vmf=90.0
 
 def run_monte_carlo(initial_composition: dict, target_composition: dict, temperature: float, vmf: float,
                     full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55,
-                    starting_comp_filename="starting_composition.csv"):
+                    starting_comp_filename="starting_composition.csv", delete_dir=True):
     # build report path
-    if os.path.exists(full_report_path):
-        shutil.rmtree(full_report_path)
-    os.mkdir(full_report_path)
+    if delete_dir:
+        if os.path.exists(full_report_path):
+            shutil.rmtree(full_report_path)
+    if not os.path.exists(full_report_path):
+        os.mkdir(full_report_path)
     # begin the Monte Carlo search
     iteration = 0
     residual_error = 1e99  # assign a large number to the initial residual error
