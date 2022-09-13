@@ -353,8 +353,6 @@ def run_isotherm(args):
                                                target_composition=bsm_composition, temperature=temperature,
                                                vmf=vmf, full_report_path=starting_comp_to_dir, full_run_vmf=None,
                                             starting_comp_filename="{}_{}_starting_comp.csv".format(temperature, vmf))
-        if not os.path.exists(starting_comp_to_dir):
-            os.mkdir(starting_comp_to_dir)
         disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(
             to_dir + "/starting_composition.csv")
         theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
