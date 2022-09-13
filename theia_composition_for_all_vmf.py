@@ -348,9 +348,12 @@ earth_mass_fraction = 30.0  # %
 def run_isotherm(args):
     temperature, to_dir = args
     for vmf in np.arange(10, 100, 10):
+        starting_comp_to_dir = to_dir + "/disk_starting_comp"
+        if not os.path.exists(starting_comp_to_dir):
+            os.mkdir(starting_comp_to_dir)
         starting_composition = run_monte_carlo(initial_composition=bse_composition,
                                                target_composition=bsm_composition, temperature=temperature,
-                                               vmf=vmf, full_report_path=to_dir, full_run_vmf=None,
+                                               vmf=vmf, full_report_path=starting_comp_to_dir, full_run_vmf=None,
                                             starting_comp_filename="{}_{}_starting_comp.csv".format(temperature, vmf))
         disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(
             to_dir + "/starting_composition.csv")
@@ -364,7 +367,10 @@ def run_isotherm(args):
             "mg/si": theia_x_si['Mg'],
             "mg/al": theia_x_al['Mg'],
         }
-        write_file(data=theia_weight_pct, metadata=metadata, filename="{}_{}_silicate_theia_composition.csv".format(temperature, vmf), to_path=to_dir)
+        theia_to_dir = to_dir + "/silicate_theia_composition"
+        if not os.path.exists(theia_to_dir):
+            os.mkdir(theia_to_dir)
+        write_file(data=theia_weight_pct, metadata=metadata, filename="{}_{}_silicate_theia_composition.csv".format(temperature, vmf), to_path=theia_to_dir)
 
 to_dir = "isotherm_initial_composition_solutions"
 if not os.path.exists(to_dir):
