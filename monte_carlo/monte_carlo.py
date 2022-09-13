@@ -229,7 +229,7 @@ def run_monte_carlo(initial_composition: dict, target_composition: dict, tempera
     residual_error = 1e99  # assign a large number to the initial residual error
     starting_composition = initial_composition  # set the starting composition to the BSE composition
     print("Starting Monte Carlo search...")
-    while abs(residual_error) > sum_residuals_for_success or iteration > 20:  # while total residual error is greater than a small number
+    while abs(residual_error) > sum_residuals_for_success and iteration <= 20:  # while total residual error is greater than a small number
         iteration += 1
         composition_at_vmf, c, l, g, t = __monte_carlo_search(starting_composition, temperature,
                                                               vmf)  # run the Monte Carlo search
@@ -282,7 +282,7 @@ def run_monte_carlo_mp(args):
     residual_error = 1e99  # assign a large number to the initial residual error
     starting_composition = initial_composition  # set the starting composition to the BSE composition
     print("Starting Monte Carlo search...")
-    while abs(residual_error) > sum_residuals_for_success or iteration > 20:  # while total residual error is greater than a small number
+    while abs(residual_error) > sum_residuals_for_success and iteration <= 20:  # while total residual error is greater than a small number
         iteration += 1
         composition_at_vmf, c, l, g, t = __monte_carlo_search(starting_composition, temperature,
                                                               vmf)  # run the Monte Carlo search
