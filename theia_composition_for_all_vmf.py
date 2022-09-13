@@ -359,27 +359,30 @@ def run_isotherm(args):
                                                vmf=vmf, full_report_path=starting_comp_to_dir, full_run_vmf=None,
                                             starting_comp_filename="{}_{}_starting_comp.csv".format(temperature, vmf),
                                                delete_dir=False)
-        disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(
-            starting_comp_to_dir + "/{}_{}_starting_comp.csv".format(temperature, vmf))
-        theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
-            disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,
-                                                    disk_mass * MASS_MOON * earth_mass_fraction / 100
-        )
-        metadata = {
-            "temperature": temperature,
-            "vmf": vmf,
-            "mg/si": theia_x_si['Mg'],
-            "mg/al": theia_x_al['Mg'],
-        }
-        theia_to_dir = to_dir + "/silicate_theia_composition"
-        if not os.path.exists(theia_to_dir):
-            os.mkdir(theia_to_dir)
-        write_file(data=theia_weight_pct, metadata=metadata, filename="{}_{}_silicate_theia_composition.csv".format(temperature, vmf), to_path=theia_to_dir)
+        try:
+            disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(
+                starting_comp_to_dir + "/{}_{}_starting_comp.csv".format(temperature, vmf))
+            theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
+                disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,
+                                                        disk_mass * MASS_MOON * earth_mass_fraction / 100
+            )
+            metadata = {
+                "temperature": temperature,
+                "vmf": vmf,
+                "mg/si": theia_x_si['Mg'],
+                "mg/al": theia_x_al['Mg'],
+            }
+            theia_to_dir = to_dir + "/silicate_theia_composition"
+            if not os.path.exists(theia_to_dir):
+                os.mkdir(theia_to_dir)
+            write_file(data=theia_weight_pct, metadata=metadata, filename="{}_{}_silicate_theia_composition.csv".format(temperature, vmf), to_path=theia_to_dir)
+        except FileNotFoundError:
+            pass
 
 to_dir = "isotherm_initial_composition_solutions"
 if not os.path.exists(to_dir):
     os.mkdir(to_dir)
 pool = mp.Pool(10)
-pool.map(run_isotherm, [[temperature, to_dir] for temperature in [3000, 5000, 8000, 10000]])
+pool.map(run_isotherm, [[temperature, to_dir] for temperature in [3500, 5000, 8000, 10000]])
 pool.close()
 pool.join()
