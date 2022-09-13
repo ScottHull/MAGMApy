@@ -349,8 +349,11 @@ def run_isotherm(args):
     temperature, to_dir = args
     for vmf in np.arange(10, 100, 10):
         starting_comp_to_dir = to_dir + "/disk_starting_comp"
-        if not os.path.exists(starting_comp_to_dir):
-            os.mkdir(starting_comp_to_dir)
+        try:
+            if not os.path.exists(starting_comp_to_dir):
+                os.mkdir(starting_comp_to_dir)
+        except FileExistsError:
+            pass
         starting_composition = run_monte_carlo(initial_composition=bse_composition,
                                                target_composition=bsm_composition, temperature=temperature,
                                                vmf=vmf, full_report_path=starting_comp_to_dir, full_run_vmf=None,
