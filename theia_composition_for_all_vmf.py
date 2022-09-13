@@ -357,7 +357,7 @@ def run_isotherm(args):
                                             starting_comp_filename="{}_{}_starting_comp.csv".format(temperature, vmf),
                                                delete_dir=False)
         disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(
-            to_dir + "/starting_composition.csv")
+            starting_comp_to_dir + "/{}_{}_starting_comp.csv".format(temperature, vmf))
         theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
             disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,
                                                     disk_mass * MASS_MOON * earth_mass_fraction / 100
