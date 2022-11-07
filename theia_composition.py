@@ -31,17 +31,30 @@ bse_composition = {
     'ZnO': 6.7e-3,
 }
 
-bsm_composition = {
-    "SiO2": 44.60,
-    'MgO': 35.10,
-    'Al2O3': 3.90,
-    'TiO2': 0.17,
-    'Fe2O3': 0.00000,
-    'FeO': 12.40,
-    'CaO': 3.30,
-    'Na2O': 0.050,
-    'K2O': 0.004,
-    'ZnO': 2.0e-4,
+# bsm_composition = {
+#     "SiO2": 44.60,
+#     'MgO': 35.10,
+#     'Al2O3': 3.90,
+#     'TiO2': 0.17,
+#     'Fe2O3': 0.00000,
+#     'FeO': 12.40,
+#     'CaO': 3.30,
+#     'Na2O': 0.050,
+#     'K2O': 0.004,
+#     'ZnO': 2.0e-4,
+# }
+
+bsm_composition = {  # including core Fe as FeO
+    "SiO2": 41.95862216,
+    'MgO': 33.02124749,
+    'Al2O3': 3.669027499,
+    'TiO2': 0.159931968,
+    'Fe2O3': 0.0,
+    'FeO': 18.03561908,
+    'CaO': 3.10456173,
+    'Na2O': 0.047038814,
+    'K2O': 0.003763105,
+    'ZnO': 0.000188155,
 }
 
 
@@ -289,13 +302,13 @@ runs = {
     #     'earth_pct': 100 - 60.32,  # %
     #     'disk_mass': 0.47,  # M_L
     # },
-    # '500b075S': {
-    #     "temperature": 6554.56,
-    #     "vmf": 39.77,
-    #     'theia_pct': 67.9,  # %
-    #     'earth_pct': 100 - 67.9,  # %
-    #     'disk_mass': 0.78,  # M_L
-    # },
+    '500b075S': {
+        "temperature": 6554.56,
+        "vmf": 39.77,
+        'theia_pct': 67.9,  # %
+        'earth_pct': 100 - 67.9,  # %
+        'disk_mass': 0.78,  # M_L
+    },
     # '1000b075S': {
     #     "temperature": 6325.06,
     #     "vmf": 42.97,
@@ -340,12 +353,12 @@ runs = {
     # },
 }
 
-# for run in runs.keys():
-#     temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
-#     to_dir = run
-#     starting_composition = run_monte_carlo(initial_composition=bse_composition,
-#                                                        target_composition=bsm_composition, temperature=temperature,
-#                                                        vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0)
+for run in runs.keys():
+    temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
+    to_dir = run
+    starting_composition = run_monte_carlo(initial_composition=bse_composition,
+                                                       target_composition=bsm_composition, temperature=temperature,
+                                                       vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0)
 
 # pool = mp.Pool(20)
 # pool.map(run_monte_carlo_mp, [[bse_composition, bsm_composition, runs[run]['temperature'], runs[run]['vmf'],

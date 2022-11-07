@@ -44,6 +44,19 @@ bsm_composition = {
     'ZnO': 2.0e-4,
 }
 
+# bsm_composition = {  # including core Fe as FeO
+#     "SiO2": 41.95862216,
+#     'MgO': 33.02124749,
+#     'Al2O3': 3.669027499,
+#     'TiO2': 0.159931968,
+#     'Fe2O3': 0.0,
+#     'FeO': 18.03561908,
+#     'CaO': 3.10456173,
+#     'Na2O': 0.047038814,
+#     'K2O': 0.003763105,
+#     'ZnO': 0.000188155,
+# }
+
 
 def renormalize_composition(oxide_masses: dict):
     """
