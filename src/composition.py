@@ -1,7 +1,12 @@
+import os
 import re
 from math import isnan
+import numpy as np
 import pandas as pd
 from copy import copy
+from scipy.interpolate import interp1d
+
+from src.plots import collect_data
 
 
 def get_molecule_stoichiometry(molecule, return_oxygen=True, force_O2=False):
@@ -157,6 +162,25 @@ def get_stoich_from_sheet(molecule, df):
     return d
 
 
+def interpolate_composition_at_vmf(run, vmf, subdir):
+    """
+    Given a VMF, reads all vapor outputs, gets VMF and composition, gets nearest VMF, and then interpolates the
+    composition based on the nearest VMF.
+    :param vapor_path:
+    :param vmf:
+    :return:
+    """
+    # read in all vapor outputs
+    d = collect_data(path=f"{run}/{subdir}", x_header='mass fraction vaporized')
+    vmfs = d.keys()  # get all VMFs
+    species = d[list(vmfs)[0]].keys()  # get species from first vmf
+    interpolated_composition = {}
+    for i in species:
+        # interpolate each species based on the given VMF
+        interpolated_composition.update({i: float(interp1d(x=list(vmfs), y=[d[j][i] for j in vmfs])(vmf / 100.0))})
+    return interpolated_composition
+
+
 class ConvertComposition:
 
     def __init__(self):
@@ -287,6 +311,7 @@ class ConvertComposition:
                 if cation != "O":
                     cations[cation] += stoich[cation] * composition[oxide]
         return cations
+
 
 class Composition(ConvertComposition):
     """
