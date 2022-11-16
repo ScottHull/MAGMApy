@@ -66,6 +66,7 @@ bulk_moon_composition = {  # including core Fe as FeO, my mass balance calculati
     'ZnO': 0.000188155,
 }
 
+
 # define a bunch of functions to calculate the bulk disk composition and Theia's bulk composition
 def get_theia_composition(starting_composition, earth_composition, disk_mass, earth_mass):
     starting_weights = {oxide: starting_composition[oxide] / 100 * disk_mass for oxide in starting_composition.keys()}
@@ -79,6 +80,7 @@ def get_theia_composition(starting_composition, earth_composition, disk_mass, ea
     theia_x_si = {cation: theia_cations[cation] / theia_cations['Si'] for cation in theia_cations.keys()}
     theia_x_al = {cation: theia_cations[cation] / theia_cations['Al'] for cation in theia_cations.keys()}
     return theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al
+
 
 def read_composition_file(file_path: str, metadata_rows=3):
     metadata = {}
@@ -96,41 +98,48 @@ def read_composition_file(file_path: str, metadata_rows=3):
             data.update({line[0]: float(line[1])})
     return metadata, data
 
-def find_disk_composition():
+
+def find_disk_composition(run):
     """
     Find the starting disk composition that reproduces the BSM for each run.
     :return:
     """
-    for run in runs.keys():
-        """
-        We will iteratively solve for a disk composition that gives back the bulk Moon composition.
-        We will use the BSE as an initial guess, and then iteratively adjust the disk composition.
-        """
-        temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
-        to_dir = run
-        starting_comp_filename = f"{run}_starting_composition.csv"
-        starting_composition = run_monte_carlo(initial_composition=bse_composition,
-                                               target_composition=bulk_moon_composition,
-                                               temperature=temperature,
-                                               vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0,
-                                               starting_comp_filename=starting_comp_filename)
-        disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/" + starting_comp_filename)
-        theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
-            disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,
-                                                    disk_mass * MASS_MOON * earth_mass_fraction / 100
-        )
+    """
+    We will iteratively solve for a disk composition that gives back the bulk Moon composition.
+    We will use the BSE as an initial guess, and then iteratively adjust the disk composition.
+    """
+    temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
+    to_dir = run
+    starting_comp_filename = f"{run}_starting_composition.csv"
+    starting_composition = run_monte_carlo(initial_composition=bse_composition,
+                                           target_composition=bulk_moon_composition,
+                                           temperature=temperature,
+                                           vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0,
+                                           starting_comp_filename=starting_comp_filename)
+    disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/" + starting_comp_filename)
+    theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
+        disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,
+                                                disk_mass * MASS_MOON * earth_mass_fraction / 100
+    )
 
-def get_vapor_composition_at_vmf():
+
+def get_vapor_composition_at_vmf(run):
     """
     For each run, interpolate the vapor composition at the given VMF value.
     :return:
     """
-    # TODO: make sure _l phases arent included in vapor mole fractions.
-    for run in runs.keys():
-        temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
-        vapor_composition_species = interpolate_composition_at_vmf(run, vmf, subdir="atmosphere_mole_fraction")
-        print(
-            run, vapor_composition_species
-        )
+    temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
+    vapor_composition_species = interpolate_composition_at_vmf(run, vmf, subdir="atmosphere_mole_fraction")
+    return vapor_composition_species
 
-get_vapor_composition_at_vmf()
+
+run = '500b073S'
+# find_disk_composition(run)
+vapor_comp = {key: value / 100 for key, value in normalize({key: value for key, value in
+                                get_vapor_composition_at_vmf(run).items() if "_l" not in key}).items()}
+# take this and insert into the hydrodynamics code, will calculate mean atmosphere molecular mass there
+print(vapor_comp)
+# now, run the hydrodynamics code
+
+# come back with atmosphere mass loss fraction from hydrodynamics code
+atmosphere_mass_loss_fraction = None  # insert value here
