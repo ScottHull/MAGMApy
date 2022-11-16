@@ -172,6 +172,7 @@ def interpolate_composition_at_vmf(run, vmf, subdir):
     """
     # read in all vapor outputs
     d = collect_data(path=f"{run}/{subdir}", x_header='mass fraction vaporized')
+    d = {i: normalize(d[i]) for i in d.keys()}  # normalize compositions
     vmfs = d.keys()  # get all VMFs
     species = d[list(vmfs)[0]].keys()  # get species from first vmf
     interpolated_composition = {}
@@ -179,6 +180,35 @@ def interpolate_composition_at_vmf(run, vmf, subdir):
         # interpolate each species based on the given VMF
         interpolated_composition.update({i: float(interp1d(x=list(vmfs), y=[d[j][i] for j in vmfs])(vmf / 100.0))})
     return interpolated_composition
+
+
+def get_molecular_mass(molecule: str):
+    """
+    Returns the number of moles of the given composition in weight percent.
+    """
+    # read in the period table
+    pt = pd.read_csv("data/periodic_table.csv", index_col='element')
+    # get the stoichiometry of the molecule
+    stoich = re.findall(r'([A-Z][a-z]*)(\d*)', molecule)
+    # get the sum of the masses of each atom in the molecule
+    moles = 0
+    for atom, count in stoich:
+        if len(count) == 0:
+            count = 1
+        moles += int(count) * pt.loc[atom, 'atomic_mass']
+    return moles
+
+
+def mole_fraction_to_weight_percent(mole_fraction: dict):
+    """
+    Takes in a dictionary of species in mole fraction and converts to weight percent.
+    :param mole_fraction:
+    :return:
+    """
+    weight_percent = {}
+    for i in mole_fraction.keys():
+        weight_percent.update({i: mole_fraction[i] * get_molecular_mass(i)})
+    return normalize(weight_percent)
 
 
 class ConvertComposition:

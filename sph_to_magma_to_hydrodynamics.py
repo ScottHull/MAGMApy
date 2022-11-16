@@ -1,4 +1,5 @@
-from src.composition import Composition, ConvertComposition, normalize, interpolate_composition_at_vmf
+from src.composition import Composition, ConvertComposition, normalize, interpolate_composition_at_vmf, \
+    mole_fraction_to_weight_percent
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
@@ -134,11 +135,54 @@ def get_vapor_composition_at_vmf(run):
 
 
 run = '500b073S'
+# run MAGMA to find the disk composition that reproduces the bulk Moon composition
 # find_disk_composition(run)
-vapor_comp = {key: value / 100 for key, value in normalize({key: value for key, value in
+
+# get the vapor composition at the given VMF
+vapor_comp_mole_fraction = {key: value / 100 for key, value in normalize({key: value for key, value in
                                 get_vapor_composition_at_vmf(run).items() if "_l" not in key}).items()}
+
+# get the vapor mole fraction at all VMFs
+vapor_comp_mole_fraction_all_vmf = collect_data(path=f"{run}/atmosphere_mole_fraction",
+                                                x_header='mass fraction vaporized')
+vapor_comp_mole_fraction_all_vmf = {key: normalize({i: j for i, j in value.items() if "_l" not in i})
+                                    for key, value in vapor_comp_mole_fraction_all_vmf.items()}
+
+# convert to weight percent
+vapor_comp_weight_pct = mole_fraction_to_weight_percent(vapor_comp_mole_fraction)
+vapor_comp_weight_pct_all_vmf = {vmf: mole_fraction_to_weight_percent(vapor_comp_mole_fraction_all_vmf[vmf])
+                                 for vmf in vapor_comp_mole_fraction_all_vmf}
+
 # take this and insert into the hydrodynamics code, will calculate mean atmosphere molecular mass there
-print(vapor_comp)
+print(vapor_comp_weight_pct)
+
+# plot the vapor composition at all VMFs and the vapor composition at the given VMF
+fig, ax = plt.subplots(figsize=(16, 9))
+# get the color cycle for the matplotlib plot as a list
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 20
+all_species = list(vapor_comp_weight_pct.keys())
+for i in vapor_comp_weight_pct_all_vmf.keys():
+    print(sum(vapor_comp_weight_pct_all_vmf[i].values()), vapor_comp_weight_pct_all_vmf[i])
+for i, species in enumerate(all_species):
+    ax.plot([vmf * 100.0 for vmf in vapor_comp_weight_pct_all_vmf.keys()],
+            [vapor_comp_weight_pct_all_vmf[vmf][species] for vmf in vapor_comp_weight_pct_all_vmf.keys()],
+            color=color_cycle[i], label=species)
+    # annotate the line at 10% VMF
+    ax.annotate(species, (10, vapor_comp_weight_pct_all_vmf[next(iter(vapor_comp_weight_pct_all_vmf), 10)][species]), color=color_cycle[i])
+# plot the given VMF as a vertical line
+ax.axvline(x=runs[run]['vmf'], color='k', linestyle='--')
+# plot the vapor composition at the given VMF as a scatter plot
+for j, species in enumerate(vapor_comp_weight_pct.keys()):
+    index = all_species.index(species)
+    ax.scatter(runs[run]['vmf'], vapor_comp_weight_pct[species], color=color_cycle[index], label=species)
+    # annotate next to the scattered point
+    ax.annotate(species, (runs[run]['vmf'] + 0.5, vapor_comp_weight_pct[species]), color=color_cycle[index])
+ax.set_xlabel('Vapor mass fraction')
+ax.set_ylabel('Weight percent')
+ax.set_title(f"Vapor composition at all VMFs and at VMF = {runs[run]['vmf']}")
+ax.grid()
+plt.show()
+
 # now, run the hydrodynamics code
 
 # come back with atmosphere mass loss fraction from hydrodynamics code
