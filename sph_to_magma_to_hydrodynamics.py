@@ -1,5 +1,5 @@
 from src.composition import Composition, ConvertComposition, normalize, interpolate_composition_at_vmf, \
-    mole_fraction_to_weight_percent
+    mole_fraction_to_weight_percent, get_mean_molecular_mass
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
@@ -140,7 +140,8 @@ run = '500b073S'
 
 # get the vapor composition at the given VMF
 vapor_comp_mole_fraction = {key: value / 100 for key, value in normalize({key: value for key, value in
-                                get_vapor_composition_at_vmf(run).items() if "_l" not in key}).items()}
+                                                                          get_vapor_composition_at_vmf(run).items() if
+                                                                          "_l" not in key}).items()}
 
 # get the vapor mole fraction at all VMFs
 vapor_comp_mole_fraction_all_vmf = collect_data(path=f"{run}/atmosphere_mole_fraction",
@@ -156,19 +157,29 @@ vapor_comp_weight_pct_all_vmf = {vmf: mole_fraction_to_weight_percent(vapor_comp
 # take this and insert into the hydrodynamics code, will calculate mean atmosphere molecular mass there
 print(vapor_comp_weight_pct)
 
+# get the mean molecular mass of the atmosphere as a function of VMF
+mean_molecular_mass = [get_mean_molecular_mass(vapor_comp_weight_pct_all_vmf[vmf]) for vmf in
+                       vapor_comp_weight_pct_all_vmf.keys()]
+# plot it
+plt.plot(np.array(list(vapor_comp_mole_fraction_all_vmf.keys())) * 100.0, np.array(mean_molecular_mass) / 1000,
+         linewidth=2.0)
+# plot a vertical line at the given VMF
+plt.axvline(x=runs[run]['vmf'], color='red', linestyle='--', linewidth=2.0)
+plt.xlabel("VMF (%)")
+plt.ylabel("Mean Molecular Mass (kg/mol)")
+plt.title("Mean Molecular Mass of Vapor as a Function of VMF")
+plt.grid()
+plt.show()
+
 # plot the vapor composition at all VMFs and the vapor composition at the given VMF
 fig, ax = plt.subplots(figsize=(16, 9))
 # get the color cycle for the matplotlib plot as a list
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 20
 all_species = list(vapor_comp_weight_pct.keys())
-for i in vapor_comp_weight_pct_all_vmf.keys():
-    print(sum(vapor_comp_weight_pct_all_vmf[i].values()), vapor_comp_weight_pct_all_vmf[i])
 for i, species in enumerate(all_species):
     ax.plot([vmf * 100.0 for vmf in vapor_comp_weight_pct_all_vmf.keys()],
             [vapor_comp_weight_pct_all_vmf[vmf][species] for vmf in vapor_comp_weight_pct_all_vmf.keys()],
             color=color_cycle[i], label=species)
-    # annotate the line at 10% VMF
-    ax.annotate(species, (10, vapor_comp_weight_pct_all_vmf[next(iter(vapor_comp_weight_pct_all_vmf), 10)][species]), color=color_cycle[i])
 # plot the given VMF as a vertical line
 ax.axvline(x=runs[run]['vmf'], color='k', linestyle='--')
 # plot the vapor composition at the given VMF as a scatter plot
@@ -177,6 +188,8 @@ for j, species in enumerate(vapor_comp_weight_pct.keys()):
     ax.scatter(runs[run]['vmf'], vapor_comp_weight_pct[species], color=color_cycle[index], label=species)
     # annotate next to the scattered point
     ax.annotate(species, (runs[run]['vmf'] + 0.5, vapor_comp_weight_pct[species]), color=color_cycle[index])
+# convert y-axis to log scale
+ax.set_yscale('log')
 ax.set_xlabel('Vapor mass fraction')
 ax.set_ylabel('Weight percent')
 ax.set_title(f"Vapor composition at all VMFs and at VMF = {runs[run]['vmf']}")
@@ -186,4 +199,47 @@ plt.show()
 # now, run the hydrodynamics code
 
 # come back with atmosphere mass loss fraction from hydrodynamics code
-atmosphere_mass_loss_fraction = None  # insert value here
+atmosphere_mass_loss_fraction = 0.5  # insert value here
+
+# we want to get the absolute masses in the vapor
+disk_vapor_mass = runs[run]['disk_mass'] * runs[run]['vmf'] / 100.0
+# find the pre-loss atmosphere species masses
+original_atmosphere_component_masses = {
+    species: disk_vapor_mass * MASS_MOON * vapor_comp_weight_pct[species] / 100.0 for species in
+    vapor_comp_weight_pct.keys()
+}
+# find the post-loss atmosphere species masses
+post_loss_atmosphere_component_masses = {
+    species: atmosphere_mass_loss_fraction * original_atmosphere_component_masses[species]
+    for species in original_atmosphere_component_masses.keys()
+}
+
+# plot the pre-loss and post-loss atmosphere species masses
+fig, ax = plt.subplots(figsize=(16, 9))
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 20
+for index, species in enumerate(original_atmosphere_component_masses.keys()):
+    ax.scatter(
+        index + 1, original_atmosphere_component_masses[species], color=colors[all_species.index(species)],
+        s=100, marker="*", label=species,
+    )
+    ax.scatter(
+        index + 1, post_loss_atmosphere_component_masses[species], color=colors[all_species.index(species)],
+        s=100, label=species,
+    )
+    # draw an arrow connecting the edges of the scatter point to show the mass loss
+    ax.arrow(
+        index + 1, original_atmosphere_component_masses[species], 0,
+        post_loss_atmosphere_component_masses[species] - original_atmosphere_component_masses[species],
+        color=colors[all_species.index(species)], head_width=0.4,
+        head_length=abs(original_atmosphere_component_masses[species] -
+                        post_loss_atmosphere_component_masses[species]) * 0.1,
+        length_includes_head=True,
+    )
+    # annotate the species name next to the arrow
+    ax.annotate(species, (index + 0.5, post_loss_atmosphere_component_masses[species] - 0.3e21),
+                color=colors[all_species.index(species)])
+ax.grid()
+ax.set_xlabel('Species')
+ax.set_ylabel('Mass (kg)')
+ax.set_title(f"Mass depletion of atmosphere species at VMF = {runs[run]['vmf']}")
+plt.show()

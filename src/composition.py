@@ -199,6 +199,24 @@ def get_molecular_mass(molecule: str):
     return moles
 
 
+def get_mean_molecular_mass(composition: dict):
+    """
+    Returns the mean molecular mass of the given composition in weight percent.
+    """
+    # remove the gas label
+    cleaned_composition = {key.split("_")[0].replace("+", "").replace("-", ""): value
+                           for key, value in composition.items()}
+    # remove species with 0 weight percent
+    cleaned_composition = {key: value for key, value in cleaned_composition.items() if value != 0}
+    # get the sum of the masses in the composition dict
+    total_mass = sum(cleaned_composition.values())
+    # get the number of moles in the composition dict
+    total_moles = sum(
+        [(1 / get_molecular_mass(molecule)) * cleaned_composition[molecule] if get_molecular_mass(molecule) != 0 else 0
+         for molecule in cleaned_composition.keys()])
+    return total_mass / total_moles
+
+
 def mole_fraction_to_weight_percent(mole_fraction: dict):
     """
     Takes in a dictionary of species in mole fraction and converts to weight percent.
