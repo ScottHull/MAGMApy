@@ -15,11 +15,15 @@ import multiprocessing as mp
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
+# use seaborn-colorblind palette
+plt.style.use('seaborn-colorblind')
+
 # SPH parameters at peak shock conditions
 runs = {
     '500b073S': {
         "temperature": 3063.18893,
         "vmf": 19.21,
+        # "vmf": 2.52,
         'theia_pct': 66.78,  # %
         'earth_pct': 100 - 66.78,  # %
         'disk_mass': 1.02,  # M_L
@@ -133,10 +137,43 @@ def get_vapor_composition_at_vmf(run):
     vapor_composition_species = interpolate_composition_at_vmf(run, vmf, subdir="atmosphere_mole_fraction")
     return vapor_composition_species
 
+def return_vmf_and_element_lists(data):
+    """
+    Returns a list of VMF values and a dictionary of lists of element values.
+    :param data:
+    :return:
+    """
+    vmf_list = list(sorted(data.keys()))
+    elements_at_vmf = {element: [data[vmf][element] for vmf in vmf_list] for element in data[vmf_list[0]].keys()}
+    return vmf_list, elements_at_vmf
+
 
 run = '500b073S'
 # run MAGMA to find the disk composition that reproduces the bulk Moon composition
 # find_disk_composition(run)
+
+# plot the magma composition as a function of VMF
+fig = plt.figure(figsize=(16, 9))
+ax = fig.add_subplot(111)
+ax.set_title(run)
+ax.set_xlabel("VMF (%)")
+ax.set_ylabel("Oxide Abundance (wt%)")
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+ax.set_title(run)
+data = collect_data(path=f"{run}/magma_oxide_mass_fraction", x_header='mass fraction vaporized')
+vmf_list, elements = return_vmf_and_element_lists(data)
+for index2, oxide in enumerate(elements):
+    color = color_cycle[index2]
+    ax.plot(np.array(vmf_list) * 100, np.array(elements[oxide]) * 100, color=color)
+    # ax.scatter(runs[run]['vmf'], interpolated_elements[oxide] * 100, color=color, s=200, marker='x')
+    ax.axhline(bsm_composition[oxide], color=color, linewidth=2.0, linestyle='--')
+    ax.scatter([], [], color=color, marker='s', label="{} (MAGMA)".format(oxide))
+ax.plot([], [], color='k', linestyle="--", label="Moon")
+ax.axvline(runs[run]['vmf'], linewidth=2.0, color='k', label="Predicted VMF")
+
+ax.legend(loc='upper right')
+
+plt.show()
 
 # get the vapor composition at the given VMF
 vapor_comp_mole_fraction = {key: value / 100 for key, value in normalize({key: value for key, value in
