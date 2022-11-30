@@ -247,6 +247,8 @@ def run_monte_carlo(initial_composition: dict, target_composition: dict, tempera
             f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nResiduals: {residuals}\n"
             f"Residual error: {residual_error}"
         )
+        if abs(residual_error) > sum_residuals_for_success:
+            print("Calculation has NOT yet converged. Continuing search...")
     if iteration > 20:
         print("FAILED TO FIND SOLUTION!")
         return None

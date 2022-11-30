@@ -20,10 +20,10 @@ plt.style.use('seaborn-colorblind')
 
 # SPH parameters at peak shock conditions
 runs = {
-    '500b073S': {
+    '500b073S-no-circ-vmf': {
         "temperature": 3063.18893,
-        "vmf": 19.21,
-        # "vmf": 2.52,
+        # "vmf": 19.21,
+        "vmf": 2.52,
         'theia_pct': 66.78,  # %
         'earth_pct': 100 - 66.78,  # %
         'disk_mass': 1.02,  # M_L
@@ -71,6 +71,8 @@ bulk_moon_composition = {  # including core Fe as FeO, my mass balance calculati
     'ZnO': 0.000188155,
 }
 
+target_composition = bulk_moon_composition
+
 
 # define a bunch of functions to calculate the bulk disk composition and Theia's bulk composition
 def get_theia_composition(starting_composition, earth_composition, disk_mass, earth_mass):
@@ -117,7 +119,7 @@ def find_disk_composition(run):
     to_dir = run
     starting_comp_filename = f"{run}_starting_composition.csv"
     starting_composition = run_monte_carlo(initial_composition=bse_composition,
-                                           target_composition=bulk_moon_composition,
+                                           target_composition=target_composition,
                                            temperature=temperature,
                                            vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0,
                                            starting_comp_filename=starting_comp_filename)
@@ -148,7 +150,7 @@ def return_vmf_and_element_lists(data):
     return vmf_list, elements_at_vmf
 
 
-run = '500b073S'
+run = '500b073S-no-circ-vmf'
 # run MAGMA to find the disk composition that reproduces the bulk Moon composition
 # find_disk_composition(run)
 
@@ -158,7 +160,7 @@ ax = fig.add_subplot(111)
 ax.set_title(run)
 ax.set_xlabel("VMF (%)")
 ax.set_ylabel("Oxide Abundance (wt%)")
-color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 10
 ax.set_title(run)
 data = collect_data(path=f"{run}/magma_oxide_mass_fraction", x_header='mass fraction vaporized')
 vmf_list, elements = return_vmf_and_element_lists(data)
@@ -166,7 +168,7 @@ for index2, oxide in enumerate(elements):
     color = color_cycle[index2]
     ax.plot(np.array(vmf_list) * 100, np.array(elements[oxide]) * 100, color=color)
     # ax.scatter(runs[run]['vmf'], interpolated_elements[oxide] * 100, color=color, s=200, marker='x')
-    ax.axhline(bsm_composition[oxide], color=color, linewidth=2.0, linestyle='--')
+    ax.axhline(target_composition[oxide], color=color, linewidth=2.0, linestyle='--')
     ax.scatter([], [], color=color, marker='s', label="{} (MAGMA)".format(oxide))
 ax.plot([], [], color='k', linestyle="--", label="Moon")
 ax.axvline(runs[run]['vmf'], linewidth=2.0, color='k', label="Predicted VMF")
@@ -272,11 +274,15 @@ for index, species in enumerate(original_atmosphere_component_masses.keys()):
                         post_loss_atmosphere_component_masses[species]) * 0.1,
         length_includes_head=True,
     )
+    # get the order of magnitude of the largest y value
+    y_max = max(original_atmosphere_component_masses[species], post_loss_atmosphere_component_masses[species])
     # annotate the species name next to the arrow
-    ax.annotate(species, (index + 0.5, post_loss_atmosphere_component_masses[species] - 0.3e21),
+    ax.annotate(species, (index + 0.5, post_loss_atmosphere_component_masses[species] - 0.14 * y_max),
                 color=colors[all_species.index(species)])
 ax.grid()
 ax.set_xlabel('Species')
 ax.set_ylabel('Mass (kg)')
 ax.set_title(f"Mass depletion of atmosphere species at VMF = {runs[run]['vmf']}")
+# log y scale
+ax.set_yscale('log')
 plt.show()
