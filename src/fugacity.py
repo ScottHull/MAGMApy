@@ -2,6 +2,7 @@ from math import log
 
 
 def get_oxygen_fugacity(gas_system):
+    # TODO: this might have to be used for the liquid system instead of the gas
     """
     From Visscher and Fegley 2013.
     fO2 = gamma_O2 * P_O2 = gamma_O2 * X_O2 * P_tot

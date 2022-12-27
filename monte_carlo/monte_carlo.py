@@ -327,3 +327,77 @@ def run_monte_carlo_mp(args):
     write_file(data=starting_composition, metadata=metadata, filename="starting_composition.csv",
                  to_path=full_report_path)
     return starting_composition
+
+def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: dict, temperature: float, vmf: float,
+                    full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55,
+                    starting_comp_filename="starting_composition.csv", delete_dir=True):
+    """
+    We need to account for the fact that only a portion of the vapor is lost and the rest is retained and will recondense.
+    Ultimately, the bulk composition of the disk needs to be the same as the target composition.
+    We assume that the only mass lost is that of the escaping vapor.
+    We know the VMF of the ejecta.  We know the fraction of this vapor that should escape.
+    We must adjust this composition so that the bulk liquid + retained vapor composition is that of the bulk Moon.
+    :param initial_composition:
+    :param target_composition:
+    :param temperature:
+    :param vmf:
+    :param full_run_vmf:
+    :param full_report_path:
+    :param sum_residuals_for_success:
+    :param starting_comp_filename:
+    :param delete_dir:
+    :return:
+    """
+    # build report path
+    if delete_dir:
+        if os.path.exists(full_report_path):
+            shutil.rmtree(full_report_path)
+    if not os.path.exists(full_report_path):
+        os.mkdir(full_report_path)
+    # begin the Monte Carlo search
+    iteration = 0
+    residual_error = 1e99  # assign a large number to the initial residual error
+    starting_composition = initial_composition  # set the starting composition to the BSE composition
+    print("Starting Monte Carlo search...")
+    while abs(residual_error) > sum_residuals_for_success and iteration <= 20:  # while total residual error is greater than a small number
+        iteration += 1
+        composition_at_vmf, c, l, g, t = __monte_carlo_search(starting_composition, temperature,
+                                                              vmf)  # run the Monte Carlo search
+        # calculate the residuals
+        residuals = {oxide: target_composition[oxide] - composition_at_vmf[oxide] if oxide != "Fe2O3" else 0.0 for
+                     oxide
+                     in starting_composition.keys()}
+        # calculate the total residual error
+        residual_error = sum([abs(residuals[oxide]) for oxide in residuals.keys()])
+        # adjust the guess
+        starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
+        print(
+            f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nResiduals: {residuals}\n"
+            f"Residual error: {residual_error}"
+        )
+        if abs(residual_error) > sum_residuals_for_success:
+            print("Calculation has NOT yet converged. Continuing search...")
+    if iteration > 20:
+        print("FAILED TO FIND SOLUTION!")
+        return None
+
+    print("FOUND SOLUTION!")
+    # write starting composition and metadata to file
+    print(f"Starting composition: {starting_composition}")
+    best_vmf = None
+    if full_run_vmf is not None:
+        print("Running full solution...")
+        c, l, g, t, best_vmf = __run_full_MAGMApy(
+            composition=starting_composition, target_composition=target_composition, temperature=temperature,
+            to_vmf=full_run_vmf, to_dir=full_report_path
+        )
+        print("Finished full solution.")
+
+    metadata = {
+        "vmf": vmf,
+        "best vmf": best_vmf,
+        "temperature": temperature,
+    }
+    write_file(data=starting_composition, metadata=metadata, filename=starting_comp_filename,
+               to_path=full_report_path)
+    return starting_composition
