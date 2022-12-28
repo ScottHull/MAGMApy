@@ -21,14 +21,17 @@ plt.style.use('seaborn-colorblind')
 # SPH parameters at peak shock conditions
 runs = {
     '500b073S-no-circ-vmf': {
-        "temperature": 3063.18893,
+        "temperature": 2682.61,  # this is the temperature of the disk
         # "vmf": 19.21,
-        "vmf": 2.52,
+        "vmf": 0.96 * 0.75,
         'theia_pct': 66.78,  # %
         'earth_pct': 100 - 66.78,  # %
         'disk_mass': 1.02,  # M_L
     },
 }
+
+# come back with atmosphere mass loss fraction from hydrodynamics code
+atmosphere_mass_loss_fraction = 0.75  # insert value here
 
 MASS_MOON = 7.34767309e22  # kg
 
@@ -118,6 +121,8 @@ def find_disk_composition(run):
     temperature, vmf, theia_mass_fraction, earth_mass_fraction, disk_mass = runs[run].values()
     to_dir = run
     starting_comp_filename = f"{run}_starting_composition.csv"
+    theia_silicate_comp_filename = f"{run}_theia_silicate_composition.csv"
+    theia_bulk_comp_filename = f"{run}_theia_composition.csv"
     starting_composition = run_monte_carlo(initial_composition=bse_composition,
                                            target_composition=target_composition,
                                            temperature=temperature,
@@ -128,7 +133,8 @@ def find_disk_composition(run):
         disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,
                                                 disk_mass * MASS_MOON * earth_mass_fraction / 100
     )
-
+    write_file(data=theia_weight_pct, filename=theia_bulk_comp_filename, metadata={'vmf': vmf}, to_path=to_dir)
+    write_file(data=theia_weight_pct, filename=theia_silicate_comp_filename, metadata={'vmf': vmf}, to_path=to_dir)
 
 def get_vapor_composition_at_vmf(run):
     """
@@ -152,7 +158,7 @@ def return_vmf_and_element_lists(data):
 
 run = '500b073S-no-circ-vmf'
 # run MAGMA to find the disk composition that reproduces the bulk Moon composition
-# find_disk_composition(run)
+find_disk_composition(run)
 
 # plot the magma composition as a function of VMF
 fig = plt.figure(figsize=(16, 9))
@@ -194,7 +200,7 @@ vapor_comp_weight_pct_all_vmf = {vmf: mole_fraction_to_weight_percent(vapor_comp
                                  for vmf in vapor_comp_mole_fraction_all_vmf}
 
 # take this and insert into the hydrodynamics code, will calculate mean atmosphere molecular mass there
-print(vapor_comp_weight_pct)
+print(f"Vapor Composition (wt%) at VMF {runs[run]['vmf']}: ", vapor_comp_weight_pct)
 
 # get the mean molecular mass of the atmosphere as a function of VMF
 mean_molecular_mass = [get_mean_molecular_mass(vapor_comp_weight_pct_all_vmf[vmf]) for vmf in
@@ -236,9 +242,6 @@ ax.grid()
 plt.show()
 
 # now, run the hydrodynamics code
-
-# come back with atmosphere mass loss fraction from hydrodynamics code
-atmosphere_mass_loss_fraction = 0.5  # insert value here
 
 # we want to get the absolute masses in the vapor
 disk_vapor_mass = runs[run]['disk_mass'] * runs[run]['vmf'] / 100.0

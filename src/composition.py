@@ -225,7 +225,7 @@ def mole_fraction_to_weight_percent(mole_fraction: dict):
     """
     weight_percent = {}
     for i in mole_fraction.keys():
-        weight_percent.update({i: mole_fraction[i] * get_molecular_mass(i)})
+        weight_percent.update({i: mole_fraction[i] * get_molecular_mass(i.split("_")[0])})
     return normalize(weight_percent)
 
 

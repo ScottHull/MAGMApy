@@ -1,3 +1,5 @@
+import copy
+
 from src.composition import get_element_in_base_oxide, get_molecule_stoichiometry
 import sys
 
@@ -39,6 +41,10 @@ class ThermoSystem:
         # renormalize oxide mole fractions
         for i in self.composition.cation_fraction.keys():
             self.composition.cation_fraction[i] /= total_cations
+        # get the melt mass from the previous step
+        self.previous_melt_mass = copy.copy(self.liquid_system.melt_mass)
+        if self.previous_melt_mass <= 1e-98:
+            self.previous_melt_mass = self.liquid_system.initial_melt_mass
         # get the absolute mass of the melt
         self.liquid_system.melt_mass = self.liquid_system.initial_melt_mass - self.weight_vaporized
         # get liquid cation mass %
@@ -46,9 +52,13 @@ class ThermoSystem:
         # convert liquid moles to oxides and get oxide mass %
         self.liquid_system.get_liquid_oxide_mass_fraction()
         # get vapor cation mass %
-        self.gas_system.get_cation_fraction_from_moles(vapor_mass=self.weight_vaporized)
+        self.gas_system.get_cation_mass_fraction_from_moles(vapor_mass=self.weight_vaporized)
         # calculate f
         self.gas_system.get_f()
+        # calculate the total vapor mass of all vapor produced
+        self.gas_system.get_vapor_mass(initial_liquid_mass=self.liquid_system.initial_melt_mass,
+                                       liquid_mass_at_time=self.liquid_system.melt_mass,
+                                       previous_melt_mass=self.previous_melt_mass)
 
     def __calculate_size_step(self, fraction=0.05):
         """

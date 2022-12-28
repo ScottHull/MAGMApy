@@ -328,7 +328,7 @@ def run_monte_carlo_mp(args):
                  to_path=full_report_path)
     return starting_composition
 
-def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: dict, temperature: float, vmf: float,
+def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: dict, temperature: float, vmf: float, vapor_loss_fraction: float,
                     full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55,
                     starting_comp_filename="starting_composition.csv", delete_dir=True):
     """
@@ -337,6 +337,8 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
     We assume that the only mass lost is that of the escaping vapor.
     We know the VMF of the ejecta.  We know the fraction of this vapor that should escape.
     We must adjust this composition so that the bulk liquid + retained vapor composition is that of the bulk Moon.
+    To accomplish this, we run MAGMApy to the given VMF.  At this VMF, some fraction of the vapor is lost and some is retained.
+    The total bulk composition of the liquid + retained vapor is the same as the target composition.
     :param initial_composition:
     :param target_composition:
     :param temperature:
@@ -355,6 +357,8 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
     if not os.path.exists(full_report_path):
         os.mkdir(full_report_path)
     # begin the Monte Carlo search
+    if vapor_loss_fraction > 1.0:
+        raise ValueError("Vapor loss fraction must be less than 1.0.")
     iteration = 0
     residual_error = 1e99  # assign a large number to the initial residual error
     starting_composition = initial_composition  # set the starting composition to the BSE composition
@@ -363,6 +367,26 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         iteration += 1
         composition_at_vmf, c, l, g, t = __monte_carlo_search(starting_composition, temperature,
                                                               vmf)  # run the Monte Carlo search
+
+        # get the mass of the liquid and the vapor and their constituent species/elements
+        liquid_mass = l.melt_mass
+        vapor_mass = g.vapor_mass
+        liquid_species_masses = l.cation_mass  # TODO: add O?
+        vapor_species_masses = g.species_total_mass
+        vapor_element_masses = g.element_total_mass
+
+        # multiply the vapor species/element masses by the fraction of the vapor that is lost
+        vapor_species_masses_lost = {species: vapor_species_masses[species] * vapor_loss_fraction for species in
+                                vapor_species_masses.keys()}
+        vapor_element_masses_lost = {element: vapor_element_masses[element] * vapor_loss_fraction for element in
+                                vapor_element_masses.keys()}
+        # multiply the liquid species/element masses by the fraction of the vapor that is retained
+        vapor_species_masses_retained = {species: vapor_species_masses[species] * (1.0 - vapor_loss_fraction) for species in
+                                vapor_species_masses.keys()}
+        vapor_element_masses_retained = {element: vapor_element_masses[element] * (1.0 - vapor_loss_fraction) for element in
+                                vapor_element_masses.keys()}
+
+
         # calculate the residuals
         residuals = {oxide: target_composition[oxide] - composition_at_vmf[oxide] if oxide != "Fe2O3" else 0.0 for
                      oxide
