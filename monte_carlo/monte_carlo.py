@@ -1,6 +1,6 @@
 import copy
 
-from src.composition import Composition, ConvertComposition, get_element_in_base_oxide
+from src.composition import Composition, ConvertComposition, get_element_in_base_oxide, oxygen_accounting
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
@@ -385,6 +385,7 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
 
         # get the liquid elemental abundances
         liquid_cation_masses = c.liquid_abundances
+        liquid_cation_masses["O"] = liquid_mass - sum(liquid_cation_masses.values())
 
 
         # multiply the vapor species/element masses by the fraction of the vapor that is lost
@@ -401,13 +402,32 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         # add back in the retained vapor element masses to the liquid element masses
         liquid_element_masses = {element: liquid_cation_masses[element] + vapor_element_masses_retained[element] for element in
                             liquid_cation_masses.keys()}
+
+        # do oxygen accounting
+        leftover_oxygen = oxygen_accounting(liquid_element_masses, oxides)
+
         new_liquid_mass = sum(liquid_element_masses.values())
 
+        liquid_element_masses_element_mass = copy.copy(liquid_element_masses)
         # convert new liquid masses to oxide wt%
         liquid_element_masses = c.cations_mass_to_oxides_weight_percent(liquid_element_masses, oxides)
 
         composition_at_vmf_without_recondensed_vapor = copy.copy(composition_at_vmf)
         composition_at_vmf = liquid_element_masses
+
+        # ensure that mass is conserved at all steps
+        # that the vapor species masses lost is equal to the vapor element masses lost
+        assert abs(sum(vapor_species_masses_lost.values()) - sum(vapor_element_masses_lost.values())) < 1e-6
+        print('passed mass conservation check 1')
+        # that the vapor species masses retained is equal to the vapor element masses retained
+        assert abs(sum(vapor_species_masses_retained.values()) - sum(vapor_element_masses_retained.values())) < 1e-6
+        print('passed mass conservation check 2')
+        # that the retained vapor mass and lost vapor mass is equal to the total vapor mass
+        assert abs(sum(vapor_species_masses_lost.values()) + sum(vapor_species_masses_retained.values()) - vapor_mass) < 1e-6
+        print('passed mass conservation check 3')
+        # that the sum of the new liquid mass plus the lost vapor mass is equal to the total mass
+        assert abs(new_liquid_mass + sum(vapor_species_masses_lost.values()) - (liquid_mass + vapor_mass)) < 1e-6
+        print('passed mass conservation check 4')
 
         # calculate the residuals
         residuals = {oxide: target_composition[oxide] - composition_at_vmf[oxide] if oxide != "Fe2O3" else 0.0 for
@@ -419,7 +439,10 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
         print(
             f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nTarget composition: {target_composition}\nResiduals: {residuals}\n"
-            f"Residual error: {residual_error}\nComposition without recondensed vapor: {composition_at_vmf_without_recondensed_vapor}\nComposition with recondensed vapor: {composition_at_vmf}\n")
+            f"Residual error: {residual_error}\nComposition without recondensed vapor: {composition_at_vmf_without_recondensed_vapor}\n"
+            f"Composition with recondensed vapor: {composition_at_vmf}\nLeftover oxygen: {leftover_oxygen} "
+            f"(total liquid atoms: {sum(liquid_element_masses_element_mass.values())} "
+            f"total liquid O atoms: {liquid_element_masses_element_mass['O']})\n")
         if abs(residual_error) > sum_residuals_for_success:
             print("Calculation has NOT yet converged. Continuing search...")
 

@@ -229,6 +229,27 @@ def mole_fraction_to_weight_percent(mole_fraction: dict):
     return normalize(weight_percent)
 
 
+def oxygen_accounting(element_maases: dict, oxides: list):
+    """
+    Given a dictionary of absolute element masses (e.g. Si, Mg, Fe in kg), determine if there are enough oxygen atoms
+    to oxidize all elements.
+    :param element_weight_percent:
+    :param oxides:
+    :return:
+    """
+    # convert elemet mass to element moles
+    element_moles = {i: element_maases[i] / get_molecular_mass(i) for i in element_maases.keys()}
+    # get the number of oxygen atoms in the system
+    # get the number of oxygen atoms needed to oxidize all elements
+    oxygen_atoms_needed = 0
+    for i in element_moles.keys():
+        if i != 'O':
+            oxygen_atoms_needed += get_molecule_stoichiometry(
+                get_element_in_base_oxide(element=i, oxides=oxides))['O']
+    # return the difference
+    return element_moles['O'] - oxygen_atoms_needed
+
+
 class ConvertComposition:
 
     def __init__(self):
