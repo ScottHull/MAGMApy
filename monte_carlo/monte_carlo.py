@@ -1,4 +1,6 @@
-from src.composition import Composition, ConvertComposition
+import copy
+
+from src.composition import Composition, ConvertComposition, get_element_in_base_oxide
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
@@ -6,6 +8,7 @@ from src.report import Report
 from src.plots import collect_data
 
 import os
+import sys
 import shutil
 import numpy as np
 from scipy.interpolate import interp1d
@@ -363,17 +366,26 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
     residual_error = 1e99  # assign a large number to the initial residual error
     starting_composition = initial_composition  # set the starting composition to the BSE composition
     print("Starting Monte Carlo search...")
-    while abs(residual_error) > sum_residuals_for_success and iteration <= 20:  # while total residual error is greater than a small number
+    while abs(residual_error) > sum_residuals_for_success:  # while total residual error is greater than a small number
         iteration += 1
         composition_at_vmf, c, l, g, t = __monte_carlo_search(starting_composition, temperature,
-                                                              vmf)  # run the Monte Carlo search
+                                                              vmf)  # run the Monte Carlo search  # TODO: is there an interpolation here?
 
         # get the mass of the liquid and the vapor and their constituent species/elements
         liquid_mass = l.melt_mass
         vapor_mass = g.vapor_mass
-        liquid_species_masses = l.cation_mass  # TODO: add O?
+        liquid_species_masses = l.cation_mass
+        # add in O
+        liquid_species_masses["O"] = liquid_mass - sum(liquid_species_masses.values())
         vapor_species_masses = g.species_total_mass
         vapor_element_masses = g.element_total_mass
+
+        # get a list of all oxides in the melt
+        oxides = [oxide for oxide in composition_at_vmf.keys() if oxide != "Fe2O3"]
+
+        # get the liquid elemental abundances
+        liquid_cation_masses = c.liquid_abundances
+
 
         # multiply the vapor species/element masses by the fraction of the vapor that is lost
         vapor_species_masses_lost = {species: vapor_species_masses[species] * vapor_loss_fraction for species in
@@ -386,6 +398,16 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         vapor_element_masses_retained = {element: vapor_element_masses[element] * (1.0 - vapor_loss_fraction) for element in
                                 vapor_element_masses.keys()}
 
+        # add back in the retained vapor element masses to the liquid element masses
+        liquid_element_masses = {element: liquid_cation_masses[element] + vapor_element_masses_retained[element] for element in
+                            liquid_cation_masses.keys()}
+        new_liquid_mass = sum(liquid_element_masses.values())
+
+        # convert new liquid masses to oxide wt%
+        liquid_element_masses = c.cations_mass_to_oxides_weight_percent(liquid_element_masses, oxides)
+
+        composition_at_vmf_without_recondensed_vapor = copy.copy(composition_at_vmf)
+        composition_at_vmf = liquid_element_masses
 
         # calculate the residuals
         residuals = {oxide: target_composition[oxide] - composition_at_vmf[oxide] if oxide != "Fe2O3" else 0.0 for
@@ -396,14 +418,10 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         # adjust the guess
         starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
         print(
-            f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nResiduals: {residuals}\n"
-            f"Residual error: {residual_error}"
-        )
+            f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nTarget composition: {target_composition}\nResiduals: {residuals}\n"
+            f"Residual error: {residual_error}\nComposition without recondensed vapor: {composition_at_vmf_without_recondensed_vapor}\nComposition with recondensed vapor: {composition_at_vmf}\n")
         if abs(residual_error) > sum_residuals_for_success:
             print("Calculation has NOT yet converged. Continuing search...")
-    if iteration > 20:
-        print("FAILED TO FIND SOLUTION!")
-        return None
 
     print("FOUND SOLUTION!")
     # write starting composition and metadata to file

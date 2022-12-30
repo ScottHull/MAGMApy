@@ -6,7 +6,7 @@ from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data
 
-from monte_carlo.monte_carlo import run_monte_carlo, run_monte_carlo_mp, write_file
+from monte_carlo.monte_carlo import run_monte_carlo, run_monte_carlo_mp, write_file, run_monte_carlo_vapor_loss
 
 import os
 import csv
@@ -123,11 +123,11 @@ def find_disk_composition(run):
     starting_comp_filename = f"{run}_starting_composition.csv"
     theia_silicate_comp_filename = f"{run}_theia_silicate_composition.csv"
     theia_bulk_comp_filename = f"{run}_theia_composition.csv"
-    starting_composition = run_monte_carlo(initial_composition=bse_composition,
+    starting_composition = run_monte_carlo_vapor_loss(initial_composition=bse_composition,
                                            target_composition=target_composition,
                                            temperature=temperature,
                                            vmf=vmf, full_report_path=to_dir, full_run_vmf=90.0,
-                                           starting_comp_filename=starting_comp_filename)
+                                           starting_comp_filename=starting_comp_filename, vapor_loss_fraction=0.75)
     disk_bulk_composition_metadata, disk_bulk_composition = read_composition_file(to_dir + "/" + starting_comp_filename)
     theia_weight_pct, theia_moles, theia_cations, theia_x_si, theia_x_al = get_theia_composition(
         disk_bulk_composition, bse_composition, disk_mass * MASS_MOON,

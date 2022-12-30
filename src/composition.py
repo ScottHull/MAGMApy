@@ -319,6 +319,23 @@ class ConvertComposition:
                     corresponding_oxide] += abundance / element_stoich_in_molecule  # add the moles of the cation
         return oxides_moles
 
+    def cations_mass_to_oxides_weight_percent(self, cations: dict, oxides: list):
+        """
+        Takes absolute cation mass abundances, finds their corresponding oxide, and returns the oxide molar abundance.
+        :param cations:
+        :return:
+        :param cations:
+        :param oxides:
+        :return:
+        """
+        # convert absolute mass of each cation to moles
+        cations_moles = {i: cations[i] / self.get_atomic_mass(element=i) for i in cations.keys()}  # g --> moles
+        # convert moles of each cation to moles of each oxide
+        oxides_moles = self.cations_to_oxides(cations=cations_moles, oxides=oxides)
+        # convert moles of each oxide to weight percent
+        oxides_weight_percent = {i: oxides_moles[i] / sum(oxides_moles.values()) * 100.0 for i in oxides_moles}
+        return oxides_weight_percent
+
     def moles_to_mass(self, composition: dict):
         """
         Returns a dictionary of the absolute masses of the given molar compositions.
