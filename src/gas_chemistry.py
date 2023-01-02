@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from math import isnan, sqrt
 import sys
 
@@ -193,6 +194,11 @@ class GasPressure:
         self.vapor_mass = initial_liquid_mass - liquid_mass_at_time
         if self.vapor_mass < 0:  # make sure we dont have negative vapor mass
             raise ValueError("Vapor mass is negative")
+        # make sure that vapor species mass fractions equal 100
+        if not np.isclose(sum(self.vapor_species_mass_fractions.values()), 100.0):
+            raise ValueError("Vapor species mass fractions do not sum to 100")
+        if not np.isclose(sum(self.vapor_element_mass_fractions.values()), 100.0):
+            raise ValueError("Vapor element mass fractions do not sum to 100")
         # get the mass of vapor produced at the given iteration
         mass_produced_at_iteration = previous_melt_mass - liquid_mass_at_time
         # get the mass of each species from the vapor produced at the given iteration

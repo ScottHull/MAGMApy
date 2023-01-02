@@ -332,7 +332,7 @@ def run_monte_carlo_mp(args):
     return starting_composition
 
 def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: dict, temperature: float, vmf: float, vapor_loss_fraction: float,
-                    full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55,
+                    full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=10,
                     starting_comp_filename="starting_composition.csv", delete_dir=True):
     """
     We need to account for the fact that only a portion of the vapor is lost and the rest is retained and will recondense.
@@ -403,6 +403,11 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         liquid_element_masses = {element: liquid_cation_masses[element] + vapor_element_masses_retained[element] for element in
                             liquid_cation_masses.keys()}
 
+        print(f"liquid_category_masses: {liquid_element_masses}\nvapor_element_masses_retained: {vapor_element_masses_retained}")
+        print(f"vapor retained mass: {sum(vapor_element_masses_retained.values())}\nvapor lost mass: {sum(vapor_element_masses_lost.values())}\nliquid mass: {sum(liquid_element_masses.values())}")
+        print("alskdfjlaskdfj", (sum(vapor_element_masses_retained.values()) + sum(vapor_element_masses_lost.values())) / (sum(liquid_element_masses.values()) + sum(vapor_element_masses_retained.values()) + sum(vapor_element_masses_lost.values())) * 100)
+
+
         # do oxygen accounting
         leftover_oxygen = oxygen_accounting(liquid_element_masses, oxides)
 
@@ -430,21 +435,22 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         print('passed mass conservation check 4')
 
         # calculate the residuals
+        print(">>>", composition_at_vmf, liquid_element_masses)
         residuals = {oxide: target_composition[oxide] - composition_at_vmf[oxide] if oxide != "Fe2O3" else 0.0 for
                      oxide
                      in starting_composition.keys()}
         # calculate the total residual error
         residual_error = sum([abs(residuals[oxide]) for oxide in residuals.keys()])
         # adjust the guess
-        starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
         print(
             f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nTarget composition: {target_composition}\nResiduals: {residuals}\n"
             f"Residual error: {residual_error}\nComposition without recondensed vapor: {composition_at_vmf_without_recondensed_vapor}\n"
             f"Composition with recondensed vapor: {composition_at_vmf}\nLeftover oxygen: {leftover_oxygen} "
             f"(total liquid atoms: {sum(liquid_element_masses_element_mass.values())} "
-            f"total liquid O atoms: {liquid_element_masses_element_mass['O']})\n")
+            f"total liquid O atoms: {liquid_element_masses_element_mass['O']})\nVMF: {vapor_mass / (liquid_mass + vapor_mass) * 100.0}\n")
         if abs(residual_error) > sum_residuals_for_success:
             print("Calculation has NOT yet converged. Continuing search...")
+            starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
 
     print("FOUND SOLUTION!")
     # write starting composition and metadata to file
