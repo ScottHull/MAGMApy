@@ -477,6 +477,7 @@ class Composition(ConvertComposition):
 
     def __initial_liquid_abundances(self):
         """
+        liquid mole absolute abundances.
         liquid elemental abundances, where we initially assume that the liquid abundances is equal to the
         full system input composition.
         Assume that initially, the liquid abundances are just equal to the elemental abundances
