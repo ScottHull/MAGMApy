@@ -332,7 +332,7 @@ def run_monte_carlo_mp(args):
     return starting_composition
 
 def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: dict, temperature: float, vmf: float, vapor_loss_fraction: float,
-                    full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=10,
+                    full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55,
                     starting_comp_filename="starting_composition.csv", delete_dir=True):
     """
     We need to account for the fact that only a portion of the vapor is lost and the rest is retained and will recondense.
@@ -403,7 +403,7 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         liquid_element_masses = {element: liquid_cation_masses[element] + vapor_element_masses_retained[element] for element in
                             liquid_cation_masses.keys()}
 
-        print(f"liquid_category_masses: {liquid_element_masses}\nvapor_element_masses_retained: {vapor_element_masses_retained}")
+        print(f"liquid_category_masses: {liquid_element_masses} (total mass: {sum(liquid_element_masses.values())} // {liquid_mass})\nvapor_element_masses_retained: {vapor_element_masses_retained}")
         print(f"vapor retained mass: {sum(vapor_element_masses_retained.values())}\nvapor lost mass: {sum(vapor_element_masses_lost.values())}\nliquid mass: {sum(liquid_element_masses.values())}")
         print("alskdfjlaskdfj", (sum(vapor_element_masses_retained.values()) + sum(vapor_element_masses_lost.values())) / (sum(liquid_element_masses.values()) + sum(vapor_element_masses_retained.values()) + sum(vapor_element_masses_lost.values())) * 100)
 

@@ -128,10 +128,11 @@ def get_list_of_cations(oxides):
 
 
 def normalize(composition):
-    total = sum(composition.values())
-    for i in composition.keys():
-        composition[i] = composition[i] / total * 100.0
-    return composition
+    # total = sum(composition.values())
+    # for i in composition.keys():
+    #     composition[i] = composition[i] / total * 100.0
+    # return composition
+    return {i: composition[i] / sum(composition.values()) * 100.0 for i in composition.keys()}
 
 
 def __get_isnan(r):
@@ -353,8 +354,11 @@ class ConvertComposition:
         cations_moles = {i: cations[i] / self.get_atomic_mass(element=i) for i in cations.keys()}  # g --> moles
         # convert moles of each cation to moles of each oxide
         oxides_moles = self.cations_to_oxides(cations=cations_moles, oxides=oxides)
-        # convert moles of each oxide to weight percent
-        oxides_weight_percent = {i: oxides_moles[i] / sum(oxides_moles.values()) * 100.0 for i in oxides_moles}
+        # convert moles of each oxide to absolute mass
+        oxides_mass = {i: oxides_moles[i] * self.get_molecule_mass(molecule=i) for i in oxides_moles.keys()}
+        # normalize to weight percent
+        total = sum(oxides_mass.values())
+        oxides_weight_percent = {i: oxides_mass[i] / total * 100.0 for i in oxides_mass.keys()}
         return oxides_weight_percent
 
     def moles_to_mass(self, composition: dict):

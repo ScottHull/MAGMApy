@@ -35,20 +35,18 @@ atmosphere_mass_loss_fraction = 0.75  # insert value here
 
 MASS_MOON = 7.34767309e22  # kg
 
-# bse_composition = {  # Visscher and Fegley (2013)
-#     "SiO2": 45.40,
-#     'MgO': 36.76,
-#     'Al2O3': 4.48,
-#     'TiO2': 0.21,
-#     'Fe2O3': 0.00000,
-#     'FeO': 8.10,
-#     'CaO': 3.65,
-#     'Na2O': 0.349,
-#     'K2O': 0.031,
-#     'ZnO': 6.7e-3,
-# }
-
-bse_composition = {'SiO2': 36.797664273422306, 'MgO': 18.435892829921976, 'Al2O3': 5.7941370601212165, 'TiO2': 0.34919325188588596, 'Fe2O3': 0.0, 'FeO': 34.567954601123105, 'CaO': 4.008610956099986, 'Na2O': 0.0384765336159055, 'K2O': 0.007331832562542576, 'ZnO': 0.0007386612470675246}
+bse_composition = {  # Visscher and Fegley (2013)
+    "SiO2": 45.40,
+    'MgO': 36.76,
+    'Al2O3': 4.48,
+    'TiO2': 0.21,
+    'Fe2O3': 0.00000,
+    'FeO': 8.10,
+    'CaO': 3.65,
+    'Na2O': 0.349,
+    'K2O': 0.031,
+    'ZnO': 6.7e-3,
+}
 
 bsm_composition = {  # Visscher and Fegley (2013)
     "SiO2": 44.60,
