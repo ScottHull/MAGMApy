@@ -491,7 +491,7 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
         print(
             f"*** Iteration: {iteration}\nStarting composition: {starting_composition}\nTarget composition: {target_composition}\nResiduals: {residuals}\n"
             f"Residual error: {residual_error}\nComposition without recondensed vapor: {composition_at_vmf_without_recondensed_vapor}\n"
-            f"Composition with recondensed vapor: {composition_at_vmf}\nVapor Fraction: {(sum(vapor_species_masses_lost.values()) / (sum(vapor_species_masses_lost.values()) + new_liquid_mass)) * 100.0}\n")
+            f"Composition with recondensed vapor: {composition_at_vmf}\nVapor Fraction: {(sum(vapor_species_masses_lost.values()) + sum(vapor_species_masses_retained.values())) / sum(liquid_cation_masses.values()) * 100.0} // {t.weight_fraction_vaporized * 100}\n")
         if abs(residual_error) > sum_residuals_for_success:
             print("Calculation has NOT yet converged. Continuing search...")
             starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
