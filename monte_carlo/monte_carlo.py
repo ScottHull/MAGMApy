@@ -1,6 +1,6 @@
 import copy
 
-from src.composition import Composition, ConvertComposition, get_element_in_base_oxide, oxygen_accounting
+from src.composition import Composition, ConvertComposition, get_element_in_base_oxide, oxygen_accounting, get_molecular_mass
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
@@ -24,7 +24,8 @@ def renormalize_composition(oxide_masses: dict):
     return {oxide: oxide_masses[oxide] / total_mass * 100 for oxide in oxide_masses.keys()}
 
 
-def interpolate_elements_at_vmf(at_vmf, at_composition, previous_vmf, previous_composition, target_vmf, normalize=False):
+def interpolate_elements_at_vmf(at_vmf, at_composition, previous_vmf, previous_composition, target_vmf,
+                                normalize=False):
     """
     Interpolates composition at target VMF.
     :return:
@@ -41,7 +42,7 @@ def interpolate_elements_at_vmf(at_vmf, at_composition, previous_vmf, previous_c
     return interpolated_elements
 
 
-def adjust_guess(previous_bulk_composition: dict, liquid_composition_at_vmf: dict, residuals: dict):
+def adjust_guess(previous_bulk_composition: dict, residuals: dict):
     """
     Returns a new guess to start the next Monte Carlo iteration by minimizing the residuals from the previous iteration.
     :return:
@@ -188,8 +189,10 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
     liquid_cation_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized * 100, l.cation_mass, previous_vmf,
                                                        previous_liquid_cation_mass, to_vmf)
     # interpolate the liquid mass and vapor mass at the target VMF
-    liquid_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized * 100], [previous_liquid_mass, l.melt_mass])(to_vmf).item()
-    vapor_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized * 100], [previous_vapor_mass, g.vapor_mass])(to_vmf).item()
+    liquid_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized * 100],
+                                  [previous_liquid_mass, l.melt_mass])(to_vmf).item()
+    vapor_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized * 100],
+                                 [previous_vapor_mass, g.vapor_mass])(to_vmf).item()
     # get the value from liquid_mass_at_vmf and vapor_mass_at_vmf
     # return the results as a dictionary
     return {
@@ -410,6 +413,16 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
     iteration = 0
     residual_error = 1e99  # assign a large number to the initial residual error
     starting_composition = initial_composition  # set the starting composition to the BSE composition
+    composition_at_vmf_without_recondensed_vapor = {}  # initialize the composition at the given VMF without recondensed vapor
+    vapor_species_masses_lost = {}  # initialize a dictionary to hold the masses of the vapor species lost
+    vapor_element_masses_lost = {}  # initialize a dictionary to hold the masses of the vapor elements lost
+    vapor_species_masses_retained = {}  # initialize a dictionary to hold the masses of the vapor species retained
+    vapor_element_masses_retained = {}  # initialize a dictionary to hold the masses of the vapor elements retained
+    liquid_cation_masses = {}  # initialize a dictionary to hold the masses of the liquid cations
+    composition_at_vmf = {}  # initialize the composition at the given VMF (includes recondensed vapor)
+    liquid_element_masses_absolute = {}  # initialize a dictionary to hold the absolute masses of the liquid elements
+    new_liquid_mass = 0.0  # initialize a variable to hold the new liquid mass (after vapor recondensation)
+    c, l, g, t = None, None, None, None
     print("Starting Monte Carlo search...")
     while abs(residual_error) > sum_residuals_for_success:  # while total residual error is greater than a small number
         iteration += 1
@@ -456,6 +469,7 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
 
         liquid_element_masses_element_mass = copy.copy(liquid_element_masses)
         # convert new liquid masses to oxide wt%
+        liquid_element_masses_absolute = copy.copy(liquid_element_masses)
         liquid_element_masses = c.cations_mass_to_oxides_weight_percent(liquid_element_masses, oxides)
 
         composition_at_vmf_without_recondensed_vapor = copy.copy(composition_at_vmf)
@@ -494,7 +508,7 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
             f"Composition with recondensed vapor: {composition_at_vmf}\nVapor Fraction: {(sum(vapor_species_masses_lost.values()) + sum(vapor_species_masses_retained.values())) / sum(liquid_cation_masses.values()) * 100.0} // {t.weight_fraction_vaporized * 100}\n")
         if abs(residual_error) > sum_residuals_for_success:
             print("Calculation has NOT yet converged. Continuing search...")
-            starting_composition = adjust_guess(starting_composition, initial_composition, residuals)
+            starting_composition = adjust_guess(starting_composition, residuals)
 
     print("FOUND SOLUTION!")
     # write starting composition and metadata to file
@@ -515,4 +529,133 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
     }
     write_file(data=starting_composition, metadata=metadata, filename=starting_comp_filename,
                to_path=full_report_path)
-    return starting_composition
+    return {
+        "starting composition": starting_composition,
+        "vapor_lost_composition": composition_at_vmf_without_recondensed_vapor,
+        "vapor_element_masses_lost": vapor_element_masses_lost,
+        "vapor_element_masses_retained": vapor_element_masses_retained,
+        "vapor_species_masses_lost": vapor_species_masses_lost,
+        "vapor_species_masses_retained": vapor_species_masses_retained,
+        "liquid_composition_with_recondensed_vapor": composition_at_vmf,
+        "liquid_composition_with_recondensed_vapor_element_masses": liquid_element_masses_absolute,
+        "liquid_mass_with_recondensed_vapor": new_liquid_mass,
+        'c': c,
+        'l': l,
+        'g': g,
+        't': t,
+    }
+
+
+def test(guess_initial_composition: dict, target_composition: dict, temperature: float, vmf: float,
+         vapor_loss_fraction: float,
+         full_run_vmf=90.0, full_report_path="theia_composition", sum_residuals_for_success=0.55,
+         starting_comp_filename="starting_composition.csv", delete_dir=True):
+    # normalize fractional abundances to 1 if they are not already
+    if vmf > 1:
+        vmf /= 100.0
+    if vapor_loss_fraction > 1:
+        vapor_loss_fraction /= 100.0
+
+    # track some metadata
+    iteration = 0
+    residual_error = 1e99  # assign a large number to the initial residual error
+    initial_composition = copy.copy(guess_initial_composition)  # this is what we are searching to find
+
+    # run the simulation
+    while abs(residual_error) > sum_residuals_for_success:  # while total residual error is greater than a small number
+        data = __monte_carlo_search(initial_composition, temperature, vmf)  # run the Monte Carlo search
+        liquid_composition_at_vmf, vapor_species_masses, vapor_element_masses, liquid_cation_masses, liquid_mass, \
+            vapor_mass, c, l, g, t = data.values()  # unpack the interpolated data
+
+        # liquid composition at vmf: the composition of the liquid at the vapor mass fraction
+        # vapor species masses: the mass of each vapor species (complex species, not elements)
+        # vapor element masses: the mass of each element in the vapor
+        # liquid cation masses: the mass of each cation in the liquid
+        # liquid mass: the mass of the liquid
+        # vapor mass: the mass of the vapor
+        # c: the composition object
+        # l: the liquid object
+        # g: the gas object
+        # t: the thermodynamic object
+
+        # ======================== CALCULATE PRE-LOSS VAPOR/LIQUID MOLE FRACTIONS ========================
+        # calculate the vapor mole fractions
+        vapor_mole_fractions_pre_loss = {i: vapor_species_masses[i] / get_molecular_mass(i) * 100 for i in vapor_species_masses.keys()}
+        # calculate the liquid mole fractions
+        liquid_mole_fractions_pre_loss = {i: liquid_cation_masses[i] / get_molecular_mass(i) * 100 for i in liquid_cation_masses.keys()}
+
+        # ======================== RECONDENSE RETAINED VAPOR ========================
+        vapor_species_masses_lost = {species: vapor_species_masses[species] * vapor_loss_fraction for species in
+                                     vapor_species_masses.keys()}
+        vapor_element_masses_lost = {element: vapor_element_masses[element] * vapor_loss_fraction for element in
+                                     vapor_element_masses.keys()}
+        # multiply the liquid species/element masses by the fraction of the vapor that is retained
+        vapor_species_masses_retained = {species: vapor_species_masses[species] * (1.0 - vapor_loss_fraction) for
+                                         species in
+                                         vapor_species_masses.keys()}
+        vapor_element_masses_retained = {element: vapor_element_masses[element] * (1.0 - vapor_loss_fraction) for
+                                         element in
+                                         vapor_element_masses.keys()}
+
+        # add back in the retained vapor element masses to the liquid element masses
+        liquid_element_masses = {element: liquid_cation_masses[element] + vapor_element_masses_retained[element] for
+                                 element in
+                                 liquid_cation_masses.keys()}
+        new_liquid_mass = sum(liquid_element_masses.values())  # calculate the new liquid mass (with recondensed vapor)
+        # calculate the new liquid oxide wt pct (with recondensed vapor)
+        new_liquid_oxide_wt_pct = c.cations_mass_to_oxides_weight_percent(liquid_element_masses,
+                                                                          liquid_composition_at_vmf.keys())
+
+        # ======================== CALCULATE POST-LOSS VAPOR/LIQUID MOLE FRACTIONS ========================
+        # calculate the vapor mole fractions
+        vapor_mole_fractions_post_loss = {i: vapor_species_masses[i] / get_molecular_mass(i) * 100 for i in vapor_species_masses.keys()}
+        # calculate the liquid mole fractions
+        liquid_mole_fractions_post_loss = {i: liquid_element_masses[i] / get_molecular_mass(i) * 100 for i in liquid_element_masses.keys()}
+
+        # assess whether the target composition has been reached at the given VMF
+        # calculate the residuals
+        residuals = {oxide: target_composition[oxide] - new_liquid_oxide_wt_pct[oxide] if oxide != "Fe2O3" else 0.0 for
+                     oxide
+                     in initial_composition.keys()}
+        # calculate the total residual error
+        residual_error = sum([abs(residuals[oxide]) for oxide in residuals.keys()])
+
+        # print out the results
+        print(
+            f"Iteration: {iteration}, \n"
+            f"Residual error: {residual_error}, \n"
+            f"Vapor mass fraction: {vmf}, \n"
+            f"Vapor loss fraction: {vapor_loss_fraction}, \n",
+            f"Target composition: {target_composition}, \n",
+            f"Initial composition: {initial_composition}, \n",
+            f"Predicted Liquid Composition at VMF (without recondensed vapor): {liquid_composition_at_vmf}, \n",
+            f"Predicted Liquid Composition at VMF (with recondensed vapor): {new_liquid_oxide_wt_pct}",
+        )
+
+        # if the residual error is too large, adjust the initial composition and run again
+        if abs(residual_error) > sum_residuals_for_success:
+            print("Calculation has NOT yet converged. Continuing search...")
+            initial_composition = adjust_guess(initial_composition, residuals)
+        else:
+            print("Calculation has converged. Stopping search.")
+            # return the results
+            return {
+                "ejecta composition": initial_composition,
+                "liquid composition at vmf (w/o recondensed vapor)": liquid_composition_at_vmf,
+                "liquid composition at vmf (w/ recondensed vapor)": new_liquid_oxide_wt_pct,
+                "liquid element mole fractions (before recondensation)": liquid_mole_fractions_pre_loss,
+                "liquid element mole fractions (after recondensation)": liquid_mole_fractions_post_loss,
+                "vapor species (before loss/recondensation)": vapor_species_masses,
+                "vapor elements (before loss/recondensation)": vapor_element_masses,
+                "vapor species mole fractions (before loss)": vapor_mole_fractions_pre_loss,
+                "vapor species mole fractions (after loss)": vapor_mole_fractions_post_loss,
+                "vapor species masses lost": vapor_species_masses_lost,
+                "vapor species masses retained": vapor_species_masses_retained,
+                "vapor element masses lost": vapor_element_masses_lost,
+                "vapor element masses retained": vapor_element_masses_retained,
+                "liquid mass (w/ recondensed vapor)": new_liquid_mass,
+                "c": c,
+                "l": l,
+                "g": g,
+                "t": t,
+            }
