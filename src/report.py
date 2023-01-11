@@ -22,12 +22,14 @@ class Report:
                 os.mkdir(path)
 
     def __get_metadata(self):
-        return "atomic fraction vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\nliquid mass fraction,{}\ninitial liquid mass,{}\ntemperature (K),{}\nfO2,{} {}\nmost volatile species,{}\n".format(
+        return "atomic fraction vaporized,{}\nmass liquid,{}\nmass fraction vaporized,{}\nliquid mass fraction,{}\n" \
+               "initial liquid mass,{}\nmass vapor,{}\ntemperature (K),{}\nfO2,{} {}\nmost volatile species,{}\n".format(
             self.thermosystem.atomic_fraction_vaporized,
             self.liquid_system.initial_melt_mass - self.thermosystem.weight_vaporized,
             self.thermosystem.weight_fraction_vaporized,
             1 - self.thermosystem.weight_fraction_vaporized,
             self.liquid_system.initial_melt_mass,
+            self.gas_system.vapor_mass,
             self.liquid_system.temperature,
             self.gas_system.fO2_buffer,
             self.gas_system.oxygen_fugacity,
@@ -76,11 +78,13 @@ class Report:
             self.to_dir + "/atmosphere_cation_moles",
             self.to_dir + "/atmosphere_cation_mass_fraction",
             self.to_dir + "/f",
+            self.to_dir + "/total_vapor_element_mass",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.gas_system.partial_pressures)
         self.__make_report(path=paths[1], iteration=iteration, data=self.gas_system.total_mole_fraction)
         self.__make_report(path=paths[2], iteration=iteration, data=self.gas_system.mole_fractions)
         self.__make_report(path=paths[3], iteration=iteration, data=self.gas_system.cation_moles)
-        self.__make_report(path=paths[4], iteration=iteration, data=self.gas_system.cation_mass_fraction)
+        self.__make_report(path=paths[4], iteration=iteration, data=self.gas_system.element_mass_fraction)
         self.__make_report(path=paths[5], iteration=iteration, data=self.gas_system.f)
+        self.__make_report(path=paths[6], iteration=iteration, data=self.gas_system.element_total_mass)

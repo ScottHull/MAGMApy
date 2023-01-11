@@ -187,6 +187,11 @@ def get_molecular_mass(molecule: str):
     """
     Returns the number of moles of the given composition in weight percent.
     """
+    # remove all +, - from the molecule
+    molecule = molecule.replace("+", "").replace("-", "")
+    # if there is a _, then split it and only take the first part
+    if "_" in molecule:
+        molecule = molecule.split("_")[0]
     # read in the period table
     pt = pd.read_csv("data/periodic_table.csv", index_col='element')
     # get the stoichiometry of the molecule

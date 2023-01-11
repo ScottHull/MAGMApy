@@ -3,7 +3,7 @@ import csv
 import matplotlib.pyplot as plt
 
 
-def collect_data(path, x_header, metadata_rows=8, y_header=None):
+def collect_data(path, x_header, metadata_rows=9, y_header=None):
     data = {}
     metadata = {}
     ordered_data = {}

@@ -203,8 +203,8 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
         "liquid_mass_at_vmf": liquid_mass_at_vmf,
         "vapor_mass_at_vmf": vapor_mass_at_vmf,
         'c': c,
-        'g': g,
         'l': l,
+        'g': g,
         't': t,
     }
 
@@ -579,10 +579,10 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
         # t: the thermodynamic object
 
         # ======================== CALCULATE PRE-LOSS VAPOR/LIQUID MOLE FRACTIONS ========================
-        # calculate the vapor mole fractions
-        vapor_mole_fractions_pre_loss = {i: vapor_species_masses[i] / get_molecular_mass(i) * 100 for i in vapor_species_masses.keys()}
-        # calculate the liquid mole fractions
-        liquid_mole_fractions_pre_loss = {i: liquid_cation_masses[i] / get_molecular_mass(i) * 100 for i in liquid_cation_masses.keys()}
+        # # calculate the vapor mole fractions
+        # vapor_mole_fractions_pre_loss = {i: vapor_species_masses[i] / get_molecular_mass(i) * 100 for i in vapor_species_masses.keys()}
+        # # calculate the liquid mole fractions
+        # liquid_mole_fractions_pre_loss = {i: liquid_cation_masses[i] / get_molecular_mass(i) * 100 for i in liquid_cation_masses.keys()}
 
         # ======================== RECONDENSE RETAINED VAPOR ========================
         vapor_species_masses_lost = {species: vapor_species_masses[species] * vapor_loss_fraction for species in
@@ -607,10 +607,10 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
                                                                           liquid_composition_at_vmf.keys())
 
         # ======================== CALCULATE POST-LOSS VAPOR/LIQUID MOLE FRACTIONS ========================
-        # calculate the vapor mole fractions
-        vapor_mole_fractions_post_loss = {i: vapor_species_masses[i] / get_molecular_mass(i) * 100 for i in vapor_species_masses.keys()}
-        # calculate the liquid mole fractions
-        liquid_mole_fractions_post_loss = {i: liquid_element_masses[i] / get_molecular_mass(i) * 100 for i in liquid_element_masses.keys()}
+        # # calculate the vapor mole fractions
+        # vapor_mole_fractions_post_loss = {i: vapor_species_masses[i] / get_molecular_mass(i) * 100 for i in vapor_species_masses.keys()}
+        # # calculate the liquid mole fractions
+        # liquid_mole_fractions_post_loss = {i: liquid_element_masses[i] / get_molecular_mass(i) * 100 for i in liquid_element_masses.keys()}
 
         # assess whether the target composition has been reached at the given VMF
         # calculate the residuals
@@ -638,17 +638,23 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
             initial_composition = adjust_guess(initial_composition, residuals)
         else:
             print("Calculation has converged. Stopping search.")
+            print("Running full solution...")
+            c_, l_, g_, t_, best_vmf = __run_full_MAGMApy(
+                composition=initial_composition, target_composition=target_composition, temperature=temperature,
+                to_vmf=full_run_vmf, to_dir=full_report_path
+            )
+            print("Finished full solution.")
             # return the results
             return {
                 "ejecta composition": initial_composition,
                 "liquid composition at vmf (w/o recondensed vapor)": liquid_composition_at_vmf,
                 "liquid composition at vmf (w/ recondensed vapor)": new_liquid_oxide_wt_pct,
-                "liquid element mole fractions (before recondensation)": liquid_mole_fractions_pre_loss,
-                "liquid element mole fractions (after recondensation)": liquid_mole_fractions_post_loss,
+                # "liquid element mole fractions (before recondensation)": liquid_mole_fractions_pre_loss,
+                # "liquid element mole fractions (after recondensation)": liquid_mole_fractions_post_loss,
                 "vapor species (before loss/recondensation)": vapor_species_masses,
                 "vapor elements (before loss/recondensation)": vapor_element_masses,
-                "vapor species mole fractions (before loss)": vapor_mole_fractions_pre_loss,
-                "vapor species mole fractions (after loss)": vapor_mole_fractions_post_loss,
+                # "vapor species mole fractions (before loss)": vapor_mole_fractions_pre_loss,
+                # "vapor species mole fractions (after loss)": vapor_mole_fractions_post_loss,
                 "vapor species masses lost": vapor_species_masses_lost,
                 "vapor species masses retained": vapor_species_masses_retained,
                 "vapor element masses lost": vapor_element_masses_lost,

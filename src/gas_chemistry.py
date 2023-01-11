@@ -128,7 +128,7 @@ class GasPressure:
 
     def __init__(self, composition, major_gas_species, minor_gas_species, fO2_buffer="QFM"):
         self.vapor_element_mass_fractions = {}
-        self.vapor_species_mass_fractions = {}
+        self.species_mass_fractions = {}
         self.f = None
         self.cation_mass = None
         self.cation_moles = None
@@ -151,7 +151,7 @@ class GasPressure:
         self.pressure_to_number_density = 1.01325e6 / 1.38046e-16  # (dyn/cm**2=>atm) / Boltzmann's constant (R/AVOG)
         self.fO2_buffer = fO2_buffer
         self._buffer = fO2_Buffer()
-        self.cation_mass_fraction = self.get_cation_mass_fraction_from_moles(
+        self.element_mass_fraction = self.get_cation_mass_fraction_from_moles(
             vapor_mass=0.0)  # mass fraction of cations in vapor
         self.oxygen_fugacity = -10000000
         self.vapor_mass = 0.0  # total mass of vapor (all iterations)
@@ -178,9 +178,9 @@ class GasPressure:
                 self.cation_mass.update({"O": 1e-99})  # make it very small
             else:
                 self.cation_mass.update({"O": vapor_mass - sum(self.cation_mass.values())})
-        self.cation_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in
+        self.element_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in
                                      self.cation_mass.keys()}
-        return self.cation_mass_fraction
+        return self.element_mass_fraction
 
 
     def get_vapor_mass(self, initial_liquid_mass, liquid_mass_at_time, previous_melt_mass):
@@ -195,35 +195,30 @@ class GasPressure:
         if self.vapor_mass < 0:  # make sure we dont have negative vapor mass
             raise ValueError("Vapor mass is negative")
         # make sure that vapor species mass fractions equal 100
-        if not np.isclose(sum(self.vapor_species_mass_fractions.values()), 100.0):
+        if not np.isclose(sum(self.species_mass_fractions.values()), 100.0):
             raise ValueError("Vapor species mass fractions do not sum to 100")
-        if not np.isclose(sum(self.vapor_element_mass_fractions.values()), 100.0):
-            raise ValueError("Vapor element mass fractions do not sum to 100")
+        # make sure that self.self.species_mass_fractions sums to 1
+        if not np.isclose(sum(self.element_mass_fraction.values()), 1):
+            raise ValueError("Vapor element mass fractions do not sum to 1")
         # get the mass of vapor produced at the given iteration
         mass_produced_at_iteration = previous_melt_mass - liquid_mass_at_time
         # get the mass of each species from the vapor produced at the given iteration
-        species_masses = {i: self.vapor_species_mass_fractions[i] / 100.0 * mass_produced_at_iteration
-                          for i in self.vapor_species_mass_fractions.keys()}
+        species_masses = {i: self.species_mass_fractions[i] / 100.0 * mass_produced_at_iteration
+                          for i in self.species_mass_fractions.keys()}
         # get the mass of each element from the vapor produced at the given iteration
-        element_masses = {i: self.vapor_element_mass_fractions[i] / 100.0 * mass_produced_at_iteration
-                          for i in self.vapor_element_mass_fractions.keys()}
+        self.element_total_mass = {i: self.element_mass_fraction[i] * self.vapor_mass
+                          for i in self.element_mass_fraction.keys()}  # element mass fraction dictionary is bulk vapor
         # add the mass of each species to the total mass of each species in the vapor over all iterations
         for i in species_masses.keys():
             if i in self.species_total_mass.keys():
                 self.species_total_mass[i] += species_masses[i]
             else:
                 self.species_total_mass[i] = species_masses[i]
-        # add the mass of each element to the total mass of each cation in the vapor over all iterations
-        for i in element_masses.keys():
-            if i in self.element_total_mass.keys():
-                self.element_total_mass[i] += element_masses[i]
-            else:
-                self.element_total_mass[i] = element_masses[i]
         # now, make sure that the total mass of the vapor over all iterations is equal to the species and element masses
         # we use a small number assessment because of some rounding errors associated with stoich calculations
         assert self.vapor_mass - sum(self.species_total_mass.values()) < 1e-6  # small number assessment
-        # the difference betweeen the species mass and element mass is due to O (within a very small margin)
-        self.element_total_mass.update({"O": self.vapor_mass - sum(self.element_total_mass.values())})
+        # make sure that the vapor mass equals the element mass
+        assert self.vapor_mass - sum(self.element_total_mass.values()) < 1e-6  # small number assessment
         # we've passed all checks, return the vapor mass
         return self.vapor_mass
 
@@ -602,9 +597,9 @@ class GasPressure:
         self.__calculate_mole_fractions()
         self.__calculate_total_mole_fractions()
         # calculate the mass fraction of each vapor species
-        self.vapor_species_mass_fractions = mole_fraction_to_weight_percent(self.mole_fractions)
+        self.species_mass_fractions = mole_fraction_to_weight_percent(self.mole_fractions)
         # calculate the mass fraction of each element
-        self.vapor_element_mass_fractions = mole_fraction_to_weight_percent(self.total_mole_fraction)
+        # self.vapor_element_mass_fractions = mole_fraction_to_weight_percent(self.total_mole_fraction)
         self.partial_pressures = {**self.partial_pressures_major_species, **self.partial_pressures_minor_species}
         self.oxygen_fugacity = self._buffer.get_fO2_buffer(liquid_system.temperature, self.total_pressure,
                                                            get_oxygen_fugacity(self), self.fO2_buffer)
