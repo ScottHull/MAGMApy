@@ -1,3 +1,4 @@
+import os
 from math import log
 import numpy as np
 import pandas as pd
@@ -10,7 +11,7 @@ reactants = ["ZnO_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
 # base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
-base_path = r"C:\Users\Scott\Documents\MAGMApy\K"
+base_path = r"C:\Users\Scott\PycharmProjects\MAGMApy\K"
 
 # Jak et al. 1997
 # https://link.springer.com/content/pdf/10.1007/s11663-997-0055-x.pdf
@@ -46,7 +47,8 @@ def calculate_H0(T):
     return A + calculate_cp(T) * (T - 298.15)
 
 def read_janaf_file(species):
-    path = base_path + "/" + species + ".dat"
+    # path = base_path + "/" + species + ".dat"
+    path = os.path.join(base_path, species + ".dat")
     df = pd.read_csv(path, sep="\t", skiprows=1, index_col="T(K)")
     return df
 

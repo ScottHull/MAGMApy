@@ -1,7 +1,7 @@
 import copy
 
 from monte_carlo.monte_carlo import run_monte_carlo_vapor_loss
-from theia.theia import get_theia_composition
+from theia.theia import get_theia_composition, recondense_vapor
 from monte_carlo.monte_carlo import test
 from src.plots import collect_data
 from src.composition import normalize, get_molecular_mass
@@ -63,7 +63,7 @@ vmf = 0.96  # %
 disk_theia_mass_fraction = 66.78  # %
 disk_mass = 1.02  # lunar masses
 vapor_loss_fraction = 75.0  # %
-run_new_simulation = True  # True to run a new simulation, False to load a previous simulation
+run_new_simulation = False  # True to run a new simulation, False to load a previous simulation
 
 # ============================== Define Constants ==============================
 
@@ -131,6 +131,8 @@ ax.tick_params(axis='both', which='major', labelsize=20)
 ax.set_xlabel('Oxide', fontsize=20)
 ax.set_ylabel("Oxide Wt. % (Relative to BSE)", fontsize=20)
 ax.grid()
+# make all numbers in the molecules subscript without italics
+formatted_oxides = [rf"$\rm {oxide.replace('2', '_2')}$" for oxide in bse_composition.keys() if oxide != 'Fe2O3']
 for t, c in [
     ("BSM", bulk_moon_composition),
     ("Bulk Ejecta Composition", ejecta_data['ejecta composition']),
@@ -150,7 +152,10 @@ plt.xticks(rotation=45)
 ax.legend(fontsize=20)
 # set xlim to start at 0 and end at the length of the x axis
 ax.set_xlim(0, len(bse_composition.keys()) - 2)
+# replace x-axis labels with the formatted oxide names
+ax.set_xticklabels(formatted_oxides)
 plt.tight_layout()
+plt.savefig(f"{run_name}_bulk_ejecta_and_bst_relative_to_bse.png", dpi=300)
 plt.show()
 
 # # ============================== Plot Vapor Species Composition As Function of VMF ==============================
@@ -242,6 +247,46 @@ for s in species:
                  vapor_element_mole_fractions[vmfs[annotation_vmf_index]][s] +
                  vapor_element_mole_fractions[vmfs[annotation_vmf_index]][s] * 0.08),
                 fontsize=20)
-# make 0 the minimum value of the x axis
+# make 0 the minimum value of the x-axis
 ax.set_xlim(left=0)
 plt.savefig(f"{run_name}_element_vapor_mass.png", dpi=300)
+plt.show()
+
+# ============================== Plot Melt + Recondensed Vapor as a Function of VMF ==============================
+
+fig = plt.figure(figsize=(16, 9))
+ax = fig.add_subplot(111)
+# increase the font size
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.set_xlabel(r'VMF (%)', fontsize=20)
+ax.set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
+# get the melt element absolute masses
+melt_masses = collect_data(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
+# get the vapor element masses
+vapor_masses = collect_data(path=f"{run_name}/total_vapor_element_mass", x_header='mass fraction vaporized')
+# get the weight percent oxides in the melt (without recondensed vapor)
+melt_oxides = collect_data(path=f"{run_name}/magma_oxide_mass_fraction", x_header='mass fraction vaporized')
+# get the recondensed vapor element masses
+recondensed_vapor_masses_data = recondense_vapor(
+    melt_mass_element=melt_masses, vapor_mass_element=vapor_masses, vapor_mass_loss_fraction=vapor_loss_fraction / 100,
+    oxides=[i for i in bse_composition.keys() if i != "Fe2O3"]
+)
+# recondensed_vapor_masses = recondensed_vapor_masses_data["recondensed_melt_oxide_weight_pct"]
+recondensed_vapor_masses = {vmf: {element: mass_fraction * 100 for element, mass_fraction in melt_oxides[vmf].items()} for vmf in melt_oxides.keys()}
+# get 10 different colors
+colors = plt.cm.jet(np.linspace(0, 1, 10))
+# plot the evolution of the melt + recondensed vapor composition as a function of VMF
+for index, s in enumerate(recondensed_vapor_masses[vmfs[0]].keys()):
+    ax.plot(np.array(vmfs) * 100, [recondensed_vapor_masses[vmf][s] for vmf in
+                                   melt_masses.keys()], linewidth=2.0, color=colors[index], label=s)
+    # plot the equivalent species in the bulk Moon as a horizontal line
+    ax.axhline(y=bulk_moon_composition[s], linewidth=2.0, color=colors[index], linestyle="--")
+# plot a vertical line at the given VMF
+ax.axvline(x=vmf, linewidth=2, color="black", label="SPH VMF")
+# label the axes
+ax.set_xlabel(r'VMF (%)', fontsize=20)
+ax.set_ylabel(r'Melt Oxide Abundance (Wt.%)', fontsize=20)
+# make y axis log scale
+ax.grid()
+ax.legend()
+plt.show()

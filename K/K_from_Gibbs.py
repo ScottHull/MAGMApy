@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from scipy.stats import linregress
@@ -8,13 +9,14 @@ reactants = ["SiO2_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
 # base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
-base_path = r"C:\Users\Scott\Documents\MAGMApy\K"
+base_path = r"C:\Users\Scott\PycharmProjects\MAGMApy\K"
 
 def magma_code_SiO2_l(temperature):
     return 22.13 - (94311.0 / temperature)
 
 def read_janaf_file(species):
-    path = base_path + "/" + species + ".dat"
+    # path = base_path + "/" + species + ".dat"
+    path = os.path.join(base_path, species + ".dat")
     df = pd.read_csv(path, sep="\t", skiprows=1, index_col="T(K)")
     return df
 
@@ -79,7 +81,7 @@ def regress_temperature_against_logK(temperatures, logKs, temperature):
 
 
 # temperatures = get_temperatures_from_janaf(products[0])
-logKs = [1 / get_reaction_thermo(products, reactants, t, standard_state_temp)[3] for t in temperatures]
+logKs = [get_reaction_thermo(products, reactants, t, standard_state_temp)[3] for t in temperatures]
 regressed_logKs = [regress_temperature_against_logK(temperatures, logKs, t) for t in temperatures]
 slope, intercept = linear_regression(1 / temperatures, logKs)
 

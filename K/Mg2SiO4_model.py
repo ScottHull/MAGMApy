@@ -1,20 +1,28 @@
+import os.path
+
 import pandas as pd
 import numpy as np
 from scipy.stats import linregress
 import matplotlib.pyplot as plt
 
-products = ["SiO2_l", "MgO_l"]
-reactants = ["Mg2SiO4_l"]
+reactants = ["SiO2_l", "MgO_l"]
+products = ["Mg2SiO4_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
 # base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
-base_path = r"C:\Users\Scott\Documents\MAGMApy\K"
+base_path = r"C:\Users\Scott\PycharmProjects\MAGMApy\K"
 
 def magma_code_SiO2_l(temperature):
     return 22.13 - (94311.0 / temperature)
 
+
+def magma_code_Mg2SiO4_l(temperature):
+    return -0.94 + (7434 / temperature)
+
+
 def read_janaf_file(species):
-    path = base_path + "/" + species + ".dat"
+    # path = base_path + "/" + species + ".dat"
+    path = os.path.join(base_path, species + ".dat")
     df = pd.read_csv(path, sep="\t", skiprows=1, index_col="T(K)")
     return df
 
@@ -44,16 +52,26 @@ def get_reaction_thermo(products, reactants, temperature, standard_state_temp):
     reactant_sum_deltaH = 0
     product_sum_deltaS = 0
     reactant_sum_deltaS = 0
+    # for prod in products:
+    #     if prod == "MgO_l":
+    #         product_sum_deltaH += 2 * float(get_standard_state(prod, standard_state_temp)["delta-f H"])
+    #         product_sum_deltaS += 2 * float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
+    #     else:
+    #         product_sum_deltaH += float(get_standard_state(prod, standard_state_temp)["delta-f H"])
+    #         product_sum_deltaS += float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
+    # for react in reactants:
+    #     reactant_sum_deltaH += float(get_standard_state(react, standard_state_temp)["delta-f H"])
+    #     reactant_sum_deltaS += float(get_standard_state(react, standard_state_temp)["-[G-H(Tr)]/T"])
     for prod in products:
-        if prod == "MgO_l":
-            product_sum_deltaH += 2 * float(get_standard_state(prod, standard_state_temp)["delta-f H"])
-            product_sum_deltaS += 2 * float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
-        else:
-            product_sum_deltaH += float(get_standard_state(prod, standard_state_temp)["delta-f H"])
-            product_sum_deltaS += float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
+        product_sum_deltaH += float(get_standard_state(prod, standard_state_temp)["delta-f H"])
+        product_sum_deltaS += float(get_standard_state(prod, standard_state_temp)["-[G-H(Tr)]/T"])
     for react in reactants:
-        reactant_sum_deltaH += float(get_standard_state(react, standard_state_temp)["delta-f H"])
-        reactant_sum_deltaS += float(get_standard_state(react, standard_state_temp)["-[G-H(Tr)]/T"])
+        if react == "MgO_l":
+            reactant_sum_deltaH += 2 * float(get_standard_state(react, standard_state_temp)["delta-f H"])
+            reactant_sum_deltaS += 2 * float(get_standard_state(react, standard_state_temp)["-[G-H(Tr)]/T"])
+        else:
+            reactant_sum_deltaH += float(get_standard_state(react, standard_state_temp)["delta-f H"])
+            reactant_sum_deltaS += float(get_standard_state(react, standard_state_temp)["-[G-H(Tr)]/T"])
     deltaH = (product_sum_deltaH - reactant_sum_deltaH) * 1000  # S in in J, and H is in kJ
     deltaS = product_sum_deltaS - reactant_sum_deltaS
     delta_G = deltaH - temperature * deltaS
@@ -89,7 +107,7 @@ ax.plot(
     temperatures, regressed_logKs, linewidth=2, label="Regressed"
 )
 ax.plot(
-    temperatures, [magma_code_SiO2_l(t) for t in temperatures], linewidth=2, label="MAGMA Code"
+    temperatures, [magma_code_Mg2SiO4_l(t) for t in temperatures], linewidth=2, label="MAGMA Code"
 )
 ax.set_xlabel("Temperature (K)")
 ax.set_ylabel("log K")
