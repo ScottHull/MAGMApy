@@ -7,7 +7,8 @@ from src.plots import collect_data
 from src.composition import normalize, get_molecular_mass
 
 import os
-from random import uniform
+import string
+from random import uniform, shuffle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -254,39 +255,60 @@ plt.show()
 
 # ============================== Plot Melt + Recondensed Vapor as a Function of VMF ==============================
 
-fig = plt.figure(figsize=(16, 9))
-ax = fig.add_subplot(111)
-# increase the font size
-ax.tick_params(axis='both', which='major', labelsize=20)
-ax.set_xlabel(r'VMF (%)', fontsize=20)
-ax.set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
-# get the melt element absolute masses
-melt_masses = collect_data(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
-# get the vapor element masses
-vapor_masses = collect_data(path=f"{run_name}/total_vapor_element_mass", x_header='mass fraction vaporized')
-# get the weight percent oxides in the melt (without recondensed vapor)
-melt_oxides = collect_data(path=f"{run_name}/magma_oxide_mass_fraction", x_header='mass fraction vaporized')
-# get the recondensed vapor element masses
-recondensed_vapor_masses_data = recondense_vapor(
-    melt_mass_element=melt_masses, vapor_mass_element=vapor_masses, vapor_mass_loss_fraction=vapor_loss_fraction / 100,
-    oxides=[i for i in bse_composition.keys() if i != "Fe2O3"]
-)
-# recondensed_vapor_masses = recondensed_vapor_masses_data["recondensed_melt_oxide_weight_pct"]
-recondensed_vapor_masses = {vmf: {element: mass_fraction * 100 for element, mass_fraction in melt_oxides[vmf].items()} for vmf in melt_oxides.keys()}
-# get 10 different colors
-colors = plt.cm.jet(np.linspace(0, 1, 10))
-# plot the evolution of the melt + recondensed vapor composition as a function of VMF
-for index, s in enumerate(recondensed_vapor_masses[vmfs[0]].keys()):
-    ax.plot(np.array(vmfs) * 100, [recondensed_vapor_masses[vmf][s] for vmf in
-                                   melt_masses.keys()], linewidth=2.0, color=colors[index], label=s)
-    # plot the equivalent species in the bulk Moon as a horizontal line
-    ax.axhline(y=bulk_moon_composition[s], linewidth=2.0, color=colors[index], linestyle="--")
-# plot a vertical line at the given VMF
-ax.axvline(x=vmf, linewidth=2, color="black", label="SPH VMF")
-# label the axes
-ax.set_xlabel(r'VMF (%)', fontsize=20)
-ax.set_ylabel(r'Melt Oxide Abundance (Wt.%)', fontsize=20)
-# make y axis log scale
-ax.grid()
-ax.legend()
+# make a figure with two subplots that share the same x and y axes
+fig, axs = plt.subplots(2, 1, figsize=(9, 14))
+axs = axs.flatten()
+axs[0].set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
+axs[1].set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
+axs[1].set_xlabel(r'VMF (%)', fontsize=20)
+# increase the font size and add a grid
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.grid()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.axvline(x=vmf, linewidth=3, color="black", linestyle="--", label="SPH VMF")
+# get the melt and vapor masses across all VMFs
+melt_mole_frac = collect_data(path=f"{run_name}/magma_oxide_mole_fraction", x_header='mass fraction vaporized')
+vapor_mole_frac = collect_data(path=f"{run_name}/atmosphere_mole_fraction", x_header='mass fraction vaporized')
+# colors_melt = plt.cm.jet(np.linspace(0, 1, len(melt_mole_frac[vmfs[0]])))
+# colors_vapor = plt.cm.jet(np.linspace(0, 1, len(vapor_mole_frac[vmfs[0]])))
+colors_melt = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 10
+colors_vapor = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 10
+# randomize the colors
+shuffle(colors_melt)
+shuffle(colors_vapor)
+# plot the melt mole fraction as a function of VMF
+vmf_index = 2
+for index, s in enumerate(melt_mole_frac[vmfs[0]].keys()):
+    axs[0].plot(np.array(vmfs) * 100, [melt_mole_frac[vmf][s] for vmf in vmfs], linewidth=2.0,
+                color=colors_melt[index], label=index)
+    # annotate each species with its name right at the line and 25% of the way along the x axis
+    axs[0].annotate(s.split("_")[0],
+                    (vmfs[vmf_index] * 100,
+                        melt_mole_frac[vmfs[vmf_index]][s] +
+                        melt_mole_frac[vmfs[vmf_index]][s] * 0.08),
+                    fontsize=16, color=colors_melt[index])
+for index, s in enumerate(vapor_mole_frac[vmfs[0]].keys()):
+    axs[1].plot(np.array(vmfs) * 100, [vapor_mole_frac[vmf][s] for vmf in vmfs], linewidth=2.0,
+                color=colors_vapor[index], label=index)
+    # annotate each species with its name right at the line and 25% of the way along the x axis
+    axs[1].annotate(s.split("_")[0],
+                    (vmfs[vmf_index] * 100,
+                        vapor_mole_frac[vmfs[vmf_index]][s] +
+                        vapor_mole_frac[vmfs[vmf_index]][s] * 0.08),
+                    fontsize=16, color=colors_vapor[index])
+
+# set minimum plotted x value
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    ax.set_xlim(left=min(np.array(list(melt_mole_frac.keys())) * 100), right=80)
+    ax.set_ylim(bottom=10 ** -3)
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+plt.savefig(f"{run_name}_melt_vapor_mole_fractions.png", dpi=300)
+plt.tight_layout()
 plt.show()

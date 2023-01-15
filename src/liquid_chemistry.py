@@ -68,6 +68,7 @@ class LiquidActivity:
 
     def __init__(self, composition, complex_species, gas_system):
         self.liquid_oxide_mass_fraction = None  # wt% of the liquid oxide in the liquid phase
+        self.liquid_oxide_mole_fraction = None  # mol% of the liquid oxide in the liquid phase
         self.liquid_oxide_masses = None  # absolute mass of the liquid oxide composition
         self.liquid_oxide_moles = None  # absolute molar abundances of liquid cations in the liquid
         self.complex_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 3",
@@ -113,6 +114,9 @@ class LiquidActivity:
         # get the absolute oxide molar abundances
         self.liquid_oxide_moles = self.composition.cations_to_oxides(liquid_moles,
                                                                      list(self.composition.oxide_mole_fraction.keys()))
+        # calculate the mole fraction of the liquid oxide
+        self.liquid_oxide_mole_fraction = {i: self.liquid_oxide_moles[i] / sum(self.liquid_oxide_moles.values()) for
+                                           i in self.liquid_oxide_moles.keys()}
         # convert absolute moles to absolute mass
         self.liquid_oxide_masses = self.composition.moles_to_mass(self.liquid_oxide_moles)
         # make sure mass has been conserved

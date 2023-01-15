@@ -64,6 +64,7 @@ class Report:
             self.to_dir + "/magma_cation_mass_fraction",
             self.to_dir + "/magma_oxide_mass_fraction",
             self.to_dir + "/magma_element_mass",
+            self.to_dir + "/magma_oxide_mole_fraction",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.liquid_system.activities)
@@ -71,6 +72,7 @@ class Report:
         self.__make_report(path=paths[2], iteration=iteration, data=self.liquid_system.cation_mass_fraction)
         self.__make_report(path=paths[3], iteration=iteration, data=self.liquid_system.liquid_oxide_mass_fraction)
         self.__make_report(path=paths[4], iteration=iteration, data=self.liquid_system.cation_mass)
+        self.__make_report(path=paths[5], iteration=iteration, data=self.liquid_system.liquid_oxide_mole_fraction)
 
     def create_gas_report(self, iteration):
         paths = [
