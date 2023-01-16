@@ -36,12 +36,15 @@ class Report:
             self.thermosystem.most_volatile_species
         )
 
-    def __make_report(self, path, iteration, data, round_digits=4):
+    def __make_report(self, path, iteration, data, round_digits=None):
         outfile = open(path + "/{}.csv".format(iteration), 'w')
         outfile.write(self.__get_metadata())
         for i in data.keys():
             if isinstance(data[i], float):  # round to 4 decimal places if float
-                outfile.write("{},{}\n".format(i, round(data[i], round_digits)))
+                if round_digits is not None:
+                    outfile.write("{},{}\n".format(i, round(data[i], round_digits)))
+                else:
+                    outfile.write("{},{}\n".format(i, data[i]))
             else:
                 outfile.write("{},{}\n".format(i, data[i]))
         outfile.close()

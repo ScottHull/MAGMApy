@@ -3,7 +3,7 @@ import copy
 from monte_carlo.monte_carlo import run_monte_carlo_vapor_loss
 from theia.theia import get_theia_composition, recondense_vapor
 from monte_carlo.monte_carlo import test
-from src.plots import collect_data
+from src.plots import collect_data, collect_metadata
 from src.composition import normalize, get_molecular_mass
 
 import os
@@ -133,10 +133,11 @@ ax.set_xlabel('Oxide', fontsize=20)
 ax.set_ylabel("Oxide Wt. % (Relative to BSE)", fontsize=20)
 ax.grid()
 # make all numbers in the molecules subscript without italics
-formatted_oxides = [rf"$\rm {oxide.replace('2', '_2')}$" for oxide in bse_composition.keys() if oxide != 'Fe2O3']
+formatted_oxides = [rf"$\rm {oxide.replace('2', '_{2}').replace('3', '_{3}')}$" for oxide in bse_composition.keys() if oxide != 'Fe2O3']
 for t, c in [
-    ("BSM", bulk_moon_composition),
-    ("Bulk Ejecta Composition", ejecta_data['ejecta composition']),
+    ("Bulk Moon", bulk_moon_composition),
+    ("BSM", bsm_composition),
+    ("Bulk Ejecta", ejecta_data['ejecta composition']),
     ("Bulk Silicate Theia", theia_data['theia_weight_pct'])
 ]:
     ax.plot(
@@ -146,7 +147,7 @@ for t, c in [
     )
 # plot a horizontal line at 1.0
 ax.plot([i for i in bse_composition.keys() if i != "Fe2O3"], [1.0 for _ in bse_composition.keys() if _ != "Fe2O3"],
-        linewidth=3, linestyle="--", label="1:1 BSE")
+        linewidth=3, color='black', label="1:1 BSE")
 # make x axis labels at 45 degree angle
 plt.xticks(rotation=45)
 # add a legend with large font
@@ -253,7 +254,7 @@ ax.set_xlim(left=0)
 plt.savefig(f"{run_name}_element_vapor_mass.png", dpi=300)
 plt.show()
 
-# ============================== Plot Melt + Recondensed Vapor as a Function of VMF ==============================
+# ============================== Plot Melt + Vapor as a Function of VMF ==============================
 
 # make a figure with two subplots that share the same x and y axes
 fig, axs = plt.subplots(2, 1, figsize=(9, 14))
@@ -270,6 +271,7 @@ for ax in axs:
     ax.axvline(x=vmf, linewidth=3, color="black", linestyle="--", label="SPH VMF")
 # get the melt and vapor masses across all VMFs
 melt_mole_frac = collect_data(path=f"{run_name}/magma_oxide_mole_fraction", x_header='mass fraction vaporized')
+# print mole fraction of ZnO as a function of VMF
 vapor_mole_frac = collect_data(path=f"{run_name}/atmosphere_mole_fraction", x_header='mass fraction vaporized')
 # colors_melt = plt.cm.jet(np.linspace(0, 1, len(melt_mole_frac[vmfs[0]])))
 # colors_vapor = plt.cm.jet(np.linspace(0, 1, len(vapor_mole_frac[vmfs[0]])))
@@ -278,37 +280,112 @@ colors_vapor = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 10
 # randomize the colors
 shuffle(colors_melt)
 shuffle(colors_vapor)
-# plot the melt mole fraction as a function of VMF
-vmf_index = 2
+# plot the melt/vapor mole fraction as a function of VMF
+vmf_to_plot_vapor = 10 ** -1.5
+vmf_to_plot_override_vapor = {
+    'Zn': [10 ** -1.95, 10 ** -2.95],
+    'O': [10 ** -2.7, 10 ** -1.08],
+    'SiO2': [10 ** -0.9, 10 ** -2.2],
+    'NaO': [10 ** -0.95, 10 ** -2.5],
+}
+vmf_to_plot_melt = 10 ** -1.1
+vmf_to_plot_override_melt = {
+    "MgO": [10 ** -2, 10 ** -0.35],
+    "SiO2": [10 ** -1.5, 10 ** -0.65],
+    'TiO2': [10 ** -1.2, 10 ** -2.9],
+    "K2O": [10 ** -1.5, 10 ** -4.7],
+    "ZnO": [10 ** -2.75, 10 ** -5.2],
+}
 for index, s in enumerate(melt_mole_frac[vmfs[0]].keys()):
+    # format s so that all numbers are subscript
+    s_formatted = s.split('_')[0].replace("2", "_{2}").replace("3", "_{3}")
+    x, y = 0, 0
+    if not s.split("_")[0] in vmf_to_plot_override_melt.keys():
+        # get the closest VMF to the one we want to plot
+        closest_vmf = min(vmfs, key=lambda x: abs(x - vmf_to_plot_melt / 100))
+        # get the index of the closest VMF
+        vmf_index = vmfs.index(closest_vmf)
+        x = vmfs[vmf_index] * 100
+        y = melt_mole_frac[vmfs[vmf_index]][s]
+    else:
+        x, y = vmf_to_plot_override_melt[s.split("_")[0]]
     axs[0].plot(np.array(vmfs) * 100, [melt_mole_frac[vmf][s] for vmf in vmfs], linewidth=2.0,
                 color=colors_melt[index], label=index)
     # annotate each species with its name right at the line and 25% of the way along the x axis
-    axs[0].annotate(s.split("_")[0],
-                    (vmfs[vmf_index] * 100,
-                        melt_mole_frac[vmfs[vmf_index]][s] +
-                        melt_mole_frac[vmfs[vmf_index]][s] * 0.08),
-                    fontsize=16, color=colors_melt[index])
+    axs[0].annotate(rf"$\rm {s_formatted}$",
+                    (x, y + (y * 0.08)),
+                    fontsize=18, color=colors_melt[index])
 for index, s in enumerate(vapor_mole_frac[vmfs[0]].keys()):
+    s_formatted = s.split('_')[0].replace("2", "_{2}").replace("3", "_{3}")
+    x, y = 0, 0
+    if not s.split("_")[0] in vmf_to_plot_override_vapor.keys():
+        # get the closest VMF to the one we want to plot
+        closest_vmf = min(vmfs, key=lambda x: abs(x - vmf_to_plot_vapor / 100))
+        # get the index of the closest VMF
+        vmf_index = vmfs.index(closest_vmf)
+        x = vmfs[vmf_index] * 100
+        y = vapor_mole_frac[vmfs[vmf_index]][s]
+    else:
+        x, y = vmf_to_plot_override_vapor[s.split("_")[0]]
     axs[1].plot(np.array(vmfs) * 100, [vapor_mole_frac[vmf][s] for vmf in vmfs], linewidth=2.0,
                 color=colors_vapor[index], label=index)
     # annotate each species with its name right at the line and 25% of the way along the x axis
-    axs[1].annotate(s.split("_")[0],
-                    (vmfs[vmf_index] * 100,
-                        vapor_mole_frac[vmfs[vmf_index]][s] +
-                        vapor_mole_frac[vmfs[vmf_index]][s] * 0.08),
-                    fontsize=16, color=colors_vapor[index])
+    axs[1].annotate(rf"$\rm {s_formatted}$",
+                    (x, y + (y * 0.08)),
+                    fontsize=18, color=colors_vapor[index])
 
 # set minimum plotted x value
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
     ax.set_xlim(left=min(np.array(list(melt_mole_frac.keys())) * 100), right=80)
-    ax.set_ylim(bottom=10 ** -3)
     # label each subplot with a letter in the upper-left corner
     ax.annotate(
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
+axs[0].set_ylim(bottom=10 ** -5.5, top=10 ** 0)
+axs[1].set_ylim(bottom=10 ** -3, top=10 ** 0)
 plt.savefig(f"{run_name}_melt_vapor_mole_fractions.png", dpi=300)
 plt.tight_layout()
+plt.show()
+
+# ===================== Plot the most volatile element as a function of VMF =====================
+
+fig, ax = plt.subplots(figsize=(8, 6))
+# make font size larger
+ax.tick_params(axis='both', which='major', labelsize=20)
+# get the melt and vapor masses across all VMFs
+vmf_and_most_volatile_element = [[key, values['most volatile species']] for key, values in collect_metadata(
+    path=f"{run_name}/magma_oxide_mole_fraction", x_header='mass fraction vaporized'
+).items()]
+# sort the list by VMF
+vmf_and_most_volatile_element.sort(key=lambda x: x[0])
+unique_volatile_species = [i[1] for i in vmf_and_most_volatile_element]
+# for each unique species, get the minimum and maximum VMF at which it is the most volatile
+unique_volatile_species = list(set(unique_volatile_species))
+volatile_species_to_plot = []
+for s in unique_volatile_species:
+    volatile_species_to_plot.append([
+        s,
+        min([i[0] for i in vmf_and_most_volatile_element if i[1] == s]) * 100,
+        max([i[0] for i in vmf_and_most_volatile_element if i[1] == s]) * 100
+    ])
+# sort volatile_species_to_plot by the minimum VMF at which the species is the most volatile
+volatile_species_to_plot.sort(key=lambda x: x[1])
+# plot the most volatile species as a function of VMF
+for s in volatile_species_to_plot:
+    ax.plot(
+        [s[1], s[2]], [s[0], s[0]],
+        linewidth=5.0,
+    )
+ax.set_xlabel("Vapor Mass Fraction (%)", fontsize=20)
+ax.set_ylabel("Most Volatile Element", fontsize=20)
+# ax.set_xlim(left=0, right=80)
+# use log scale on x-axis
+# make a vertical line at the VMF
+ax.axvline(x=vmf, color='k', linestyle='--', linewidth=2.0)
+ax.set_xscale("log")
+ax.grid()
+plt.tight_layout()
+plt.savefig(f"{run_name}_most_volatile_element.png", dpi=300)
 plt.show()
