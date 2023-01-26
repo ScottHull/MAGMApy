@@ -44,16 +44,16 @@ bsm_composition = {  # Visscher and Fegley (2013)
 }
 
 bulk_moon_composition = {  # including core Fe as FeO, my mass balance calculation
-    "SiO2": 41.73699,
-    'MgO': 32.82540,
-    'Al2O3': 3.66824,
-    'TiO2': 0.19372,
+    "SiO2": 47.0,
+    'MgO': 29.0,
+    'Al2O3': 6.0,
+    'TiO2': 0.3,
     'Fe2O3': 0.0,
-    'FeO': 18.46253,
-    'CaO': 3.07599,
-    'Na2O': 0.03335,
-    'K2O': 0.00355,
-    'ZnO': 0.00023,
+    'FeO': 13.0,
+    'CaO': 4.6,
+    'Na2O': 9.0e-2,
+    'K2O': 1.0e-2,
+    'ZnO': 2.39e-5,
 }
 
 # ============================== Define Input Parameters ==============================
@@ -63,7 +63,7 @@ temperature = 2682.61  # K
 vmf = 0.96  # %
 disk_theia_mass_fraction = 66.78  # %
 disk_mass = 1.02  # lunar masses
-vapor_loss_fraction = 75.0  # %
+vapor_loss_fraction = 74.0  # %
 run_new_simulation = False  # True to run a new simulation, False to load a previous simulation
 
 # ============================== Define Constants ==============================
@@ -94,7 +94,7 @@ if run_new_simulation:
 # (liquid + retained vapor that is assumed to recondense) at the given VMF and temperature
 if run_new_simulation:
     ejecta_data = test(
-        guess_initial_composition=bse_composition, target_composition=bulk_moon_composition, temperature=temperature,
+        guess_initial_composition=bsm_composition, target_composition=bulk_moon_composition, temperature=temperature,
         vmf=vmf, vapor_loss_fraction=vapor_loss_fraction, full_report_path=f"{run_name}"
     )
 else:
@@ -389,3 +389,47 @@ ax.grid()
 plt.tight_layout()
 plt.savefig(f"{run_name}_most_volatile_element.png", dpi=300)
 plt.show()
+
+# ============================ Fraction of Element Lost to Escaping Vapor ============================
+# get the mass of each element in the bulk vapor
+vapor_element_masses = collect_data(path=f"{run_name}/total_vapor_element_mass", x_header='mass fraction vaporized')
+# get the mass of each element in the bulk melt
+melt_element_masses = collect_data(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
+# total mass of each element in the system
+# go through each VMF and add up the mass of each element in the melt and vapor
+total_element_masses = {}
+for vmf in melt_element_masses.keys():
+    total_element_masses[vmf] = {}
+    for element in melt_element_masses[vmf].keys():
+        total_element_masses[vmf][element] = melt_element_masses[vmf][element] + vapor_element_masses[vmf][element]
+# verify that the total element mass is conserved across all VMFs
+for vmf in melt_element_masses.keys():
+    for element in melt_element_masses[vmf].keys():
+        assert np.isclose(
+            melt_element_masses[vmf][element] + vapor_element_masses[vmf][element],
+            total_element_masses[vmf][element]
+        )
+# fraction of each element lost to vapor (without recondensation)
+fraction_lost_to_vapor = {}
+for vmf in melt_element_masses.keys():
+    fraction_lost_to_vapor[vmf] = {}
+    for element in melt_element_masses[vmf].keys():
+        fraction_lost_to_vapor[vmf][element] = vapor_element_masses[vmf][element] / total_element_masses[vmf][element]
+# fraction of each element lost to vapor (with recondensation)
+fraction_lost_to_vapor_recondensed = {}
+for vmf in melt_element_masses.keys():
+    fraction_lost_to_vapor_recondensed[vmf] = {}
+    for element in melt_element_masses[vmf].keys():
+        fraction_lost_to_vapor_recondensed[vmf][element] = (vapor_element_masses[vmf][element] * (1 - vapor_loss_fraction)) / melt_element_masses[vmf][element]
+# interpolate the fraction of each element lost to vapor (without recondensation) to the VMF of interest
+fraction_lost_to_vapor_at_vmf = {}
+for element in melt_element_masses[vmf].keys():
+    fraction_lost_to_vapor_at_vmf[element] = np.interp(vmf, list(fraction_lost_to_vapor.keys()), list(fraction_lost_to_vapor.values())[element])
+# interpolate the fraction of each element lost to vapor (with recondensation) to the VMF of interest
+fraction_lost_to_vapor_recondensed_at_vmf = {}
+for element in melt_element_masses[vmf].keys():
+    fraction_lost_to_vapor_recondensed_at_vmf[element] = np.interp(vmf, list(fraction_lost_to_vapor_recondensed.keys()), list(fraction_lost_to_vapor_recondensed.values())[element])
+# write both fraction_lost_to_vapor_at_vmf and fraction_lost_to_vapor_recondensed_at_vmf to a file
+with open(f"{run_name}_fraction_lost_to_vapor_at_vmf.txt", 'w') as f:
+    header = fraction_lost_to_vapor_recondensed_at_vmf.keys()
+    # join the header with 
