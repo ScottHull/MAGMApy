@@ -8,6 +8,7 @@ from src.composition import normalize, get_molecular_mass
 
 import os
 import string
+from scipy.interpolate import interp1d
 from random import uniform, shuffle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -201,13 +202,13 @@ vapor_element_masses = collect_data(path=f"{run_name}/total_vapor_element_mass",
                                                 x_header='mass fraction vaporized')
 # convert the vapor element masses to mole fractions for each VMF
 vapor_element_mole_fractions = {}
-for vmf, element_masses in vapor_element_masses.items():
+for vmf_val, element_masses in vapor_element_masses.items():
     # get the total mass of the vapor
     total_mass = sum(element_masses.values())
     # convert the element masses to mole fractions
     vapor_element_moles = {element: mass / get_molecular_mass(element) for element, mass in element_masses.items()}
     vapor_mole_fraction = {element: moles / sum(vapor_element_moles.values()) for element, moles in vapor_element_moles.items()}
-    vapor_element_mole_fractions[vmf] = vapor_mole_fraction
+    vapor_element_mole_fractions[vmf_val] = vapor_mole_fraction
 
 # plot it
 vmfs = sorted([float(i) for i in vapor_element_mole_fractions.keys()])
@@ -398,38 +399,59 @@ melt_element_masses = collect_data(path=f"{run_name}/magma_element_mass", x_head
 # total mass of each element in the system
 # go through each VMF and add up the mass of each element in the melt and vapor
 total_element_masses = {}
-for vmf in melt_element_masses.keys():
-    total_element_masses[vmf] = {}
-    for element in melt_element_masses[vmf].keys():
-        total_element_masses[vmf][element] = melt_element_masses[vmf][element] + vapor_element_masses[vmf][element]
+for vmf_val in melt_element_masses.keys():
+    total_element_masses[vmf_val] = {}
+    for element in melt_element_masses[vmf_val].keys():
+        total_element_masses[vmf_val][element] = melt_element_masses[vmf_val][element] + vapor_element_masses[vmf_val][element]
 # verify that the total element mass is conserved across all VMFs
-for vmf in melt_element_masses.keys():
-    for element in melt_element_masses[vmf].keys():
+for vmf_val in melt_element_masses.keys():
+    for element in melt_element_masses[vmf_val].keys():
         assert np.isclose(
-            melt_element_masses[vmf][element] + vapor_element_masses[vmf][element],
-            total_element_masses[vmf][element]
+            melt_element_masses[vmf_val][element] + vapor_element_masses[vmf_val][element],
+            total_element_masses[vmf_val][element]
         )
 # fraction of each element lost to vapor (without recondensation)
 fraction_lost_to_vapor = {}
-for vmf in melt_element_masses.keys():
-    fraction_lost_to_vapor[vmf] = {}
-    for element in melt_element_masses[vmf].keys():
-        fraction_lost_to_vapor[vmf][element] = vapor_element_masses[vmf][element] / total_element_masses[vmf][element]
+for vmf_val in melt_element_masses.keys():
+    fraction_lost_to_vapor[vmf_val] = {}
+    for element in melt_element_masses[vmf_val].keys():
+        fraction_lost_to_vapor[vmf_val][element] = melt_element_masses[vmf_val][element] / total_element_masses[vmf_val][element]
 # fraction of each element lost to vapor (with recondensation)
 fraction_lost_to_vapor_recondensed = {}
-for vmf in melt_element_masses.keys():
-    fraction_lost_to_vapor_recondensed[vmf] = {}
-    for element in melt_element_masses[vmf].keys():
-        fraction_lost_to_vapor_recondensed[vmf][element] = (vapor_element_masses[vmf][element] * (1 - vapor_loss_fraction)) / melt_element_masses[vmf][element]
-# interpolate the fraction of each element lost to vapor (without recondensation) to the VMF of interest
-fraction_lost_to_vapor_at_vmf = {}
-for element in melt_element_masses[vmf].keys():
-    fraction_lost_to_vapor_at_vmf[element] = np.interp(vmf, list(fraction_lost_to_vapor.keys()), list(fraction_lost_to_vapor.values())[element])
-# interpolate the fraction of each element lost to vapor (with recondensation) to the VMF of interest
-fraction_lost_to_vapor_recondensed_at_vmf = {}
-for element in melt_element_masses[vmf].keys():
-    fraction_lost_to_vapor_recondensed_at_vmf[element] = np.interp(vmf, list(fraction_lost_to_vapor_recondensed.keys()), list(fraction_lost_to_vapor_recondensed.values())[element])
+for vmf_val in melt_element_masses.keys():
+    fraction_lost_to_vapor_recondensed[vmf_val] = {}
+    for element in melt_element_masses[vmf_val].keys():
+        fraction_lost_to_vapor_recondensed[vmf_val][element] = (melt_element_masses[vmf_val][element] + ((vapor_element_masses[vmf_val][element] * (1 - (vapor_loss_fraction / 100))))) / total_element_masses[vmf_val][element]
+# interpolate the fraction of each element lost to vapor (without recondensation) at the VMF of interest
+fraction_lost_to_vapor_during_vaporization_at_vmf = {}
+fraction_lost_to_vapor_with_recondensation_at_vmf = {}
+# get the vmf immediately above and below the vmf of interest
+vmf_above = min([i for i in fraction_lost_to_vapor.keys() if i > vmf / 100])
+vmf_below = max([i for i in fraction_lost_to_vapor.keys() if i < vmf / 100])
+for element in fraction_lost_to_vapor[vmf_above].keys():
+    # interpolate each element's fraction lost to vapor (not recondensed) at the vmf of interest
+    fraction_lost_to_vapor_during_vaporization_at_vmf[element] = interp1d(
+        [vmf_below, vmf_above],
+        [fraction_lost_to_vapor[vmf_below][element], fraction_lost_to_vapor[vmf_above][element]]
+    )(vmf / 100)
+    # interpolate each element's fraction lost to vapor (with recondensation) at the vmf of interest
+    fraction_lost_to_vapor_with_recondensation_at_vmf[element] = interp1d(
+        [vmf_below, vmf_above],
+        [fraction_lost_to_vapor_recondensed[vmf_below][element], fraction_lost_to_vapor_recondensed[vmf_above][element]]
+    )(vmf / 100)
+
 # write both fraction_lost_to_vapor_at_vmf and fraction_lost_to_vapor_recondensed_at_vmf to a file
+if f"{run_name}_fraction_lost_to_vapor_at_vmf.txt" in os.listdir():
+    os.remove(f"{run_name}_fraction_lost_to_vapor_at_vmf.txt")
 with open(f"{run_name}_fraction_lost_to_vapor_at_vmf.txt", 'w') as f:
-    header = fraction_lost_to_vapor_recondensed_at_vmf.keys()
-    # join the header with 
+    header = fraction_lost_to_vapor_during_vaporization_at_vmf.keys()
+    # make header a comma-separated string
+    header_f = "phase," + ",".join(header)
+    f.write(f"{header_f}\n")
+    f.write(
+        "non-recondensed," + ",".join([str(fraction_lost_to_vapor_during_vaporization_at_vmf[i]) for i in header]) + "\n"
+    )
+    f.write(
+        "recondensed," + ",".join([str(fraction_lost_to_vapor_with_recondensation_at_vmf[i]) for i in header]) + "\n"
+    )
+f.close()
