@@ -89,7 +89,9 @@ class FullSequenceRayleighDistillation:
             'delta_retained_vapor': delta_retained_vapor,
             'delta_escaping_vapor': delta_escaping_vapor,
             'delta_retained_melt': delta_retained_melt,
-            'delta_moon_earth': delta_retained_melt - self.earth_isotope_composition
+            'delta_moon_earth': delta_retained_melt - self.earth_isotope_composition,
+            'element_mass_fraction_in_melt_pre_recondensation': self.element_mass_fraction_in_melt,
+            'element_mass_fraction_in_melt_post_recondensation': self.retained_mass_melt_fraction,
         }
 
     def run_theia_mass_balance(self, theia_range, delta_moon_earth):
@@ -101,13 +103,14 @@ class FullSequenceRayleighDistillation:
         :param delta_moon_earth:
         :return:
         """
-        earth_ejecta_mass_fraction = 1 - (self.theia_ejecta_fraction / 100.0)  # fraction of Earth's mass in the ejecta
+        earth_ejecta_mass_fraction = 1 - self.theia_ejecta_fraction  # fraction of Earth's mass in the ejecta
         theia_search = {}  # dictionary to hold the results of the search
         for i in theia_range:
             delta_ejecta = self.rayleigh_mixing(self.earth_isotope_composition, i, earth_ejecta_mass_fraction)
             data = self.run_3_stage_fractionation(delta_initial=delta_ejecta)
             data['delta_ejecta'] = delta_ejecta
             data['delta_theia'] = i
+            data['theia_ejecta_mass_fraction'] = self.theia_ejecta_fraction
             theia_search[i] = data
         # interpolate delta_theia to find the value that matches the delta_moon_earth
         # first, find the two values that bracket the delta_moon_earth

@@ -608,8 +608,29 @@ k_isotopes = FullSequenceRayleighDistillation(
                 theia_ejecta_fraction=disk_theia_mass_fraction
 )
 k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
-print(k_isotopes_starting_earth_isotope_composition)
-k_isotopes_mixed_model = k_isotopes.run_theia_mass_balance(
+k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit = k_isotopes.run_theia_mass_balance(
     theia_range=np.arange(-1, 1, 0.05),
     delta_moon_earth=0.415
 )  # assumes ejecta is a mix of Earth and Theia
+
+# make a plot of the 41K/39K fractionation with the Earth-Theia mixing model
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.plot(
+    k_isotopes_mixed_model.keys(),
+    [k_isotopes_mixed_model[i]['delta_moon_earth'] for i in k_isotopes_mixed_model.keys()],
+    linewidth=2.0,
+    label=r"$\rm ^{41/39}K$"
+)
+# shade a region between the error bars of the observed value
+ax.axhspan(
+    0.415 - 0.015, 0.415 + 0.015, alpha=0.2, color='grey', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
+ax.axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
+ax.axvspan(-0.479 - 0.027, -0.479 + 0.027, alpha=0.2, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
+ax.set_xlabel(r"$\delta_{\rm Theia}$")
+ax.set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
+ax.set_title("Earth-Theia Mixing Model")
+ax.grid()
+ax.legend()
+
+plt.savefig(f"{run_name}_isotope_fractionation.png", dpi=300)
+plt.show()
