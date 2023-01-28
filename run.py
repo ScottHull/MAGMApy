@@ -5,12 +5,14 @@ from theia.theia import get_theia_composition, recondense_vapor
 from monte_carlo.monte_carlo import test
 from src.plots import collect_data, collect_metadata
 from src.composition import normalize, get_molecular_mass
+from isotopes.rayleigh import FullSequenceRayleighDistillation
 
 import os
 import string
 from scipy.interpolate import interp1d
 from random import uniform, shuffle
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # use colorblind-friendly colors
@@ -589,6 +591,25 @@ with open(f"{run_name}_mass_distribution.csv", "w") as f:
     f.write(header)
     f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
     f.write("bulk vapor mass," + ",".join([str(i) for i in bulk_vapor_mass_at_vmf.values()]) + "\n")
+    f.write("bulk system mass," + ",".join([str(i) for i in (np.array(list(melt_mass_at_vmf.values())) + np.array(list(bulk_vapor_mass_at_vmf.values()))).tolist()]) + "\n")
     f.write("escaping vapor mass," + ",".join([str(i) for i in escaping_vapor_mass_at_vmf.values()]) + "\n")
     f.write("retained vapor mass," + ",".join([str(i) for i in retained_vapor_mass_at_vmf.values()]) + "\n")
 f.close()
+
+
+# ========================== Model Rayleigh Isotope Fractionation ==========================
+# read in the mass distribution file
+mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+# model 41K/39K fractionation
+k_isotopes = FullSequenceRayleighDistillation(
+    heavy_z=41, light_z=39, vapor_escape_fraction=vapor_loss_fraction,
+    system_element_mass=mass_distribution['K']['bulk system mass'], melt_element_mass=mass_distribution['K']['melt mass'],
+                 vapor_element_mass=mass_distribution['K']['bulk vapor mass'], earth_isotope_composition=-0.479,
+                theia_ejecta_fraction=disk_theia_mass_fraction
+)
+k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
+print(k_isotopes_starting_earth_isotope_composition)
+k_isotopes_mixed_model = k_isotopes.run_theia_mass_balance(
+    theia_range=np.arange(-1, 1, 0.05),
+    delta_moon_earth=0.415
+)  # assumes ejecta is a mix of Earth and Theia

@@ -1,3 +1,4 @@
+import numpy as np
 from scipy.interpolate import interp1d
 
 class FullSequenceRayleighDistillation:
@@ -23,7 +24,9 @@ class FullSequenceRayleighDistillation:
         self.element_total_retained_mass = self.melt_element_mass + self.element_vapor_mass_retained  # mass of element in the system after vapor escape
         self.retained_mass = self.melt_element_mass + self.element_vapor_mass_retained
         # quick check for mass balance
-        assert self.system_element_mass - self.retained_mass == self.element_vapor_mass_escaping
+        assert np.isclose(
+            self.system_element_mass - self.retained_mass, self.element_vapor_mass_escaping
+        )
         self.retained_mass_melt_fraction = self.melt_element_mass / self.element_total_retained_mass  # fraction of element in the melt after vapor escape, including recondensation
         self.retained_mass_vapor_fraction = self.element_vapor_mass_retained / self.element_total_retained_mass  # fraction of element in the vapor after vapor escape, including recondensation
 
@@ -73,10 +76,10 @@ class FullSequenceRayleighDistillation:
                                                              self.element_mass_fraction_in_melt)
         # next, model the physical fractionation of the vapor
         delta_retained_vapor = self.rayleigh_fractionate_residual(delta_bulk_vapor, self.physical_fractionation_factor,
-                                                                  self.retained_mass_vapor_fraction)
+                                                                  self.vapor_escape_fraction)
         # model the escaping vapor
         delta_escaping_vapor = self.rayleigh_fractionate_extract(delta_bulk_vapor, self.physical_fractionation_factor,
-                                                                 self.retained_mass_vapor_fraction)
+                                                                 self.vapor_escape_fraction)
         # now, mix the retained vapor with the melt
         delta_retained_melt = self.rayleigh_mixing(delta_melt, delta_retained_vapor, self.retained_mass_melt_fraction)
         # return everything
@@ -89,7 +92,7 @@ class FullSequenceRayleighDistillation:
             'delta_moon_earth': delta_retained_melt - self.earth_isotope_composition
         }
 
-    def run_theia_mass_balance(self, theia_range, theia_ejecta_mass_fraction, delta_moon_earth):
+    def run_theia_mass_balance(self, theia_range, delta_moon_earth):
         """
         Calculates the isotope composition of Theia by treating the ejecta as a Rayleigh mixture of Earth and Theia.
         Leaves the Theia isotope composition as an unknown and solves for it.
@@ -98,10 +101,10 @@ class FullSequenceRayleighDistillation:
         :param delta_moon_earth:
         :return:
         """
-        earth_ejecta_mass_fraction = 1 - (theia_ejecta_mass_fraction / 100.0)  # fraction of Earth's mass in the ejecta
+        earth_ejecta_mass_fraction = 1 - (self.theia_ejecta_fraction / 100.0)  # fraction of Earth's mass in the ejecta
         theia_search = {}  # dictionary to hold the results of the search
         for i in theia_range:
-            delta_ejecta = self.rayleigh_mixing(self.earth_isotope_composition, theia_range, earth_ejecta_mass_fraction)
+            delta_ejecta = self.rayleigh_mixing(self.earth_isotope_composition, i, earth_ejecta_mass_fraction)
             data = self.run_3_stage_fractionation(delta_initial=delta_ejecta)
             data['delta_ejecta'] = delta_ejecta
             data['delta_theia'] = i
