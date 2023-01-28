@@ -102,7 +102,6 @@ else:
     # read in the data dictionary from the file
     ejecta_data = eval(open(ejecta_file_path, 'r').read())
 
-
 # ============================== Calculate Bulk Silicate Theia (BST) Composition ==============================
 
 if run_new_simulation:
@@ -122,7 +121,6 @@ if run_new_simulation:
     with open(theia_file_path, "w") as f:
         f.write(str({k: v for k, v in theia_data.items() if k not in ['c', 'l', 'g', 't']}))
 
-
 # ============================== Plot Bulk Ejecta + BST Relative to BSE ==============================
 
 # calculate the composition of bulk silicate Theia (BST)
@@ -134,7 +132,8 @@ ax.set_xlabel('Oxide', fontsize=20)
 ax.set_ylabel("Oxide Wt. % (Relative to BSE)", fontsize=20)
 ax.grid()
 # make all numbers in the molecules subscript without italics
-formatted_oxides = [rf"$\rm {oxide.replace('2', '_{2}').replace('3', '_{3}')}$" for oxide in bse_composition.keys() if oxide != 'Fe2O3']
+formatted_oxides = [rf"$\rm {oxide.replace('2', '_{2}').replace('3', '_{3}')}$" for oxide in bse_composition.keys() if
+                    oxide != 'Fe2O3']
 for t, c in [
     ("Bulk Moon", bulk_moon_composition),
     ("BSM", bsm_composition),
@@ -143,7 +142,7 @@ for t, c in [
 ]:
     ax.plot(
         [i for i in bse_composition.keys() if i != "Fe2O3"], [c[oxide] / bse_composition[oxide]
-                                 for oxide in bse_composition.keys() if oxide != "Fe2O3"],
+                                                              for oxide in bse_composition.keys() if oxide != "Fe2O3"],
         linewidth=3, label=t
     )
 # plot a horizontal line at 1.0
@@ -199,7 +198,7 @@ plt.show()
 
 # ============================== Plot Vapor Element Mole Fraction As Function of VMF ==============================
 vapor_element_masses = collect_data(path=f"{run_name}/total_vapor_element_mass",
-                                                x_header='mass fraction vaporized')
+                                    x_header='mass fraction vaporized')
 # convert the vapor element masses to mole fractions for each VMF
 vapor_element_mole_fractions = {}
 for vmf_val, element_masses in vapor_element_masses.items():
@@ -207,7 +206,8 @@ for vmf_val, element_masses in vapor_element_masses.items():
     total_mass = sum(element_masses.values())
     # convert the element masses to mole fractions
     vapor_element_moles = {element: mass / get_molecular_mass(element) for element, mass in element_masses.items()}
-    vapor_mole_fraction = {element: moles / sum(vapor_element_moles.values()) for element, moles in vapor_element_moles.items()}
+    vapor_mole_fraction = {element: moles / sum(vapor_element_moles.values()) for element, moles in
+                           vapor_element_moles.items()}
     vapor_element_mole_fractions[vmf_val] = vapor_mole_fraction
 
 # plot it
@@ -396,13 +396,15 @@ plt.show()
 vapor_element_masses = collect_data(path=f"{run_name}/total_vapor_element_mass", x_header='mass fraction vaporized')
 # get the mass of each element in the bulk melt
 melt_element_masses = collect_data(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
+melt_metadata = collect_metadata(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
 # total mass of each element in the system
 # go through each VMF and add up the mass of each element in the melt and vapor
 total_element_masses = {}
 for vmf_val in melt_element_masses.keys():
     total_element_masses[vmf_val] = {}
     for element in melt_element_masses[vmf_val].keys():
-        total_element_masses[vmf_val][element] = melt_element_masses[vmf_val][element] + vapor_element_masses[vmf_val][element]
+        total_element_masses[vmf_val][element] = melt_element_masses[vmf_val][element] + vapor_element_masses[vmf_val][
+            element]
 # verify that the total element mass is conserved across all VMFs
 for vmf_val in melt_element_masses.keys():
     for element in melt_element_masses[vmf_val].keys():
@@ -410,18 +412,26 @@ for vmf_val in melt_element_masses.keys():
             melt_element_masses[vmf_val][element] + vapor_element_masses[vmf_val][element],
             total_element_masses[vmf_val][element]
         )
+    # make sure that the total mass of the system equals the initial liquid mass
+    assert np.isclose(
+        melt_metadata[vmf_val]['initial liquid mass'],
+        sum(total_element_masses[vmf_val].values())
+    )
 # fraction of each element lost to vapor (without recondensation)
 fraction_lost_to_vapor = {}
 for vmf_val in melt_element_masses.keys():
     fraction_lost_to_vapor[vmf_val] = {}
     for element in melt_element_masses[vmf_val].keys():
-        fraction_lost_to_vapor[vmf_val][element] = melt_element_masses[vmf_val][element] / total_element_masses[vmf_val][element]
+        fraction_lost_to_vapor[vmf_val][element] = melt_element_masses[vmf_val][element] / \
+                                                   total_element_masses[vmf_val][element]
 # fraction of each element lost to vapor (with recondensation)
 fraction_lost_to_vapor_recondensed = {}
 for vmf_val in melt_element_masses.keys():
     fraction_lost_to_vapor_recondensed[vmf_val] = {}
     for element in melt_element_masses[vmf_val].keys():
-        fraction_lost_to_vapor_recondensed[vmf_val][element] = (melt_element_masses[vmf_val][element] + ((vapor_element_masses[vmf_val][element] * (1 - (vapor_loss_fraction / 100))))) / total_element_masses[vmf_val][element]
+        fraction_lost_to_vapor_recondensed[vmf_val][element] = (melt_element_masses[vmf_val][element] + (
+        (vapor_element_masses[vmf_val][element] * (1 - (vapor_loss_fraction / 100))))) / total_element_masses[vmf_val][
+                                                                   element]
 # interpolate the fraction of each element lost to vapor (without recondensation) at the VMF of interest
 fraction_lost_to_vapor_during_vaporization_at_vmf = {}
 fraction_lost_to_vapor_with_recondensation_at_vmf = {}
@@ -449,9 +459,136 @@ with open(f"{run_name}_fraction_lost_to_vapor_at_vmf.txt", 'w') as f:
     header_f = "phase," + ",".join(header)
     f.write(f"{header_f}\n")
     f.write(
-        "non-recondensed," + ",".join([str(fraction_lost_to_vapor_during_vaporization_at_vmf[i]) for i in header]) + "\n"
+        "non-recondensed," + ",".join(
+            [str(fraction_lost_to_vapor_during_vaporization_at_vmf[i]) for i in header]) + "\n"
     )
     f.write(
         "recondensed," + ",".join([str(fraction_lost_to_vapor_with_recondensation_at_vmf[i]) for i in header]) + "\n"
     )
+f.close()
+
+# plot the fraction of each element lost to vapor (with and without recondensation) at the VMF of interest
+# make a figure with 2 rows and 1 column
+fig, axs = plt.subplots(2, 1, figsize=(9, 14))
+axs = axs.flatten()
+axs[0].set_title("Canonical", fontsize=20)
+# add a grid and x, y limits
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.grid()
+    ax.set_xscale('log')
+    ax.set_ylim(0, 1)
+    ax.set_xlim(ax.set_xlim(left=min(np.array(list(melt_element_masses)) * 100), right=80))
+# in the first row, plot the fraction of each element lost to vapor (without recondensation)
+all_elements = melt_element_masses[vmf_above].keys()
+# colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 10
+colors = plt.cm.jet(np.linspace(0, 1, len(all_elements)))
+for index, element in enumerate(all_elements):
+    axs[0].plot(
+        np.array(list(melt_element_masses.keys())) * 100.0,
+        [melt_element_masses[vmf_val][element] / total_element_masses[vmf_val][element] for vmf_val in
+         melt_element_masses.keys()],
+        linewidth=2.0,
+        color=colors[index],
+        # label=element
+    )
+    axs[1].plot(
+        np.array(list(melt_element_masses.keys())) * 100.0,
+        [(melt_element_masses[vmf_val][element] + (
+        (vapor_element_masses[vmf_val][element] * (1 - (vapor_loss_fraction / 100))))) / total_element_masses[vmf_val][
+             element] for vmf_val in melt_element_masses.keys()],
+        linewidth=2.0,
+        color=colors[index],
+        label=element
+    )
+# annotate in the upper right corner that this is prior to recondensation
+for ax, title in [(axs[0], "Pre-Recondensation"), (axs[1], "Post-Recondensation")]:
+    ax.annotate(
+        title,
+        xy=(10**-2.5, 0.1),
+        xycoords="axes fraction",
+        horizontalalignment="left",
+        verticalalignment="top",
+        fontsize=16,
+        fontweight="bold",
+    )
+for ax in [axs[0], axs[1]]:
+    ax.set_ylabel("Residual Fraction in Melt", fontsize=20)
+for ax in axs[-1:]:
+    ax.set_xlabel("VMF (%)", fontsize=20)
+
+for ax in [axs[0], axs[1]]:
+    ax.axvline(x=vmf, linewidth=3, color="black", linestyle="--")
+
+# annotate a letter in the upper left corner of each plot
+for index, ax in enumerate(axs):
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+
+plt.tight_layout()
+
+# place the legend to the right of both plots
+legend = fig.legend(loc=7, fontsize=16)
+for line in legend.get_lines():  # increase line widths in legend
+    try:
+        line.set_linewidth(4.0)
+    except:
+        pass
+for handle in legend.legendHandles:  # increase marker sizes in legend
+    try:
+        handle.set_sizes([120.0])
+    except:
+        pass
+fig.subplots_adjust(right=0.85)
+
+plt.savefig(f"{run_name}_fraction_lost_to_vapor_at_vmf.png", dpi=300)
+plt.show()
+
+
+# ========================== Export interpolated data to a file ==========================
+# get the mass of each element in the bulk vapor
+vapor_element_masses = collect_data(path=f"{run_name}/total_vapor_element_mass", x_header='mass fraction vaporized')
+# get the mass of each element in the bulk melt
+melt_element_masses = collect_data(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
+melt_metadata = collect_metadata(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
+# interpolate melt and vapor mass data to the VMF of interest
+vmf_above = min([i for i in fraction_lost_to_vapor.keys() if i > vmf / 100])
+vmf_below = max([i for i in fraction_lost_to_vapor.keys() if i < vmf / 100])
+melt_mass_at_vmf = {}
+bulk_vapor_mass_at_vmf = {}
+escaping_vapor_mass_at_vmf = {}
+retained_vapor_mass_at_vmf = {}
+for element in fraction_lost_to_vapor[vmf_above].keys():
+    # interpolate each element's fraction lost to vapor (not recondensed) at the vmf of interest
+    melt_mass_at_vmf[element] = interp1d(
+        [vmf_below, vmf_above],
+        [melt_element_masses[vmf_below][element], melt_element_masses[vmf_above][element]]
+    )(vmf / 100)
+    # interpolate each element's fraction lost to bulk vapor
+    bulk_vapor_mass_at_vmf[element] = interp1d(
+        [vmf_below, vmf_above],
+        [vapor_element_masses[vmf_below][element], vapor_element_masses[vmf_above][element]]
+    )(vmf / 100)
+    # get the escaping vapor mass
+    escaping_vapor_mass_at_vmf[element] = bulk_vapor_mass_at_vmf[element] * (vapor_loss_fraction / 100)
+    # get the retained vapor mass
+    retained_vapor_mass_at_vmf[element] = bulk_vapor_mass_at_vmf[element] - escaping_vapor_mass_at_vmf[element]
+# assume mass balance
+total_mass = sum(melt_mass_at_vmf.values()) + sum(bulk_vapor_mass_at_vmf.values())
+# print(
+#     total_mass, melt_metadata[vmf_above]['initial liquid mass'], melt_metadata[vmf_above]['mass liquid'] + melt_metadata[vmf_above]['mass vapor']
+# )
+# assert total_mass == melt_metadata[vmf_above]['initial liquid mass'] == melt_metadata[vmf_above]['mass liquid'] + melt_metadata[vmf_above]['mass vapor']
+# export the data to a file
+if os.path.exists(f"{run_name}_mass_distribution.csv"):
+    os.remove(f"{run_name}_mass_distribution.csv")
+with open(f"{run_name}_mass_distribution.csv", "w") as f:
+    header = "component," + ",".join([str(i) for i in melt_mass_at_vmf.keys()]) + "\n"
+    f.write(header)
+    f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
+    f.write("bulk vapor mass," + ",".join([str(i) for i in bulk_vapor_mass_at_vmf.values()]) + "\n")
+    f.write("escaping vapor mass," + ",".join([str(i) for i in escaping_vapor_mass_at_vmf.values()]) + "\n")
+    f.write("retained vapor mass," + ",".join([str(i) for i in retained_vapor_mass_at_vmf.values()]) + "\n")
 f.close()
