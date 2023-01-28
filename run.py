@@ -632,5 +632,39 @@ ax.set_title("Earth-Theia Mixing Model")
 ax.grid()
 ax.legend()
 
-plt.savefig(f"{run_name}_isotope_fractionation.png", dpi=300)
+plt.savefig(f"{run_name}_K_isotope_fractionation.png", dpi=300)
+plt.show()
+
+zn_isotopes = FullSequenceRayleighDistillation(
+    heavy_z=66, light_z=64, vapor_escape_fraction=vapor_loss_fraction,
+    system_element_mass=mass_distribution['Zn']['bulk system mass'], melt_element_mass=mass_distribution['Zn']['melt mass'],
+                 vapor_element_mass=mass_distribution['Zn']['bulk vapor mass'], earth_isotope_composition=0.28,
+                theia_ejecta_fraction=disk_theia_mass_fraction
+)
+zn_isotopes_starting_earth_isotope_composition = zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
+zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit = zn_isotopes.run_theia_mass_balance(
+    theia_range=np.arange(-550, -450, 5),
+    delta_moon_earth=1.12
+)  # assumes ejecta is a mix of Earth and Theia
+
+# make a plot of the 66Zn/64Zn fractionation with the Earth-Theia mixing model
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.plot(
+    zn_isotopes_mixed_model.keys(),
+    [zn_isotopes_mixed_model[i]['delta_moon_earth'] for i in zn_isotopes_mixed_model.keys()],
+    linewidth=2.0,
+    label=r"$\rm ^{66/64}Zn$"
+)
+# shade a region between the error bars of the observed value
+ax.axhspan(
+    1.4 - 0.5, 1.4 + 0.5, alpha=0.2, color='grey', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64Zn}$ (Observed)")
+ax.axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
+ax.axvspan(0.28 - 0.05, 0.28 + 0.05, alpha=1, color='red', label=r"$\delta \rm ^{66/64}zn_{\rm Earth}$ (Observed)")
+ax.set_xlabel(r"$\delta_{\rm Theia}$")
+ax.set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
+ax.set_title("Earth-Theia Mixing Model")
+ax.grid()
+ax.legend()
+
+plt.savefig(f"{run_name}_zn_isotope_fractionation.png", dpi=300)
 plt.show()
