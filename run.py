@@ -549,6 +549,34 @@ plt.savefig(f"{run_name}_fraction_lost_to_vapor_at_vmf.png", dpi=300)
 plt.show()
 
 
+# make a spider plot of the fraction lost with and without recondensation at the VMF of interest
+# TODO: make this fraction relative to Earth
+fig, ax = plt.subplots(figsize=(10, 10))
+ax.set_title("Canonical", fontsize=20)
+# add a grid and x, y limits
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.grid()
+ax.plot(
+    fraction_lost_to_vapor_during_vaporization_at_vmf.keys(),
+    fraction_lost_to_vapor_during_vaporization_at_vmf.values(),
+    linewidth=2.0,
+    label="Without Recondensation"
+)
+ax.plot(
+    fraction_lost_to_vapor_with_recondensation_at_vmf.keys(),
+    fraction_lost_to_vapor_with_recondensation_at_vmf.values(),
+    linewidth=2.0,
+    label="With Recondensation"
+)
+ax.set_ylabel("Mass Loss Fraction", fontsize=20)
+ax.axhline(1, linewidth=3, color="black")
+ax.legend(fontsize=16)
+
+plt.tight_layout()
+plt.savefig(f"{run_name}_fraction_lost_to_vapor_at_vmf_spider.png", dpi=300)
+plt.show()
+
+
 # ========================== Export interpolated data to a file ==========================
 # get the mass of each element in the bulk vapor
 vapor_element_masses = collect_data(path=f"{run_name}/total_vapor_element_mass", x_header='mass fraction vaporized')
@@ -595,7 +623,6 @@ with open(f"{run_name}_mass_distribution.csv", "w") as f:
     f.write("escaping vapor mass," + ",".join([str(i) for i in escaping_vapor_mass_at_vmf.values()]) + "\n")
     f.write("retained vapor mass," + ",".join([str(i) for i in retained_vapor_mass_at_vmf.values()]) + "\n")
 f.close()
-
 
 # ========================== Model Rayleigh Isotope Fractionation ==========================
 # read in the mass distribution file
