@@ -86,6 +86,7 @@ class Report:
             self.to_dir + "/atmosphere_cation_mass_fraction",
             self.to_dir + "/f",
             self.to_dir + "/total_vapor_element_mass",
+            self.to_dir + "/total_vapor_species_mass",
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.gas_system.partial_pressures)
@@ -95,3 +96,4 @@ class Report:
         self.__make_report(path=paths[4], iteration=iteration, data=self.gas_system.element_mass_fraction)
         self.__make_report(path=paths[5], iteration=iteration, data=self.gas_system.f)
         self.__make_report(path=paths[6], iteration=iteration, data=self.gas_system.element_total_mass)
+        self.__make_report(path=paths[7], iteration=iteration, data=self.gas_system.species_total_mass)

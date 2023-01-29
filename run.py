@@ -8,11 +8,13 @@ from src.composition import normalize, get_molecular_mass
 from isotopes.rayleigh import FullSequenceRayleighDistillation
 
 import os
+import sys
 import string
 from scipy.interpolate import interp1d
 from random import uniform, shuffle
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 # use colorblind-friendly colors
@@ -67,7 +69,7 @@ vmf = 0.96  # %
 disk_theia_mass_fraction = 66.78  # %
 disk_mass = 1.02  # lunar masses
 vapor_loss_fraction = 74.0  # %
-run_new_simulation = False  # True to run a new simulation, False to load a previous simulation
+run_new_simulation = True  # True to run a new simulation, False to load a previous simulation
 
 # ============================== Define Constants ==============================
 
@@ -260,7 +262,7 @@ plt.show()
 # ============================== Plot Melt + Vapor as a Function of VMF ==============================
 
 # make a figure with two subplots that share the same x and y axes
-fig, axs = plt.subplots(2, 1, figsize=(9, 14))
+fig, axs = plt.subplots(3, 1, figsize=(9, 16))
 axs = axs.flatten()
 axs[0].set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
 axs[1].set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
@@ -276,28 +278,43 @@ for ax in axs:
 melt_mole_frac = collect_data(path=f"{run_name}/magma_oxide_mole_fraction", x_header='mass fraction vaporized')
 # print mole fraction of ZnO as a function of VMF
 vapor_mole_frac = collect_data(path=f"{run_name}/atmosphere_mole_fraction", x_header='mass fraction vaporized')
-# colors_melt = plt.cm.jet(np.linspace(0, 1, len(melt_mole_frac[vmfs[0]])))
-# colors_vapor = plt.cm.jet(np.linspace(0, 1, len(vapor_mole_frac[vmfs[0]])))
-colors_melt = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 10
-colors_vapor = plt.rcParams['axes.prop_cycle'].by_key()['color'] * 10
-# randomize the colors
-shuffle(colors_melt)
-shuffle(colors_vapor)
+
+# get the bulk vapor species mass
+vapor_species_mass = collect_data(path=f"{run_name}/total_vapor_species_mass", x_header='mass fraction vaporized')
+# for each VMF, convert the vapor species mass to moles and then to mole fractions
+vapor_species_mole_fractions = {}  # bulk vapor
+for vmf, species_mass in vapor_species_mass.items():
+    # convert the species masses to mole fractions
+    vapor_species_moles = {element: mass / get_molecular_mass(element) for element, mass in species_mass.items()}
+    vapor_species_mole_fraction = {element: moles / sum(vapor_species_moles.values()) for element, moles in
+                                   vapor_species_moles.items()}
+    vapor_species_mole_fractions[vmf] = vapor_species_mole_fraction
+
+colors_melt = sns.color_palette('husl', n_colors=len(melt_mole_frac[vmfs[0]]))
+colors_vapor = sns.color_palette('husl', n_colors=len(vapor_mole_frac[vmfs[0]]))
+# shuffle(colors_melt)
+# shuffle(colors_vapor)
 # plot the melt/vapor mole fraction as a function of VMF
 vmf_to_plot_vapor = 10 ** -1.5
 vmf_to_plot_override_vapor = {
-    'Zn': [10 ** -1.95, 10 ** -2.95],
-    'O': [10 ** -2.7, 10 ** -1.08],
-    'SiO2': [10 ** -0.9, 10 ** -2.2],
-    'NaO': [10 ** -0.95, 10 ** -2.5],
+    'Zn': [10 ** -3, 10 ** -2.8],
+    'O2': [10 ** -0.7, 10 ** -0.6],
+    # 'SiO2': [10 ** -0.9, 10 ** -2.2],
+    # 'NaO': [10 ** -0.95, 10 ** -2.5],
+    "SiO": [10 ** - 2.4, 10 ** -0.54],
 }
 vmf_to_plot_melt = 10 ** -1.1
 vmf_to_plot_override_melt = {
-    "MgO": [10 ** -2, 10 ** -0.35],
-    "SiO2": [10 ** -1.5, 10 ** -0.65],
-    'TiO2': [10 ** -1.2, 10 ** -2.9],
-    "K2O": [10 ** -1.5, 10 ** -4.7],
-    "ZnO": [10 ** -2.75, 10 ** -5.2],
+    "MgO": [10 ** -2, 10 ** -0.65],
+    "SiO2": [10 ** -1.5, 10 ** -0.35],
+    # 'TiO2': [10 ** -1.2, 10 ** -2.9],
+    # "K2O": [10 ** -1.5, 10 ** -4.7],
+    "ZnO": [10 ** -3.3, 10 ** -6.6],
+    "Al2O3": [10 ** -1.5, 10 ** -1.82],
+}
+vmf_to_plot_bulk_vapor = 10 ** -1.5
+vmf_to_plot_override_bulk_vapor = {
+
 }
 for index, s in enumerate(melt_mole_frac[vmfs[0]].keys()):
     # format s so that all numbers are subscript
@@ -337,6 +354,25 @@ for index, s in enumerate(vapor_mole_frac[vmfs[0]].keys()):
                     (x, y + (y * 0.08)),
                     fontsize=18, color=colors_vapor[index])
 
+for index, s in enumerate(vapor_species_mole_fractions[vmfs[0]].keys()):
+    s_formatted = s.split('_')[0].replace("2", "_{2}").replace("3", "_{3}")
+    x, y = 0, 0
+    if not s.split("_")[0] in vmf_to_plot_override_bulk_vapor.keys():
+        # get the closest VMF to the one we want to plot
+        closest_vmf = min(vmfs, key=lambda x: abs(x - vmf_to_plot_bulk_vapor / 100))
+        # get the index of the closest VMF
+        vmf_index = vmfs.index(closest_vmf)
+        x = vmfs[vmf_index] * 100
+        y = vapor_species_mole_fractions[vmfs[vmf_index]][s]
+    else:
+        x, y = vmf_to_plot_override_bulk_vapor[s.split("_")[0]]
+    axs[2].plot(np.array(vmfs) * 100, [vapor_species_mole_fractions[vmf][s] for vmf in vmfs], linewidth=2.0,
+                color=colors_vapor[index], label=index)
+    # annotate each species with its name right at the line and 25% of the way along the x axis
+    axs[2].annotate(rf"$\rm {s_formatted}$",
+                    (x, y + (y * 0.08)),
+                    fontsize=18, color=colors_vapor[index])
+
 # set minimum plotted x value
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
@@ -346,11 +382,13 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
-axs[0].set_ylim(bottom=10 ** -5.5, top=10 ** 0)
+axs[0].set_ylim(bottom=10 ** -7, top=10 ** 0)
 axs[1].set_ylim(bottom=10 ** -3, top=10 ** 0)
 plt.savefig(f"{run_name}_melt_vapor_mole_fractions.png", dpi=300)
 plt.tight_layout()
 plt.show()
+
+sys.exit()
 
 # ===================== Plot the most volatile element as a function of VMF =====================
 
@@ -373,8 +411,18 @@ for s in unique_volatile_species:
         min([i[0] for i in vmf_and_most_volatile_element if i[1] == s]) * 100,
         max([i[0] for i in vmf_and_most_volatile_element if i[1] == s]) * 100
     ])
-# sort volatile_species_to_plot by the minimum VMF at which the species is the most volatile
 volatile_species_to_plot.sort(key=lambda x: x[1])
+# for index, s in enumerate(volatile_species_to_plot):
+#     forward_diff = 0
+#     backward_diff = 0
+#     if index < len(volatile_species_to_plot) - 1:
+#         forward_diff = abs(volatile_species_to_plot[index + 1][1] - s[2])
+#     if index > 1:
+#         backward_diff = abs(s[1] - volatile_species_to_plot[index - 1][2])
+#
+#     s[1] = s[1] - (backward_diff / 2)
+#     s[2] = s[2] + (forward_diff / 2)
+# sort volatile_species_to_plot by the minimum VMF at which the species is the most volatile
 # plot the most volatile species as a function of VMF
 for s in volatile_species_to_plot:
     ax.plot(
@@ -638,29 +686,37 @@ k_isotopes = FullSequenceRayleighDistillation(
 )
 k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
 k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit = k_isotopes.run_theia_mass_balance(
-    theia_range=np.arange(-1, 1, 0.05),
+    theia_range=np.arange(-.6, .2, 0.05),
     delta_moon_earth=0.415
 )  # assumes ejecta is a mix of Earth and Theia
 
 # make a subplot with 2 columns and 3 rows
 fig, axs = plt.subplots(3, 2, figsize=(12, 12))
+# increase the font size
 axs = axs.flatten()
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=14)
 axs[0].plot(
     k_isotopes_mixed_model.keys(),
     [k_isotopes_mixed_model[i]['delta_moon_earth'] for i in k_isotopes_mixed_model.keys()],
     linewidth=2.0,
-    label=r"$\rm ^{41/39}K$"
+    color='black',
+    label="Model",
 )
 # shade a region between the error bars of the observed value
 axs[0].axhspan(
-    0.415 - 0.015, 0.415 + 0.015, alpha=0.2, color='grey', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
-axs[0].axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
-axs[0].axvspan(-0.479 - 0.027, -0.479 + 0.027, alpha=0.2, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
-axs[0].set_xlabel(r"$\delta_{\rm Theia}$")
-axs[0].set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
-axs[0].set_title("Earth-Theia Mixing Model")
-axs[0].grid()
-axs[0].legend()
+    0.415 - 0.015, 0.415 + 0.015, alpha=0.2, color='blue')
+axs[0].axhline(0.415, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
+axs[0].axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
+# annotate the best fit value with vertical text
+axs[0].annotate(
+    r"$\delta \rm ^{41}K_{\rm Theia} = $" + f"{k_isotopes_mixed_model_best_fit:.3f}",
+    (k_isotopes_mixed_model_best_fit - (k_isotopes_mixed_model_best_fit * .2), 0.1),
+    rotation=90, fontsize=12
+)
+axs[0].axvspan(-0.479 - 0.027, -0.479 + 0.027, alpha=0.2, color='red')
+axs[0].axvline(x=-0.479, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
+axs[0].set_title(r"$\rm ^{41/39}K$", fontsize=20)
 
 zn_isotopes = FullSequenceRayleighDistillation(
     heavy_z=66, light_z=64, vapor_escape_fraction=vapor_loss_fraction,
@@ -670,7 +726,7 @@ zn_isotopes = FullSequenceRayleighDistillation(
 )
 zn_isotopes_starting_earth_isotope_composition = zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
 zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit = zn_isotopes.run_theia_mass_balance(
-    theia_range=np.arange(-550, -450, 5),
+    theia_range=np.arange(-520, -480, 2),
     delta_moon_earth=1.12
 )  # assumes ejecta is a mix of Earth and Theia
 
@@ -679,33 +735,52 @@ axs[1].plot(
     zn_isotopes_mixed_model.keys(),
     [zn_isotopes_mixed_model[i]['delta_moon_earth'] for i in zn_isotopes_mixed_model.keys()],
     linewidth=2.0,
-    label=r"$\rm ^{66/64}Zn$"
+    color='black',
+    label="Model"
 )
 # shade a region between the error bars of the observed value
 axs[1].axhspan(
-    1.4 - 0.5, 1.4 + 0.5, alpha=0.2, color='grey', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64Zn}$ (Observed)")
-axs[1].axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
-axs[1].axvspan(0.28 - 0.05, 0.28 + 0.05, alpha=1, color='red', label=r"$\delta \rm ^{66/64}zn_{\rm Earth}$ (Observed)")
-axs[1].set_xlabel(r"$\delta_{\rm Theia}$")
-# axs[1].set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
-# axs[1].set_title("Earth-Theia Mixing Model")
-axs[1].grid()
-axs[1].legend()
+    1.4 - 0.5, 1.4 + 0.5, alpha=0.2, color='blue')
+axs[1].axhline(1.4, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64Zn}$ (Observed)")
+axs[1].axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
+axs[1].axvspan(0.28 - 0.05, 0.28 + 0.05, alpha=1, color='red')
+axs[1].axvline(x=0.28, color='red', label=r"$\delta \rm ^{66/64}Zn_{\rm Earth}$ (Observed)")
+axs[1].set_title(r"$\rm ^{66/64}Zn$", fontsize=20)
+axs[1].annotate(
+    r"$\delta \rm ^{66}Zn_{\rm Theia} = $" + f"{zn_isotopes_mixed_model_best_fit:.3f}",
+    (zn_isotopes_mixed_model_best_fit - (zn_isotopes_mixed_model_best_fit * .02), -22),
+    rotation=90, fontsize=12
+)
 
 # annotate the model in the upper right corner
-axs[0].annotate(
-    f"Canonical", xy=(0.95, 0.95), xycoords='axes fraction', horizontalalignment='right',
-    verticalalignment='top', fontweight='bold', fontsize=12)
+# axs[0].annotate(
+#     f"Canonical", xy=(0.85, 0.95), xycoords='axes fraction', horizontalalignment='right',
+#     verticalalignment='top', fontweight='bold', fontsize=12
+# )
+# axs[2].annotate(
+#     f"Half-Earths", xy=(0.85, 0.95), xycoords='axes fraction', horizontalalignment='right',
+#     verticalalignment='top', fontweight='bold', fontsize=12
+# )
+# axs[4].annotate(
+#     f"Mars", xy=(0.85, 0.95), xycoords='axes fraction', horizontalalignment='right',
+#     verticalalignment='top', fontweight='bold', fontsize=12
+# )
 
 # annotate a letter in the upper left corner
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
-    ax.set_xlim(left=min(np.array(list(melt_mole_frac.keys())) * 100), right=80)
     # label each subplot with a letter in the upper-left corner
     ax.annotate(
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
+    ax.grid()
+    # ax.legend()
+
+for ax, t in [(axs[-2], r"$\delta \rm ^{41}K_{Theia}$"), (axs[-1], r"$\delta \rm ^{66}Zn_{Theia}$")]:
+    ax.set_xlabel(t, fontsize=20)
+for ax, t in [(axs[0], "Canonical"), (axs[2], "Half Earths"), (axs[4], "Mars")]:
+    ax.set_ylabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
 
 plt.tight_layout()
 plt.savefig(f"{run_name}_k_zn_isotope_fractionation_earth_theia_mixing.png", dpi=300)
