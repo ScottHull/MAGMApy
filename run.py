@@ -576,6 +576,8 @@ plt.tight_layout()
 plt.savefig(f"{run_name}_fraction_lost_to_vapor_at_vmf_spider.png", dpi=300)
 plt.show()
 
+# TODO: make the same figure but as a coupled bar graph
+
 
 # ========================== Export interpolated data to a file ==========================
 # get the mass of each element in the bulk vapor
@@ -640,27 +642,25 @@ k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit = k_isotopes.run_theia_m
     delta_moon_earth=0.415
 )  # assumes ejecta is a mix of Earth and Theia
 
-# make a plot of the 41K/39K fractionation with the Earth-Theia mixing model
-fig, ax = plt.subplots(figsize=(6, 4))
-ax.plot(
+# make a subplot with 2 columns and 3 rows
+fig, axs = plt.subplots(3, 2, figsize=(12, 12))
+axs = axs.flatten()
+axs[0].plot(
     k_isotopes_mixed_model.keys(),
     [k_isotopes_mixed_model[i]['delta_moon_earth'] for i in k_isotopes_mixed_model.keys()],
     linewidth=2.0,
     label=r"$\rm ^{41/39}K$"
 )
 # shade a region between the error bars of the observed value
-ax.axhspan(
+axs[0].axhspan(
     0.415 - 0.015, 0.415 + 0.015, alpha=0.2, color='grey', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
-ax.axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
-ax.axvspan(-0.479 - 0.027, -0.479 + 0.027, alpha=0.2, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
-ax.set_xlabel(r"$\delta_{\rm Theia}$")
-ax.set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
-ax.set_title("Earth-Theia Mixing Model")
-ax.grid()
-ax.legend()
-
-plt.savefig(f"{run_name}_K_isotope_fractionation.png", dpi=300)
-plt.show()
+axs[0].axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
+axs[0].axvspan(-0.479 - 0.027, -0.479 + 0.027, alpha=0.2, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
+axs[0].set_xlabel(r"$\delta_{\rm Theia}$")
+axs[0].set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
+axs[0].set_title("Earth-Theia Mixing Model")
+axs[0].grid()
+axs[0].legend()
 
 zn_isotopes = FullSequenceRayleighDistillation(
     heavy_z=66, light_z=64, vapor_escape_fraction=vapor_loss_fraction,
@@ -675,23 +675,38 @@ zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit = zn_isotopes.run_thei
 )  # assumes ejecta is a mix of Earth and Theia
 
 # make a plot of the 66Zn/64Zn fractionation with the Earth-Theia mixing model
-fig, ax = plt.subplots(figsize=(6, 4))
-ax.plot(
+axs[1].plot(
     zn_isotopes_mixed_model.keys(),
     [zn_isotopes_mixed_model[i]['delta_moon_earth'] for i in zn_isotopes_mixed_model.keys()],
     linewidth=2.0,
     label=r"$\rm ^{66/64}Zn$"
 )
 # shade a region between the error bars of the observed value
-ax.axhspan(
+axs[1].axhspan(
     1.4 - 0.5, 1.4 + 0.5, alpha=0.2, color='grey', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64Zn}$ (Observed)")
-ax.axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
-ax.axvspan(0.28 - 0.05, 0.28 + 0.05, alpha=1, color='red', label=r"$\delta \rm ^{66/64}zn_{\rm Earth}$ (Observed)")
-ax.set_xlabel(r"$\delta_{\rm Theia}$")
-ax.set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
-ax.set_title("Earth-Theia Mixing Model")
-ax.grid()
-ax.legend()
+axs[1].axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
+axs[1].axvspan(0.28 - 0.05, 0.28 + 0.05, alpha=1, color='red', label=r"$\delta \rm ^{66/64}zn_{\rm Earth}$ (Observed)")
+axs[1].set_xlabel(r"$\delta_{\rm Theia}$")
+# axs[1].set_ylabel(r"$\Delta_{\rm Lunar-BSE}$")
+# axs[1].set_title("Earth-Theia Mixing Model")
+axs[1].grid()
+axs[1].legend()
 
-plt.savefig(f"{run_name}_zn_isotope_fractionation.png", dpi=300)
+# annotate the model in the upper right corner
+axs[0].annotate(
+    f"Canonical", xy=(0.95, 0.95), xycoords='axes fraction', horizontalalignment='right',
+    verticalalignment='top', fontweight='bold', fontsize=12)
+
+# annotate a letter in the upper left corner
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    ax.set_xlim(left=min(np.array(list(melt_mole_frac.keys())) * 100), right=80)
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+
+plt.tight_layout()
+plt.savefig(f"{run_name}_k_zn_isotope_fractionation_earth_theia_mixing.png", dpi=300)
 plt.show()
