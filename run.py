@@ -69,7 +69,7 @@ vmf = 0.96  # %
 disk_theia_mass_fraction = 66.78  # %
 disk_mass = 1.02  # lunar masses
 vapor_loss_fraction = 74.0  # %
-run_new_simulation = True  # True to run a new simulation, False to load a previous simulation
+run_new_simulation = False  # True to run a new simulation, False to load a previous simulation
 
 # ============================== Define Constants ==============================
 
@@ -264,9 +264,11 @@ plt.show()
 # make a figure with two subplots that share the same x and y axes
 fig, axs = plt.subplots(3, 1, figsize=(9, 16))
 axs = axs.flatten()
-axs[0].set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
-axs[1].set_ylabel(r'log Mole Fraction ($X_{i}$)', fontsize=20)
-axs[1].set_xlabel(r'VMF (%)', fontsize=20)
+axs[0].set_title("Canonical", fontsize=20)
+axs[0].set_ylabel(r'Melt - Mole Fraction', fontsize=20)
+axs[1].set_ylabel(r'Fractional Vapor - Mole Fraction', fontsize=20)
+axs[2].set_ylabel(r'Bulk Vapor - Mole Fraction', fontsize=20)
+axs[2].set_xlabel(r'VMF (%)', fontsize=20)
 # increase the font size and add a grid
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=20)
@@ -285,7 +287,7 @@ vapor_species_mass = collect_data(path=f"{run_name}/total_vapor_species_mass", x
 vapor_species_mole_fractions = {}  # bulk vapor
 for vmf, species_mass in vapor_species_mass.items():
     # convert the species masses to mole fractions
-    vapor_species_moles = {element: mass / get_molecular_mass(element) for element, mass in species_mass.items()}
+    vapor_species_moles = {element: mass / get_molecular_mass(element) if mass > 0 else 0 for element, mass in species_mass.items()}
     vapor_species_mole_fraction = {element: moles / sum(vapor_species_moles.values()) for element, moles in
                                    vapor_species_moles.items()}
     vapor_species_mole_fractions[vmf] = vapor_species_mole_fraction
@@ -314,7 +316,11 @@ vmf_to_plot_override_melt = {
 }
 vmf_to_plot_bulk_vapor = 10 ** -1.5
 vmf_to_plot_override_bulk_vapor = {
-
+    'Zn': [10 ** -2.1, 10 ** -2.45],
+    'O2': [10 ** -0.7, 10 ** -0.6],
+    # 'SiO2': [10 ** -0.9, 10 ** -2.2],
+    # 'NaO': [10 ** -0.95, 10 ** -2.5],
+    "SiO": [10 ** - 2.4, 10 ** -0.54],
 }
 for index, s in enumerate(melt_mole_frac[vmfs[0]].keys()):
     # format s so that all numbers are subscript
@@ -384,11 +390,10 @@ for index, ax in enumerate(axs):
     )
 axs[0].set_ylim(bottom=10 ** -7, top=10 ** 0)
 axs[1].set_ylim(bottom=10 ** -3, top=10 ** 0)
+axs[2].set_ylim(bottom=10 ** -3, top=10 ** 0)
 plt.savefig(f"{run_name}_melt_vapor_mole_fractions.png", dpi=300)
 plt.tight_layout()
 plt.show()
-
-sys.exit()
 
 # ===================== Plot the most volatile element as a function of VMF =====================
 
@@ -412,16 +417,16 @@ for s in unique_volatile_species:
         max([i[0] for i in vmf_and_most_volatile_element if i[1] == s]) * 100
     ])
 volatile_species_to_plot.sort(key=lambda x: x[1])
-# for index, s in enumerate(volatile_species_to_plot):
-#     forward_diff = 0
-#     backward_diff = 0
-#     if index < len(volatile_species_to_plot) - 1:
-#         forward_diff = abs(volatile_species_to_plot[index + 1][1] - s[2])
-#     if index > 1:
-#         backward_diff = abs(s[1] - volatile_species_to_plot[index - 1][2])
-#
-#     s[1] = s[1] - (backward_diff / 2)
-#     s[2] = s[2] + (forward_diff / 2)
+for index, s in enumerate(volatile_species_to_plot):
+    forward_diff = 0
+    backward_diff = 0
+    if index < len(volatile_species_to_plot) - 1:
+        forward_diff = abs(volatile_species_to_plot[index + 1][1] - s[2])
+    if index > 1:
+        backward_diff = abs(s[1] - volatile_species_to_plot[index - 1][2])
+
+    s[1] = s[1] - (backward_diff / 2)
+    s[2] = s[2] + (forward_diff / 2)
 # sort volatile_species_to_plot by the minimum VMF at which the species is the most volatile
 # plot the most volatile species as a function of VMF
 for s in volatile_species_to_plot:
