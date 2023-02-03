@@ -140,5 +140,4 @@ class FullSequenceRayleighDistillation:
         data['delta_ejecta'] = delta_ejecta
         data['alpha_chemical'] = self.chemical_fractionation_factor
         data['alpha_physical'] = self.physical_fractionation_factor
-        print(data)
-        return theia_search, theia_value
+        return theia_search, theia_value, data

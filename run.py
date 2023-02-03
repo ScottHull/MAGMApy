@@ -709,18 +709,18 @@ k_isotopes = FullSequenceRayleighDistillation(
                 theia_ejecta_fraction=disk_theia_mass_fraction
 )
 # k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
-k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit = k_isotopes.run_theia_mass_balance(
-    theia_range=np.arange(-.6, .2, 0.05),
+k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit, k_best_fit_results = k_isotopes.run_theia_mass_balance(
+    theia_range=delta_k_theia_range,
     delta_moon_earth=delta_K_Lunar_BSE
 )  # assumes ejecta is a mix of Earth and Theia
-k_isotopes_mixed_model_best_fit_lower = k_isotopes.run_theia_mass_balance(
-    theia_range=np.arange(-.6, .2, 0.05),
+k_isotopes_mixed_model_lower, k_isotopes_mixed_model_best_fit_lower, k_best_fit_lower_results = k_isotopes.run_theia_mass_balance(
+    theia_range=delta_k_theia_range,
     delta_moon_earth=delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error
-)[1]  # assumes ejecta is a mix of Earth and Theia
-k_isotopes_mixed_model_best_fit_upper = k_isotopes.run_theia_mass_balance(
-    theia_range=np.arange(-.6, .2, 0.05),
+)  # assumes ejecta is a mix of Earth and Theia
+k_isotopes_mixed_model_upper, k_isotopes_mixed_model_best_fit_upper, k_best_fit_upper_results = k_isotopes.run_theia_mass_balance(
+    theia_range=delta_k_theia_range,
     delta_moon_earth=delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error
-)[1]  # assumes ejecta is a mix of Earth and Theia
+)  # assumes ejecta is a mix of Earth and Theia
 # assert abs(k_isotopes_mixed_model_best_fit - k_isotopes_mixed_model_best_fit_lower) == abs(k_isotopes_mixed_model_best_fit - k_isotopes_mixed_model_best_fit_upper)
 
 
@@ -762,19 +762,34 @@ zn_isotopes = FullSequenceRayleighDistillation(
                 theia_ejecta_fraction=disk_theia_mass_fraction, chemical_frac_factor_exponent=0.5, alpha_chem=0.99
 )
 # zn_isotopes_starting_earth_isotope_composition = zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
-zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit = zn_isotopes.run_theia_mass_balance(
+zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit, zn_best_fit_results = zn_isotopes.run_theia_mass_balance(
     theia_range=delta_zn_theia_range,
     delta_moon_earth=delta_Zn_Lunar_BSE
 )  # assumes ejecta is a mix of Earth and Theia
-zn_isotopes_mixed_model_best_fit_lower = zn_isotopes.run_theia_mass_balance(
+zn_isotopes_mixed_model_lower, zn_isotopes_mixed_model_best_fit_lower, zn_best_fit_lower_results = zn_isotopes.run_theia_mass_balance(
     theia_range=delta_zn_theia_range,
     delta_moon_earth=delta_Zn_Lunar_BSE - delta_Zn_Lunar_BSE_std_error
-)[1]
-zn_isotopes_mixed_model_best_fit_upper = zn_isotopes.run_theia_mass_balance(
+)
+zn_isotopes_mixed_model_upper, zn_isotopes_mixed_model_best_fit_upper, zn_best_fit_upper_results = zn_isotopes.run_theia_mass_balance(
     theia_range=delta_zn_theia_range,
     delta_moon_earth=delta_Zn_Lunar_BSE + delta_Zn_Lunar_BSE_std_error
-)[1]
+)
 # assert abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_lower) == abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_upper)
+
+# export all models to a CSV
+headers = k_best_fit_results.keys()
+headers = ['model'] + list(headers)
+# add all models to a pandas dataframe
+df = pd.DataFrame(columns=headers)
+for model, i in [('K_best_fit', k_best_fit_results),
+                 ("K_best_fit_lower", k_best_fit_lower_results),
+                 ("K_best_fit_upper", k_best_fit_upper_results),
+                    ("Zn_best_fit", zn_best_fit_results),
+                    ("Zn_best_fit_lower", zn_best_fit_lower_results),
+                    ("Zn_best_fit_upper", zn_best_fit_upper_results)
+                 ]:
+    df = df.append({'model': model, **i}, ignore_index=True)
+df.to_csv(f'{run_name}_isotope_model.csv', index=False)
 
 
 # make a plot of the 66Zn/64Zn fractionation with the Earth-Theia mixing model
