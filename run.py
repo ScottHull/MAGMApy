@@ -679,21 +679,50 @@ with open(f"{run_name}_mass_distribution.csv", "w") as f:
     f.write("retained vapor mass," + ",".join([str(i) for i in retained_vapor_mass_at_vmf.values()]) + "\n")
 f.close()
 
+
+
+
+
 # ========================== Model Rayleigh Isotope Fractionation ==========================
+
+# define the observed isotope ratios
+delta_K_Lunar_BSE = 0.415  # mean of 41K/39K isotope ratios from lunar samples
+delta_K_Lunar_BSE_std_error = 0.05  # standard error of 41K/39K isotope ratios from lunar samples
+delta_Zn_Lunar_BSE = 1.12  # mean of 66Zn/64Zn isotope ratios from lunar samples
+delta_Zn_Lunar_BSE_std_error = 0.55  # standard error of 66Zn/64Zn isotope ratios from lunar samples
+delta_K_BSE = -0.479  # mean of 41K/39K isotope ratios from BSE
+delta_K_BSE_std_error = 0.027  # standard error of 41K/39K isotope ratios from BSE
+delta_Zn_BSE = 0.28  # mean of 66Zn/64Zn isotope ratios from BSE
+delta_Zn_BSE_std_error = 0.05  # standard error of 66Zn/64Zn isotope ratios from BSE
+
+delta_k_theia_range = np.arange(-0.6, 0.6, 0.1)  # range of 41K/39K isotope ratios to test for Theia
+delta_zn_theia_range = np.arange(-410, -380, 5)  # range of 66Zn/64Zn isotope ratios to test for Theia
+
+
 # read in the mass distribution file
 mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
 # model 41K/39K fractionation
 k_isotopes = FullSequenceRayleighDistillation(
     heavy_z=41, light_z=39, vapor_escape_fraction=vapor_loss_fraction,
     system_element_mass=mass_distribution['K']['bulk system mass'], melt_element_mass=mass_distribution['K']['melt mass'],
-                 vapor_element_mass=mass_distribution['K']['bulk vapor mass'], earth_isotope_composition=-0.479,
+                 vapor_element_mass=mass_distribution['K']['bulk vapor mass'], earth_isotope_composition=delta_K_BSE,
                 theia_ejecta_fraction=disk_theia_mass_fraction
 )
-k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
+# k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
 k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit = k_isotopes.run_theia_mass_balance(
     theia_range=np.arange(-.6, .2, 0.05),
-    delta_moon_earth=0.415
+    delta_moon_earth=delta_K_Lunar_BSE
 )  # assumes ejecta is a mix of Earth and Theia
+k_isotopes_mixed_model_best_fit_lower = k_isotopes.run_theia_mass_balance(
+    theia_range=np.arange(-.6, .2, 0.05),
+    delta_moon_earth=delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error
+)[1]  # assumes ejecta is a mix of Earth and Theia
+k_isotopes_mixed_model_best_fit_upper = k_isotopes.run_theia_mass_balance(
+    theia_range=np.arange(-.6, .2, 0.05),
+    delta_moon_earth=delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error
+)[1]  # assumes ejecta is a mix of Earth and Theia
+# assert abs(k_isotopes_mixed_model_best_fit - k_isotopes_mixed_model_best_fit_lower) == abs(k_isotopes_mixed_model_best_fit - k_isotopes_mixed_model_best_fit_upper)
+
 
 # make a subplot with 2 columns and 3 rows
 fig, axs = plt.subplots(3, 2, figsize=(12, 12))
@@ -710,30 +739,43 @@ axs[0].plot(
 )
 # shade a region between the error bars of the observed value
 axs[0].axhspan(
-    0.415 - 0.015, 0.415 + 0.015, alpha=0.2, color='blue')
-axs[0].axhline(0.415, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
-axs[0].axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
+    delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error, alpha=0.2, color='blue')
+axs[0].axhline(delta_K_Lunar_BSE, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
+axs[0].axvspan(
+    k_isotopes_mixed_model_best_fit_lower, k_isotopes_mixed_model_best_fit_upper, alpha=0.2, color='green'
+)
+axs[0].axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, color='green', label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
 # annotate the best fit value with vertical text
 axs[0].annotate(
-    r"$\delta \rm ^{41}K_{\rm Theia} = $" + f"{k_isotopes_mixed_model_best_fit:.3f}",
+    r"$\delta \rm ^{41}K_{\rm Theia} = $" + f"{k_isotopes_mixed_model_best_fit:.3f}" + r"$\pm$" + f"{abs(k_isotopes_mixed_model_best_fit - k_isotopes_mixed_model_best_fit_lower):.3f}",
     (k_isotopes_mixed_model_best_fit - (k_isotopes_mixed_model_best_fit * .2), 0.1),
-    rotation=90, fontsize=12
+    rotation=90, fontsize=10
 )
-axs[0].axvspan(-0.479 - 0.027, -0.479 + 0.027, alpha=0.2, color='red')
-axs[0].axvline(x=-0.479, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
+axs[0].axvspan(delta_K_BSE - delta_K_BSE_std_error, delta_K_BSE + delta_K_BSE_std_error, alpha=0.2, color='red')
+axs[0].axvline(x=delta_K_BSE, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
 axs[0].set_title(r"$\rm ^{41/39}K$", fontsize=20)
 
 zn_isotopes = FullSequenceRayleighDistillation(
     heavy_z=66, light_z=64, vapor_escape_fraction=vapor_loss_fraction,
     system_element_mass=mass_distribution['Zn']['bulk system mass'], melt_element_mass=mass_distribution['Zn']['melt mass'],
-                 vapor_element_mass=mass_distribution['Zn']['bulk vapor mass'], earth_isotope_composition=0.28,
-                theia_ejecta_fraction=disk_theia_mass_fraction
+                 vapor_element_mass=mass_distribution['Zn']['bulk vapor mass'], earth_isotope_composition=delta_Zn_BSE,
+                theia_ejecta_fraction=disk_theia_mass_fraction, chemical_frac_factor_exponent=0.5, alpha_chem=0.99
 )
-zn_isotopes_starting_earth_isotope_composition = zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
+# zn_isotopes_starting_earth_isotope_composition = zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
 zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit = zn_isotopes.run_theia_mass_balance(
-    theia_range=np.arange(-520, -480, 2),
-    delta_moon_earth=1.12
+    theia_range=delta_zn_theia_range,
+    delta_moon_earth=delta_Zn_Lunar_BSE
 )  # assumes ejecta is a mix of Earth and Theia
+zn_isotopes_mixed_model_best_fit_lower = zn_isotopes.run_theia_mass_balance(
+    theia_range=delta_zn_theia_range,
+    delta_moon_earth=delta_Zn_Lunar_BSE - delta_Zn_Lunar_BSE_std_error
+)[1]
+zn_isotopes_mixed_model_best_fit_upper = zn_isotopes.run_theia_mass_balance(
+    theia_range=delta_zn_theia_range,
+    delta_moon_earth=delta_Zn_Lunar_BSE + delta_Zn_Lunar_BSE_std_error
+)[1]
+# assert abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_lower) == abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_upper)
+
 
 # make a plot of the 66Zn/64Zn fractionation with the Earth-Theia mixing model
 axs[1].plot(
@@ -743,19 +785,24 @@ axs[1].plot(
     color='black',
     label="Model"
 )
+
 # shade a region between the error bars of the observed value
 axs[1].axhspan(
-    1.4 - 0.5, 1.4 + 0.5, alpha=0.2, color='blue')
-axs[1].axhline(1.4, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64Zn}$ (Observed)")
-axs[1].axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
-axs[1].axvspan(0.28 - 0.05, 0.28 + 0.05, alpha=1, color='red')
-axs[1].axvline(x=0.28, color='red', label=r"$\delta \rm ^{66/64}Zn_{\rm Earth}$ (Observed)")
+    delta_Zn_Lunar_BSE - delta_Zn_Lunar_BSE_std_error, delta_Zn_Lunar_BSE + delta_Zn_Lunar_BSE_std_error, alpha=0.2, color='blue')
+axs[1].axhline(delta_Zn_Lunar_BSE, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64Zn}$ (Observed)")
+
+axs[1].axvspan(zn_isotopes_mixed_model_best_fit_lower, zn_isotopes_mixed_model_best_fit_upper, alpha=0.2, color='green')
+axs[1].axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, color='green', label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
+
+axs[1].axvspan(delta_Zn_BSE - delta_Zn_BSE_std_error, delta_Zn_BSE + delta_Zn_BSE_std_error, alpha=0.2, color='red')
+axs[1].axvline(x=delta_Zn_BSE, color='red', label=r"$\delta \rm ^{66/64}Zn_{\rm Earth}$ (Observed)")
 axs[1].set_title(r"$\rm ^{66/64}Zn$", fontsize=20)
 axs[1].annotate(
-    r"$\delta \rm ^{66}Zn_{\rm Theia} = $" + f"{zn_isotopes_mixed_model_best_fit:.3f}",
-    (zn_isotopes_mixed_model_best_fit - (zn_isotopes_mixed_model_best_fit * .02), -22),
-    rotation=90, fontsize=12
+    r"$\delta \rm ^{66}Zn_{\rm Theia} = $" + f"{zn_isotopes_mixed_model_best_fit:.3f}" + r"$\pm$" + f"{abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_lower):.3f}",
+    (zn_isotopes_mixed_model_best_fit - (zn_isotopes_mixed_model_best_fit * .02), -10),
+    rotation=90, fontsize=10
 )
+
 
 # annotate the model in the upper right corner
 # axs[0].annotate(

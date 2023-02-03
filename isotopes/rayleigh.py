@@ -5,7 +5,8 @@ class FullSequenceRayleighDistillation:
 
     def __init__(self, heavy_z, light_z, vapor_escape_fraction, system_element_mass, melt_element_mass,
                  vapor_element_mass, earth_isotope_composition, theia_ejecta_fraction,
-                 chemical_frac_factor_exponent=0.43, physical_frac_factor_exponent=0.5):
+                 chemical_frac_factor_exponent=0.43, physical_frac_factor_exponent=0.5,
+                 alpha_chem=None, alpha_phys=None):
         self.heavy_z = heavy_z
         self.light_z = light_z
         self.vapor_escape_fraction = vapor_escape_fraction / 100.0
@@ -16,8 +17,14 @@ class FullSequenceRayleighDistillation:
         self.theia_ejecta_fraction = theia_ejecta_fraction / 100.0
 
         # pre-calculate some values
-        self.chemical_fractionation_factor = (self.light_z / self.heavy_z) ** chemical_frac_factor_exponent
-        self.physical_fractionation_factor = (self.light_z / self.heavy_z) ** physical_frac_factor_exponent
+        if alpha_chem is None:
+            self.chemical_fractionation_factor = (self.light_z / self.heavy_z) ** chemical_frac_factor_exponent
+        else:
+            self.chemical_fractionation_factor = alpha_chem
+        if alpha_phys is None:
+            self.physical_fractionation_factor = (self.light_z / self.heavy_z) ** physical_frac_factor_exponent
+        else:
+            self.physical_fractionation_factor = alpha_phys
         self.element_mass_fraction_in_melt = self.melt_element_mass / self.system_element_mass  # fraction of element in the melt (before recondensation)
         self.element_vapor_mass_escaping = self.vapor_escape_fraction * self.vapor_element_mass  # mass of element in the vapor escaping
         self.element_vapor_mass_retained = self.vapor_element_mass - self.element_vapor_mass_escaping  # mass of element in the vapor after vapor escape
@@ -125,4 +132,13 @@ class FullSequenceRayleighDistillation:
             delta_earth_moon_values,
             theia_values
         )(delta_moon_earth)  # the value of Theia's isotope composition that best matches the delta_moon_earth
+
+        # rerun the calculation with the interpolated value of Theia's isotope composition
+        delta_ejecta = self.rayleigh_mixing(self.earth_isotope_composition, theia_value, earth_ejecta_mass_fraction)
+        data = self.run_3_stage_fractionation(delta_initial=delta_ejecta)
+        data['delta_theia'] = theia_value
+        data['delta_ejecta'] = delta_ejecta
+        data['alpha_chemical'] = self.chemical_fractionation_factor
+        data['alpha_physical'] = self.physical_fractionation_factor
+        print(data)
         return theia_search, theia_value
