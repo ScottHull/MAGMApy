@@ -487,6 +487,7 @@ for vmf_val in melt_element_masses.keys():
         fraction_lost_to_vapor_recondensed[vmf_val][element] = (melt_element_masses[vmf_val][element] + (
         (vapor_element_masses[vmf_val][element] * (1 - (vapor_loss_fraction / 100))))) / total_element_masses[vmf_val][
                                                                    element]
+
 # interpolate the fraction of each element lost to vapor (without recondensation) at the VMF of interest
 fraction_lost_to_vapor_during_vaporization_at_vmf = {}
 fraction_lost_to_vapor_with_recondensation_at_vmf = {}
@@ -695,8 +696,11 @@ delta_K_BSE_std_error = 0.027  # standard error of 41K/39K isotope ratios from B
 delta_Zn_BSE = 0.28  # mean of 66Zn/64Zn isotope ratios from BSE
 delta_Zn_BSE_std_error = 0.05  # standard error of 66Zn/64Zn isotope ratios from BSE
 
-delta_k_theia_range = np.arange(-0.6, 0.6, 0.1)  # range of 41K/39K isotope ratios to test for Theia
-delta_zn_theia_range = np.arange(-410, -380, 5)  # range of 66Zn/64Zn isotope ratios to test for Theia
+# delta_k_theia_range = np.arange(-0.6, 0.6, 0.1)  # range of 41K/39K isotope ratios to test for Theia
+delta_k_theia_range = np.arange(-500, 500, 20)  # range of 41K/39K isotope ratios to test for Theia
+# delta_zn_theia_range = np.arange(-410, -380, 5)  # range of 66Zn/64Zn isotope ratios to test for Theia
+delta_zn_theia_range = np.arange(-900, 900, 20)  # range of 66Zn/64Zn isotope ratios to test for Theia
+
 
 
 # read in the mass distribution file
@@ -706,7 +710,9 @@ k_isotopes = FullSequenceRayleighDistillation(
     heavy_z=41, light_z=39, vapor_escape_fraction=vapor_loss_fraction,
     system_element_mass=mass_distribution['K']['bulk system mass'], melt_element_mass=mass_distribution['K']['melt mass'],
                  vapor_element_mass=mass_distribution['K']['bulk vapor mass'], earth_isotope_composition=delta_K_BSE,
-                theia_ejecta_fraction=disk_theia_mass_fraction
+                theia_ejecta_fraction=disk_theia_mass_fraction,
+    total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
+    total_vapor_mass=sum([mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
 )
 # k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
 k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit, k_best_fit_results = k_isotopes.run_theia_mass_balance(
@@ -759,7 +765,9 @@ zn_isotopes = FullSequenceRayleighDistillation(
     heavy_z=66, light_z=64, vapor_escape_fraction=vapor_loss_fraction,
     system_element_mass=mass_distribution['Zn']['bulk system mass'], melt_element_mass=mass_distribution['Zn']['melt mass'],
                  vapor_element_mass=mass_distribution['Zn']['bulk vapor mass'], earth_isotope_composition=delta_Zn_BSE,
-                theia_ejecta_fraction=disk_theia_mass_fraction, chemical_frac_factor_exponent=0.5, alpha_chem=0.99
+                theia_ejecta_fraction=disk_theia_mass_fraction, chemical_frac_factor_exponent=0.5, alpha_chem=0.99,
+    total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
+    total_vapor_mass=sum([mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
 )
 # zn_isotopes_starting_earth_isotope_composition = zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
 zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit, zn_best_fit_results = zn_isotopes.run_theia_mass_balance(
