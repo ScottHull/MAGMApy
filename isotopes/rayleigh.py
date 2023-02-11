@@ -103,7 +103,7 @@ class FullSequenceRayleighDistillation:
             'delta_bulk_vapor': delta_bulk_vapor,
             'delta_retained_vapor': delta_retained_vapor,
             'delta_escaping_vapor': delta_escaping_vapor,
-            'delta_retained_melt': delta_retained_melt,
+            'delta_final_melt': delta_retained_melt,
             'delta_moon_earth': delta_retained_melt - self.earth_isotope_composition,
             'element_mass_fraction_in_melt_pre_recondensation': self.element_mass_fraction_in_melt,
             'element_mass_fraction_in_melt_post_recondensation': self.retained_element_mass_melt_fraction

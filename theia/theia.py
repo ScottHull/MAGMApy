@@ -1,3 +1,5 @@
+import numpy as np
+
 from src.composition import ConvertComposition, normalize
 
 
@@ -12,6 +14,9 @@ def get_theia_composition(starting_composition, earth_composition, disk_mass, ea
     theia_cations = ConvertComposition().oxide_to_cations(theia_moles)
     # theia_x_si = {cation: theia_cations[cation] / theia_cations['Si'] for cation in theia_cations.keys()}
     # theia_x_al = {cation: theia_cations[cation] / theia_cations['Al'] for cation in theia_cations.keys()}
+    # make sure that the theia weights and the BSE weights sum to the starting weights and equal the disk mass
+    assert np.isclose(sum(theia_weights.values()) + sum(bse_weights.values()), sum(starting_weights.values()))
+    assert np.isclose(sum(theia_weights.values()) + sum(bse_weights.values()), disk_mass)
     return {
         'theia_weight_pct': theia_weight_pct,
         'theia_moles': theia_moles,
@@ -48,3 +53,17 @@ def recondense_vapor(melt_mass_element: dict, vapor_mass_element: dict, vapor_ma
         'escaping_vapor_mass': escaping_vapor_mass,
         'recondensed_melt_oxide_weight_pct': recondensed_melt_oxide_weight_pct,
     }
+
+def get_mass_sourced_from_bse_and_theia(theia_mass_fraction: float, bse_composition: dict, bst_composition: dict):
+    """
+    Given the composition of the system, returns the absolute mass of each element sourced from the BSE and Theia.
+    :param theia_mass_fraction:
+    :param bse_composition:
+    :param bst_composition:
+    :return:
+    """
+    if theia_mass_fraction > 1:
+        raise ValueError('Theia mass fraction cannot be greater than 1.')
+    if sum(bse_composition.values()) != sum(bst_composition.values()) != 100:
+        raise ValueError('BSE and BST compositions must sum to 100 individually.')
+

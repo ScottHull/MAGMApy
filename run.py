@@ -48,28 +48,41 @@ bsm_composition = {  # Visscher and Fegley (2013)
     'ZnO': 2.0e-4,
 }
 
-bulk_moon_composition = {  # including core Fe as FeO, my mass balance calculation
-    "SiO2": 47.0,
-    'MgO': 29.0,
-    'Al2O3': 6.0,
-    'TiO2': 0.3,
+# bulk_moon_composition = {  # including core Fe as FeO, my mass balance calculation
+#     "SiO2": 47.0,
+#     'MgO': 29.0,
+#     'Al2O3': 6.0,
+#     'TiO2': 0.3,
+#     'Fe2O3': 0.0,
+#     'FeO': 13.0,
+#     'CaO': 4.6,
+#     'Na2O': 9.0e-2,
+#     'K2O': 1.0e-2,
+#     'ZnO': 2.39e-5,
+# }
+bulk_moon_composition = {  # O'Neill 1991
+    "SiO2": 44.37,
+    'MgO': 34.90,
+    'Al2O3': 3.90,
+    'TiO2': 0.02,
     'Fe2O3': 0.0,
-    'FeO': 13.0,
-    'CaO': 4.6,
-    'Na2O': 9.0e-2,
-    'K2O': 1.0e-2,
+    'FeO': 13.54,
+    'CaO': 3.27,
+    'Na2O': 3.55e-3,
+    'K2O': 3.78e-4,
     'ZnO': 2.39e-5,
 }
 
 # ============================== Define Input Parameters ==============================
 
-run_name = "500b073S"
+run_name = "500b073S-2"
 temperature = 2682.61  # K
-vmf = 0.96  # %
+vmf = 19.3  # %
+# vmf = 19.30  # %
 disk_theia_mass_fraction = 66.78  # %
 disk_mass = 1.02  # lunar masses
 vapor_loss_fraction = 74.0  # %
-run_new_simulation = False  # True to run a new simulation, False to load a previous simulation
+run_new_simulation = True  # True to run a new simulation, False to load a previous simulation
 
 # ============================== Define Constants ==============================
 
@@ -83,14 +96,6 @@ theia_mass_in_disk = disk_mass_kg - earth_mass_in_disk_kg  # kg, mass of theia i
 ejecta_file_path = f"{run_name}_ejecta_data.txt"
 theia_file_path = f"{run_name}_theia_composition.txt"
 
-# delete the output files if its a new simulation and they already exist
-if run_new_simulation:
-    for f in [ejecta_file_path, theia_file_path]:
-        try:
-            os.remove(f)
-        except OSError:
-            pass
-
 # ============================== Calculate Bulk Ejecta Composition ==============================
 
 # run the monte carlo simulation
@@ -98,9 +103,13 @@ if run_new_simulation:
 # this will calculate the bulk ejecta composition that is required to reproduce the bulk moon composition
 # (liquid + retained vapor that is assumed to recondense) at the given VMF and temperature
 if run_new_simulation:
+    try:
+        os.remove(ejecta_file_path)
+    except OSError:
+        pass
     ejecta_data = test(
         guess_initial_composition=bsm_composition, target_composition=bulk_moon_composition, temperature=temperature,
-        vmf=vmf, vapor_loss_fraction=vapor_loss_fraction, full_report_path=f"{run_name}"
+        vmf=vmf / 100, vapor_loss_fraction=vapor_loss_fraction / 100, full_report_path=f"{run_name}"
     )
 else:
     # read in the data dictionary from the file
@@ -109,6 +118,10 @@ else:
 # ============================== Calculate Bulk Silicate Theia (BST) Composition ==============================
 
 if run_new_simulation:
+    try:
+        os.remove(theia_file_path)
+    except OSError:
+        pass
     theia_data = get_theia_composition(starting_composition=ejecta_data['ejecta composition'],
                                        earth_composition=bse_composition, disk_mass=disk_mass_kg,
                                        earth_mass=earth_mass_in_disk_kg)
@@ -124,6 +137,72 @@ if run_new_simulation:
     # now, write the theia composition dictionary to a file in text format
     with open(theia_file_path, "w") as f:
         f.write(str({k: v for k, v in theia_data.items() if k not in ['c', 'l', 'g', 't']}))
+
+# ========================= Plot path to lunar composition =========================
+
+melt_oxide_mass_fraction = collect_data(path=f"{run_name}/magma_oxide_mass_fraction",
+                                        x_header='mass fraction vaporized')
+fig, ax = plt.subplots(figsize=(16, 9))
+ax.tick_params(axis='both', which='major', labelsize=20)
+colors = sns.color_palette('husl', n_colors=len([i for i in bulk_moon_composition.keys() if i != 'Fe2O3']))
+for index, oxide in enumerate([i for i in bulk_moon_composition.keys() if i != 'Fe2O3']):
+    ax.plot(np.array(list(melt_oxide_mass_fraction.keys())) * 100,
+            [melt_oxide_mass_fraction[vmf][oxide] * 100 for vmf in melt_oxide_mass_fraction.keys()],
+            linewidth=2.0,
+            color=colors[index],
+            label=oxide
+        )
+    ax.axhline(y=bulk_moon_composition[oxide], color=colors[index], linestyle='--')
+    ax.scatter(
+        vmf,
+        ejecta_data['liquid composition at vmf (w/o recondensed vapor)'][oxide],
+        color=colors[index],
+        marker='d'
+    )
+    ax.scatter(
+        vmf,
+        ejecta_data['liquid composition at vmf (w/ recondensed vapor)'][oxide],
+        color=colors[index],
+        marker='o'
+    )
+    ax.scatter(
+        min(melt_oxide_mass_fraction.keys()) * 100,
+        ejecta_data['ejecta composition'][oxide],
+        color=colors[index],
+        marker='s'
+    )
+    # # have an arrow connect the d marker to the o marker
+    # ax.annotate(
+    #     '',
+    #     xy=(vmf, ejecta_data['liquid composition at vmf (w/ recondensed vapor)'][oxide]),
+    #     xytext=(vmf, ejecta_data['liquid composition at vmf (w/o recondensed vapor)'][oxide]),
+    #     arrowprops=dict(arrowstyle='->', color=colors[index], linewidth=3.0),
+    # )
+ax.scatter(
+    [], [], color='black', marker='d', label="w/o recondensed vapor"
+)
+ax.scatter(
+    [], [], color='black', marker='o', label="w/ recondensed vapor"
+)
+ax.scatter(
+    [], [], color='black', marker='s', label="Bulk Ejecta"
+)
+ax.axvline(x=vmf, color='black', linestyle='--', label=f"VMF {vmf} %")
+ax.set_title(f"{run_name} - {temperature} K - VMF {vmf} %", fontsize=20)
+ax.set_xlabel("VMF (%)", fontsize=20)
+ax.set_ylabel("Oxide Wt. %", fontsize=20)
+ax.grid(alpha=0.4)
+ax.legend(loc='lower right', fontsize=20)
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+
 
 # ============================== Plot Bulk Ejecta + BST Relative to BSE ==============================
 

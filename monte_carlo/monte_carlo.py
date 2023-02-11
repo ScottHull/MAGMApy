@@ -150,9 +150,9 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
     previous_liquid_mass = {}  # stores the previous iteration's liquid mass
     previous_vapor_mass = {}  # stores the previous iteration's vapor mass
     iteration = 0  # the current iteration
-    while t.weight_fraction_vaporized * 100 < to_vmf:
+    while t.weight_fraction_vaporized < to_vmf:
         iteration += 1
-        previous_vmf = t.weight_fraction_vaporized * 100
+        previous_vmf = t.weight_fraction_vaporized
         previous_liquid_composition = copy.copy(l.liquid_oxide_mass_fraction)
         previous_vapor_species_mass = copy.copy(g.species_total_mass)
         previous_vapor_element_mass = copy.copy(g.element_total_mass)
@@ -160,7 +160,7 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
         previous_liquid_mass = copy.copy(l.melt_mass)
         previous_vapor_mass = copy.copy(g.vapor_mass)
         output_interval = 100
-        if t.weight_fraction_vaporized * 100.0 > 5:  # vmf changes very fast towards end of simulation
+        if t.weight_fraction_vaporized > 5:  # vmf changes very fast towards end of simulation
             output_interval = 5
         if 80 < t.weight_fraction_vaporized:
             output_interval = 50
@@ -177,21 +177,21 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
     # the model has finshed, now we need to interpolate the composition at the target VMF
     if previous_liquid_composition == l.liquid_oxide_mass_fraction:
         raise ValueError("The starting and ending compositions are the same.")
-    liquid_composition_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized * 100,
+    liquid_composition_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized,
                                                             l.liquid_oxide_mass_fraction, previous_vmf,
                                                             previous_liquid_composition, to_vmf, normalize=True)
-    vapor_species_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized * 100, g.species_total_mass,
+    vapor_species_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized, g.species_total_mass,
                                                        previous_vmf,
                                                        previous_vapor_species_mass, to_vmf)
-    vapor_element_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized * 100, g.element_total_mass,
+    vapor_element_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized, g.element_total_mass,
                                                        previous_vmf,
                                                        previous_vapor_element_mass, to_vmf)
-    liquid_cation_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized * 100, l.cation_mass, previous_vmf,
+    liquid_cation_at_vmf = interpolate_elements_at_vmf(t.weight_fraction_vaporized, l.cation_mass, previous_vmf,
                                                        previous_liquid_cation_mass, to_vmf)
     # interpolate the liquid mass and vapor mass at the target VMF
-    liquid_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized * 100],
+    liquid_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized],
                                   [previous_liquid_mass, l.melt_mass])(to_vmf).item()
-    vapor_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized * 100],
+    vapor_mass_at_vmf = interp1d([previous_vmf, t.weight_fraction_vaporized],
                                  [previous_vapor_mass, g.vapor_mass])(to_vmf).item()
     # get the value from liquid_mass_at_vmf and vapor_mass_at_vmf
     # return the results as a dictionary
@@ -552,9 +552,9 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
          starting_comp_filename="starting_composition.csv", delete_dir=True):
     # normalize fractional abundances to 1 if they are not already
     if vmf > 1:
-        vmf /= 100.0
+        print("Warning: The VMF input is expected to be a fractional value, not a percentage.")
     if vapor_loss_fraction > 1:
-        vapor_loss_fraction /= 100.0
+        print("Warning: The vapor loss fraction input is expected to be a fractional value, not a percentage.")
 
     # track some metadata
     iteration = 0
@@ -624,7 +624,7 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
         print(
             f"Iteration: {iteration}, \n"
             f"Residual error: {residual_error}, \n"
-            f"Vapor mass fraction: {vmf}, \n"
+            f"Vapor mass fraction: {vmf * 100}, \n"
             f"Vapor loss fraction: {vapor_loss_fraction}, \n",
             f"Target composition: {target_composition}, \n",
             f"Initial composition: {initial_composition}, \n",
