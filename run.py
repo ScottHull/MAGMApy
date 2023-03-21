@@ -75,14 +75,13 @@ bulk_moon_composition = {  # O'Neill 1991
 
 # ============================== Define Input Parameters ==============================
 
-run_name = "500b073S-2"
+run_name = "500b073S"
 temperature = 2682.61  # K
-vmf = 19.3  # %
-# vmf = 19.30  # %
+vmf = 0.96  # %
 disk_theia_mass_fraction = 66.78  # %
 disk_mass = 1.02  # lunar masses
 vapor_loss_fraction = 74.0  # %
-run_new_simulation = True  # True to run a new simulation, False to load a previous simulation
+run_new_simulation = False  # True to run a new simulation, False to load a previous simulation
 
 # ============================== Define Constants ==============================
 

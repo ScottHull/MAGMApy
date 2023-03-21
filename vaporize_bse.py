@@ -15,9 +15,11 @@ plt.style.use('seaborn-colorblind')
 
 run_name = "BSE_starting_composition"
 temperature = 2682.61  # K
-vmf = 19.3  # %
-vapor_loss_fraction = 100  # %
-new_simulation = False
+vmf = 0.96  # %
+disk_theia_mass_fraction = 66.78  # %
+disk_mass = 1.02  # lunar masses
+vapor_loss_fraction = 74.0  # %
+new_simulation = False  # True to run a new simulation, False to load a previous simulation
 
 bse_composition = {  # Visscher and Fegley (2013)
     "SiO2": 45.40,
