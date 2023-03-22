@@ -80,7 +80,7 @@ temperature = 3517.83  # K
 vmf = 4.17  # %
 # vmf = 19.30  # %
 disk_theia_mass_fraction = 51.97  # %
-disk_mass = 1.70 # lunar masses
+disk_mass = 1.70  # lunar masses
 vapor_loss_fraction = 16.0  # %
 run_new_simulation = True  # True to run a new simulation, False to load a previous simulation
 
