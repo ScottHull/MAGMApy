@@ -159,6 +159,10 @@ class GasPressure:
         self.species_total_mass = {}
         # the total mass of each cation in the vapor over all iterations
         self.element_total_mass = {}
+        # calculate the total mass fraction of each species in the vapor over all iterations
+        self.species_total_mass_fraction = {}
+        # the total mass fraction of each cation in the vapor over all iterations
+        self.element_total_mass_fraction = {}
 
     def get_cation_mass_fraction_from_moles(self, vapor_mass, include_O=True):
         """
@@ -179,9 +183,8 @@ class GasPressure:
             else:
                 self.cation_mass.update({"O": vapor_mass - sum(self.cation_mass.values())})
         self.element_mass_fraction = {i: self.cation_mass[i] / sum(self.cation_mass.values()) for i in
-                                     self.cation_mass.keys()}
+                                      self.cation_mass.keys()}
         return self.element_mass_fraction
-
 
     def get_vapor_mass(self, initial_liquid_mass, liquid_mass_at_time, previous_melt_mass):
         """
@@ -207,13 +210,19 @@ class GasPressure:
                           for i in self.species_mass_fractions.keys()}
         # get the mass of each element from the vapor produced at the given iteration
         self.element_total_mass = {i: self.element_mass_fraction[i] * self.vapor_mass
-                          for i in self.element_mass_fraction.keys()}  # element mass fraction dictionary is bulk vapor
+                                   for i in
+                                   self.element_mass_fraction.keys()}  # element mass fraction dictionary is bulk vapor
         # add the mass of each species to the total mass of each species in the vapor over all iterations
         for i in species_masses.keys():
             if i in self.species_total_mass.keys():
                 self.species_total_mass[i] += species_masses[i]
             else:
                 self.species_total_mass[i] = species_masses[i]
+        # calculate the total mas fraction of species and elements
+        self.species_total_mass_fraction = {i: self.species_total_mass[i] / sum(self.species_total_mass.values()) for i
+                                            in self.species_total_mass.keys()}
+        self.element_total_mass_fraction = {i: self.element_total_mass[i] / sum(self.element_total_mass.values()) for i
+                                            in self.element_total_mass.keys()}
         # now, make sure that the total mass of the vapor over all iterations is equal to the species and element masses
         # we use a small number assessment because of some rounding errors associated with stoich calculations
         assert self.vapor_mass - sum(self.species_total_mass.values()) < 1e-6  # small number assessment
@@ -221,7 +230,6 @@ class GasPressure:
         assert self.vapor_mass - sum(self.element_total_mass.values()) < 1e-6  # small number assessment
         # we've passed all checks, return the vapor mass
         return self.vapor_mass
-
 
     def get_f(self):
         """
@@ -554,7 +562,6 @@ class GasPressure:
                 self.total_mole_fraction.update(
                     {i: self.number_densities_elements[i] / self.cation_number_density})
         return self.total_mole_fraction
-        
 
     def __calculate_partial_pressure_elements(self):
         """

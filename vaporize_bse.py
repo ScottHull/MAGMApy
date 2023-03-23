@@ -6,9 +6,11 @@ from src.report import Report
 from src.plots import collect_data, make_figure
 
 from math import log10
+from random import uniform
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import labellines
 
 # use colorblind-friendly colors
 plt.style.use('seaborn-colorblind')
@@ -21,7 +23,7 @@ runs = [
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 74.0,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
         "run_name": "Half-Earths Model",
@@ -30,7 +32,7 @@ runs = [
         "disk_theia_mass_fraction": 51.97,  # %
         "disk_mass": 1.70,  # lunar masses
         "vapor_loss_fraction": 16.0,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 
@@ -104,7 +106,8 @@ for run in runs:
             t.vaporize()
             l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
             print(
-                "[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(count, t.weight_fraction_vaporized * 100.0))
+                "[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(
+                    count, t.weight_fraction_vaporized * 100.0))
             if count % 50 == 0 or count == 1:
                 reports.create_composition_report(iteration=count)
                 reports.create_liquid_report(iteration=count)
@@ -112,18 +115,89 @@ for run in runs:
             count += 1
 
 
+def get_all_data_for_runs():
+    data = {}
+    for r in runs:
+        run = r["run_name"]
+        data[run] = r
+        # get the data
+        melt_oxide_mass_fraction = collect_data(path=f"{run}/magma_oxide_mass_fraction",
+                                                x_header='mass fraction vaporized')
+        magma_element_mass = collect_data(path=f"{run}/magma_element_mass",
+                                          x_header='mass fraction vaporized')
+        vapor_species_mass = collect_data(path=f"{run}/total_vapor_species_mass",
+                                                   x_header='mass fraction vaporized')
+        vapor_element_mass = collect_data(path=f"{run}/total_vapor_element_mass",
+                                          x_header='mass fraction vaporized')
+        vapor_species_mass_fraction = collect_data(path=f"{run}/total_vapor_species_mass_fraction",
+                                                    x_header='mass fraction vaporized')
+        vapor_element_mass_fraction = collect_data(path=f"{run}/total_vapor_element_mass_fraction",
+                                                    x_header='mass fraction vaporized')
+
+        # add each data set to the dictionary
+        data[run]["melt_oxide_mass_fraction"] = melt_oxide_mass_fraction
+        data[run]["magma_element_mass"] = magma_element_mass
+        data[run]["vapor_species_mass"] = vapor_species_mass
+        data[run]["vapor_element_mass"] = vapor_element_mass
+        data[run]["vapor_species_mass_fraction"] = vapor_species_mass_fraction
+        data[run]["vapor_element_mass_fraction"] = vapor_element_mass_fraction
+    return data
 
 
+# get run data
+data = get_all_data_for_runs()
 
-
-
-
-
-
-
-
-
-
+# make a plot tracking liquid and vapor composition as a function of VMF
+# first, create a 2x2 grid of plots
+fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+axs = axs.flatten()
+# set a shared x and y axis label
+fig.supxlabel("VMF (%)", fontsize=14)
+fig.supylabel("Mass Fraction (%)", fontsize=14)
+for ax in axs:
+    ax.grid(alpha=0.4)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_ylim(bottom=1e-2)
+# in the upper row, plot the liquid composition for each run
+to_plot = 0
+for run in data.keys():
+    magma_plot_index = to_plot
+    vapor_plot_index = to_plot + 1
+    axs[magma_plot_index].set_title(f"{run} - Liquid")
+    axs[vapor_plot_index].set_title(f"{run} - Vapor")
+    for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
+        # set a vertical line at the VMF
+        ax.axvline(x=data[run]["vmf"], color="black", linestyle="--", alpha=1)
+    melt = data[run]["melt_oxide_mass_fraction"]
+    vapor = data[run]["vapor_species_mass_fraction"]
+    # get the first item in the dictionary to get the species
+    magma_species = list(melt[list(melt.keys())[0]].keys())
+    vapor_species = list(vapor[list(vapor.keys())[0]].keys())
+    # get a unique color for each oxide
+    melt_colors = plt.cm.jet(np.linspace(0, 1, len(magma_species)))
+    vapor_colors = plt.cm.jet(np.linspace(0, 1, len(vapor_species)))
+    for index, species in enumerate(magma_species):
+        axs[magma_plot_index].plot(
+            np.array(list(melt.keys())) * 100,
+            np.array([melt[i][species] for i in melt.keys()]) * 100,
+            linewidth=2,
+            color=melt_colors[index],
+            label=species,
+        )
+    for index, species in enumerate(vapor_species):
+        axs[vapor_plot_index].plot(
+            np.array(list(vapor.keys())) * 100,
+            np.array([vapor[i][species] for i in vapor.keys()]) * 100,
+            linewidth=2,
+            color=vapor_colors[index],
+            label=species,
+        )
+    for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
+        labellines.labelLines(ax.get_lines(), zorder=2.5, align=True, xvals=[uniform(1e-2, 30) for i in ax.get_lines()])
+    to_plot += 2
+fig.tight_layout()
+plt.show()
 
 
 
