@@ -1,0 +1,5 @@
+﻿Category,Upper Bound,Lower Bound
+Refractory,5000,1400
+Transitional,1400,1300
+Moderately Volatile,1300,800
+Volatile,800,0
