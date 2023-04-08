@@ -138,6 +138,30 @@ def get_composition_at_vmf(d: dict, vmf_val: float):
         )(vmf_val / 100.0)
     return interpolated_composition
 
+
+def recondense_vapor(melt_absolute_cation_masses: dict, vapor_absolute_cation_mass: dict, vapor_loss_fraction: float):
+    """
+    Recondenses retained vapor into the melt.
+    :param vapor_absolute_mass:
+    :param vapor_loss_fraction:
+    :return:
+    """
+    lost_vapor_mass = {
+        k: v * (vapor_loss_fraction / 100) for k, v in vapor_absolute_cation_mass.items()
+    }
+    retained_vapor_mass = {
+        k: v - lost_vapor_mass[k] for k, v in vapor_absolute_cation_mass.items()
+    }
+    recondensed_melt_mass = {
+        k: v + retained_vapor_mass[k] for k, v in melt_absolute_cation_masses.items()
+    }
+    # convert to oxide mass fractions
+    c = ConvertComposition().cations_mass_to_oxides_weight_percent(
+        cations=recondensed_melt_mass, oxides=list(bse_composition.keys())
+    )
+    # divide by 100 to get mass fraction
+    return {k: v / 100 for k, v in c.items()}
+
 def get_all_data_for_runs():
     data = {}
     for r in runs:
@@ -181,6 +205,12 @@ def get_all_data_for_runs():
             vmf_val=r["vmf"]
         )
 
+        recondensed_melt_oxide_mass_fraction = recondense_vapor(
+            melt_absolute_cation_masses=magma_element_mass_at_vmf,
+            vapor_absolute_cation_mass=vapor_element_mass_at_vmf,
+            vapor_loss_fraction=r["vapor_loss_fraction"]
+        )
+
 
         # add each data set to the dictionary
         data[run]["melt_oxide_mass_fraction"] = melt_oxide_mass_fraction
@@ -195,6 +225,7 @@ def get_all_data_for_runs():
         data[run]["vapor_element_mass_at_vmf"] = vapor_element_mass_at_vmf
         data[run]["vapor_species_mass_fraction_at_vmf"] = vapor_species_mass_fraction_at_vmf
         data[run]["vapor_element_mass_fraction_at_vmf"] = vapor_element_mass_fraction_at_vmf
+        data[run]["recondensed_melt_oxide_mass_fraction"] = recondensed_melt_oxide_mass_fraction
     return data
 
 
@@ -310,6 +341,9 @@ color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 for index, run in enumerate(runs):
     run_name = run["run_name"]
     melt = data[run_name]["melt_oxide_mass_fraction_at_vmf"]
+    recondensed_melt = data[run_name]["recondensed_melt_oxide_mass_fraction"]
+    print(melt)
+    print(recondensed_melt)
     # get the first item in the dictionary to get the species
     magma_species = list(melt.keys())
     # get a list of the cations of each species, by first splitting by any numbers, then splitting by any capital letters
@@ -335,7 +369,7 @@ for index, run in enumerate(runs):
     # annotate in the center above the arrows
     ax.annotate(
         "Refractory", xy=(3 / 2, 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
-        fontsize=14, fontweight="bold"
+        fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
         3, 10 ** -0.9, 2, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
@@ -346,7 +380,7 @@ for index, run in enumerate(runs):
     # annotate in the center above the arrows
     ax.annotate(
         "Transitional", xy=((5 - 2 / 2), 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
-        fontsize=14, fontweight="bold"
+        fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
         5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
@@ -358,7 +392,7 @@ for index, run in enumerate(runs):
     ax.annotate(
         "Moderately Volatile", xy=((8 - 3 / 2)
                                    , 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
-        fontsize=14, fontweight="bold"
+        fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     # get a unique color for each oxide
     ax.plot(
@@ -378,6 +412,29 @@ for index, run in enumerate(runs):
         s=100,
         zorder=10
     )
+    # plot the same for the recondensed melt
+    ax.plot(
+        magma_species,
+        np.array([recondensed_melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
+                                                                        for species in magma_species],
+        linewidth=4,
+        color=color_cycle[index],
+        linestyle="--",
+        # label=run['run_name']
+    )
+    # scatter the melt abundance on top of the line
+    ax.scatter(
+        magma_species,
+        np.array([recondensed_melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
+                                                                        for species in magma_species],
+        color=color_cycle[index],
+        s=100,
+        marker='d',
+        zorder=10
+    )
+ax.plot(
+    [], [], linewidth=4, linestyle="--", color='black', label="Including Retained\nVapor Recondensation"
+)
 # shade the range of normalized lunar bulk compositions
 ax.fill_between(
     magma_species, [min_values[i] for i in magma_species],
@@ -388,7 +445,7 @@ ax.plot(
     magma_species,
     [bse_composition[species] / bulk_moon_composition[species] for species in magma_species],
     linewidth=4,
-    linestyle="--",
+    # linestyle="--",
     color=color_cycle[len(runs)],
     label="BSE"
 )
