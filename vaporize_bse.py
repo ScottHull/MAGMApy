@@ -12,6 +12,7 @@ import pandas as pd
 import string
 from random import uniform
 import numpy as np
+import pandas as pd
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import labellines
@@ -245,6 +246,14 @@ def format_species_string(species):
 
 # get run data
 data = get_all_data_for_runs()
+# reformat all oxide wt% compositions to a pandas dataframe so it can be output to a csv easily
+df = pd.DataFrame({"oxide": [i for i in list(bse_composition.keys()) if i != "Fe2O3"]})
+for run in data.keys():
+    for key in ["melt_oxide_mass_fraction_at_vmf", "recondensed_melt_oxide_mass_fraction"]:
+        df[f"{run}_{key}"] = np.array([data[run][key][oxide] for oxide in
+                                       bse_composition.keys() if oxide != "Fe2O3"]) * 100
+df.to_csv("vaporize_bse.csv", index=False)
+
 
 # ========================= MELT/VAPOR SPECIES MASS FRACTION =========================
 
@@ -299,7 +308,7 @@ for run in data.keys():
     for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
         # labellines.labelLines(ax.get_lines(), zorder=2.5, align=True, fontsize=12)
         labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
-                              xvals=[uniform(1e-2, 15) for i in ax.get_lines()], fontsize=12)
+                              xvals=[uniform(1e-2, 2) for i in ax.get_lines()], fontsize=12)
     to_plot += 2
 # label the subplots
 letters = list(string.ascii_lowercase)
