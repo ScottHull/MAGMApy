@@ -181,6 +181,8 @@ def get_all_data_for_runs():
                                                     x_header='mass fraction vaporized')
         vapor_element_mass_fraction = collect_data(path=f"{run}/total_vapor_element_mass_fraction",
                                                     x_header='mass fraction vaporized')
+        vapor_element_mole_fraction = collect_data(path=f"{run}/atmosphere_total_mole_fraction",
+                                                    x_header='mass fraction vaporized')
         melt_oxide_mass_fraction_at_vmf = get_composition_at_vmf(
             d=melt_oxide_mass_fraction,
             vmf_val=r["vmf"]
@@ -211,6 +213,10 @@ def get_all_data_for_runs():
             vapor_absolute_cation_mass=vapor_element_mass_at_vmf,
             vapor_loss_fraction=r["vapor_loss_fraction"]
         )
+        vapor_element_mole_fraction_at_vmf = get_composition_at_vmf(
+            d=vapor_element_mole_fraction,
+            vmf_val=r["vmf"]
+        )
 
 
         # add each data set to the dictionary
@@ -227,6 +233,8 @@ def get_all_data_for_runs():
         data[run]["vapor_species_mass_fraction_at_vmf"] = vapor_species_mass_fraction_at_vmf
         data[run]["vapor_element_mass_fraction_at_vmf"] = vapor_element_mass_fraction_at_vmf
         data[run]["recondensed_melt_oxide_mass_fraction"] = recondensed_melt_oxide_mass_fraction
+        data[run]["vapor_element_mole_fraction"] = vapor_element_mole_fraction
+        data[run]["vapor_element_mole_fraction_at_vmf"] = vapor_element_mole_fraction_at_vmf
     return data
 
 
@@ -549,10 +557,55 @@ plt.show()
 plt.savefig("vapor_elements_vs_volatility.png", format='png', dpi=300)
 
 
-# ========================= VAPOR ELEMENTS AS A FUNCTION OF VOLATILITY (SPIDER) =========================
-# do the same as above but with bars
+# ========================= PLOT ELEMENTAL VAPOR MASS FRACTION AS FUNCTION OF VMF =========================
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
+ax.set_xlabel("Element", fontsize=20)
+ax.set_ylabel("Vapor Element Mass Fraction (%)", fontsize=20)
+linestyles = ["-", "--", "-."]
+for index, run in enumerate(runs):
+    vapor_masses = data[run["run_name"]]["vapor_element_mass_at_vmf"]
+    total_vapor_mass = sum(vapor_masses.values())
+    elements = list(vapor_masses.keys())
+    color_cycle = list(sns.color_palette("colorblind", len(elements)))
+    ax.plot(
+        elements,
+        [vapor_masses[element] / total_vapor_mass * 100 for element in elements],
+        linewidth=4,
+        linestyle=linestyles[index],
+        label=run["run_name"],
+    )
+ax.grid()
+ax.set_yscale("log")
+ax.legend(fontsize=18)
+plt.tight_layout()
+plt.show()
+
+
+# ========================= PLOT ELEMENTAL VAPOR MOLE FRACTION AS FUNCTION OF VMF =========================
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+ax.set_xlabel("Element", fontsize=20)
+ax.set_ylabel("Vapor Element Mole Fraction (%)", fontsize=20)
+linestyles = ["-", "--", "-."]
+for index, run in enumerate(runs):
+    vapor_masses = data[run["run_name"]]["vapor_element_mole_fraction_at_vmf"]
+    total_vapor_mass = sum(vapor_masses.values())
+    elements = list(vapor_masses.keys())
+    color_cycle = list(sns.color_palette("colorblind", len(elements)))
+    ax.plot(
+        elements,
+        [vapor_masses[element] / total_vapor_mass * 100 for element in elements],
+        linewidth=4,
+        linestyle=linestyles[index],
+        label=run["run_name"],
+    )
+ax.grid()
+ax.set_yscale("log")
+ax.set_ylim(bottom=10 ** -4)
+ax.legend(fontsize=18)
+plt.tight_layout()
+plt.show()
 
 
 
