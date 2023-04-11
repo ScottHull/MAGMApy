@@ -277,6 +277,11 @@ for ax in axs:
     ax.grid(alpha=0.4)
     ax.set_xscale("log")
     ax.set_yscale("log")
+    # # set the bottom and upper limts of the x axis to match the min and max VMF values
+    # ax.set_xlim(
+    #     left=min(next(iter(data.values()))["melt_oxide_mass_fraction"].keys()) * 100,
+    #     right=max(next(iter(data.values()))["melt_oxide_mass_fraction"].keys()) * 100
+    # )
     ax.set_xlim(left=1e-1, right=1e2)
     ax.set_ylim(bottom=1e-2, top=1e2)
 # in the upper row, plot the liquid composition for each run
@@ -605,6 +610,79 @@ ax.set_yscale("log")
 ax.set_ylim(bottom=10 ** -4)
 ax.legend(fontsize=18)
 plt.tight_layout()
+plt.show()
+
+
+
+# ========================= MELT/VAPOR SPECIES MASS FRACTION DIFFERENCE =========================
+
+# make a plot tracking liquid and vapor composition as a function of VMF
+# first, create a 2x2 grid of plots
+fig, axs = plt.subplots(2, 1, figsize=(12, 12))
+axs = axs.flatten()
+# set a shared x and y axis label
+fig.supxlabel("VMF (%)", fontsize=20)
+fig.supylabel("Mass Fraction (%)", fontsize=20)
+difference_melt = {
+    i: {j: abs(data[1][""])}
+}
+difference_vapor = {
+    i: abs(data[run["run_name"]]["melt_element_mass_fraction_at_vmf"][i] - data[run["run_name"]]["vapor_element_mass_fraction_at_vmf"][i]) * 100
+    for i in data[run["run_name"]]["vapor_element_mass_fraction_at_vmf"].keys()
+}
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.grid(alpha=0.4)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlim(left=1e-1, right=1e2)
+    ax.set_ylim(bottom=1e-2, top=1e2)
+to_plot = 0
+magma_plot_index = to_plot
+vapor_plot_index = to_plot + 1
+axs[magma_plot_index].set_title(f"{run} - Liquid Composition")
+axs[vapor_plot_index].set_title(f"{run} - Vapor Composition")
+for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
+    # set a vertical line at the VMF
+    ax.axvline(x=data[run]["vmf"], color="black", linestyle="--", alpha=1)
+melt = data[run]["melt_oxide_mass_fraction"]
+vapor = data[run]["vapor_species_mass_fraction"]
+# get the first item in the dictionary to get the species
+magma_species = list(melt[list(melt.keys())[0]].keys())
+vapor_species = list(vapor[list(vapor.keys())[0]].keys())
+# get a unique color for each oxide
+melt_colors = plt.cm.jet(np.linspace(0, 1, len(magma_species)))
+vapor_colors = plt.cm.jet(np.linspace(0, 1, len(vapor_species)))
+for index, species in enumerate(magma_species):
+    axs[magma_plot_index].plot(
+        np.array(list(melt.keys())) * 100,
+        np.array([difference_melt[i][species] for i in melt.keys()]) * 100,
+        linewidth=2,
+        color=melt_colors[index],
+        label=format_species_string(species),
+    )
+for index, species in enumerate(vapor_species):
+    axs[vapor_plot_index].plot(
+        np.array(list(vapor.keys())) * 100,
+        np.array([difference_vapor[i][species] for i in vapor.keys()]) * 100,
+        linewidth=2,
+        color=vapor_colors[index],
+        label=format_species_string(species),
+    )
+for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
+    # labellines.labelLines(ax.get_lines(), zorder=2.5, align=True, fontsize=12)
+    labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
+                          xvals=[uniform(1e-2, 2) for i in ax.get_lines()], fontsize=12)
+# label the subplots
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.90, 0.98), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+fig.tight_layout()
+plt.savefig("melt_vapor_species_mass_fraction_difference.png", format='png', dpi=300)
 plt.show()
 
 
