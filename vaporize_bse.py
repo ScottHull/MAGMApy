@@ -5,6 +5,9 @@ from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data, make_figure
 
+from isotopes.rayleigh import FullSequenceRayleighDistillation
+
+import os
 from math import log10
 import re
 import seaborn as sns
@@ -122,6 +125,24 @@ for run in runs:
             count += 1
 
 
+
+def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_name,
+                                 escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf):
+    if os.path.exists(f"{run_name}_mass_distribution.csv"):
+        os.remove(f"{run_name}_mass_distribution.csv")
+    with open(f"{run_name}_mass_distribution.csv", "w") as f:
+        header = "component," + ",".join([str(i) for i in melt_mass_at_vmf.keys()]) + "\n"
+        f.write(header)
+        f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
+        f.write("bulk vapor mass," + ",".join([str(i) for i in bulk_vapor_mass_at_vmf.values()]) + "\n")
+        f.write("bulk system mass," + ",".join([str(i) for i in (np.array(list(melt_mass_at_vmf.values())) + np.array(
+            list(bulk_vapor_mass_at_vmf.values()))).tolist()]) + "\n")
+        f.write("escaping vapor mass," + ",".join([str(i) for i in escaping_vapor_mass_at_vmf.values()]) + "\n")
+        f.write("retained vapor mass," + ",".join([str(i) for i in retained_vapor_mass_at_vmf.values()]) + "\n")
+    print(f"wrote file {run_name}_mass_distribution.csv")
+    f.close()
+
+
 def get_composition_at_vmf(d: dict, vmf_val: float):
     """
     Given a VMF, interpolate the composition of the d dictionary at that VMF.
@@ -161,7 +182,12 @@ def recondense_vapor(melt_absolute_cation_masses: dict, vapor_absolute_cation_ma
         cations=recondensed_melt_mass, oxides=list(bse_composition.keys())
     )
     # divide by 100 to get mass fraction
-    return {k: v / 100 for k, v in c.items()}
+    return {
+        "recondensed_melt_oxide_mass_fraction": {k: v / 100 for k, v in c.items()},
+        "lost_vapor_mass": lost_vapor_mass,
+        "retained_vapor_mass": retained_vapor_mass,
+        "recondensed_melt_mass": recondensed_melt_mass
+    }
 
 def get_all_data_for_runs():
     data = {}
@@ -208,11 +234,17 @@ def get_all_data_for_runs():
             vmf_val=r["vmf"]
         )
 
-        recondensed_melt_oxide_mass_fraction = recondense_vapor(
+        recondensed = recondense_vapor(
             melt_absolute_cation_masses=magma_element_mass_at_vmf,
             vapor_absolute_cation_mass=vapor_element_mass_at_vmf,
             vapor_loss_fraction=r["vapor_loss_fraction"]
         )
+
+        recondensed_melt_oxide_mass_fraction = recondensed["recondensed_melt_oxide_mass_fraction"]
+        escaping_vapor_mass = recondensed["lost_vapor_mass"]
+        retained_vapor_mass = recondensed["retained_vapor_mass"]
+        recondensed_melt_mass = recondensed["recondensed_melt_mass"]
+
         vapor_element_mole_fraction_at_vmf = get_composition_at_vmf(
             d=vapor_element_mole_fraction,
             vmf_val=r["vmf"]
@@ -235,6 +267,14 @@ def get_all_data_for_runs():
         data[run]["recondensed_melt_oxide_mass_fraction"] = recondensed_melt_oxide_mass_fraction
         data[run]["vapor_element_mole_fraction"] = vapor_element_mole_fraction
         data[run]["vapor_element_mole_fraction_at_vmf"] = vapor_element_mole_fraction_at_vmf
+
+        # write the mass distribution file
+        write_mass_distribution_file(
+            melt_mass_at_vmf=magma_element_mass_at_vmf, bulk_vapor_mass_at_vmf=vapor_element_mass_at_vmf,
+            run_name=run,
+            escaping_vapor_mass_at_vmf=escaping_vapor_mass, retained_vapor_mass_at_vmf=retained_vapor_mass
+        )
+
     return data
 
 
@@ -364,8 +404,6 @@ for index, run in enumerate(runs):
     run_name = run["run_name"]
     melt = data[run_name]["melt_oxide_mass_fraction_at_vmf"]
     recondensed_melt = data[run_name]["recondensed_melt_oxide_mass_fraction"]
-    print(melt)
-    print(recondensed_melt)
     # get the first item in the dictionary to get the species
     magma_species = list(melt.keys())
     # get a list of the cations of each species, by first splitting by any numbers, then splitting by any capital letters
@@ -562,128 +600,239 @@ plt.show()
 plt.savefig("vapor_elements_vs_volatility.png", format='png', dpi=300)
 
 
-# ========================= PLOT ELEMENTAL VAPOR MASS FRACTION AS FUNCTION OF VMF =========================
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(111)
-ax.set_xlabel("Element", fontsize=20)
-ax.set_ylabel("Vapor Element Mass Fraction (%)", fontsize=20)
-linestyles = ["-", "--", "-."]
-for index, run in enumerate(runs):
-    vapor_masses = data[run["run_name"]]["vapor_element_mass_at_vmf"]
-    total_vapor_mass = sum(vapor_masses.values())
-    elements = list(vapor_masses.keys())
-    color_cycle = list(sns.color_palette("colorblind", len(elements)))
-    ax.plot(
-        elements,
-        [vapor_masses[element] / total_vapor_mass * 100 for element in elements],
-        linewidth=4,
-        linestyle=linestyles[index],
-        label=run["run_name"],
-    )
-ax.grid()
-ax.set_yscale("log")
-ax.legend(fontsize=18)
-plt.tight_layout()
-plt.show()
 
+# ====================================== MVE ISOTOPE FRACTIONATION ======================================
+# define constants
+# define the observed isotope ratios
+delta_K_Lunar_BSE = 0.415  # mean of 41K/39K isotope ratios from lunar samples
+delta_K_Lunar_BSE_std_error = 0.05  # standard error of 41K/39K isotope ratios from lunar samples
+delta_Zn_Lunar_BSE = 1.12  # mean of 66Zn/64Zn isotope ratios from lunar samples
+delta_Zn_Lunar_BSE_std_error = 0.55  # standard error of 66Zn/64Zn isotope ratios from lunar samples
+delta_K_BSE = -0.479  # mean of 41K/39K isotope ratios from BSE
+delta_K_BSE_std_error = 0.027  # standard error of 41K/39K isotope ratios from BSE
+delta_Zn_BSE = 0.28  # mean of 66Zn/64Zn isotope ratios from BSE
+delta_Zn_BSE_std_error = 0.05  # standard error of 66Zn/64Zn isotope ratios from BSE
 
-# ========================= PLOT ELEMENTAL VAPOR MOLE FRACTION AS FUNCTION OF VMF =========================
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(111)
-ax.set_xlabel("Element", fontsize=20)
-ax.set_ylabel("Vapor Element Mole Fraction (%)", fontsize=20)
-linestyles = ["-", "--", "-."]
-for index, run in enumerate(runs):
-    vapor_masses = data[run["run_name"]]["vapor_element_mole_fraction_at_vmf"]
-    total_vapor_mass = sum(vapor_masses.values())
-    elements = list(vapor_masses.keys())
-    color_cycle = list(sns.color_palette("colorblind", len(elements)))
-    ax.plot(
-        elements,
-        [vapor_masses[element] / total_vapor_mass * 100 for element in elements],
-        linewidth=4,
-        linestyle=linestyles[index],
-        label=run["run_name"],
-    )
-ax.grid()
-ax.set_yscale("log")
-ax.set_ylim(bottom=10 ** -4)
-ax.legend(fontsize=18)
-plt.tight_layout()
-plt.show()
+# define ranges for the isotope ratios
+delta_k_theia_range = np.arange(-0.6, 0.6, 0.1)  # range of 41K/39K isotope ratios to test for Theia
+# delta_k_theia_range = np.arange(-500, 500, 20)  # range of 41K/39K isotope ratios to test for Theia
+# delta_zn_theia_range = np.arange(-410, -380, 5)  # range of 66Zn/64Zn isotope ratios to test for Theia
+delta_zn_theia_range = np.arange(-900, 900, 20)  # range of 66Zn/64Zn isotope ratios to test for Theia
 
-
-
-# ========================= MELT/VAPOR SPECIES MASS FRACTION DIFFERENCE =========================
-
-# make a plot tracking liquid and vapor composition as a function of VMF
-# first, create a 2x2 grid of plots
-fig, axs = plt.subplots(2, 1, figsize=(12, 12))
+# make a subplot with 2 columns and 3 rows
+fig, axs = plt.subplots(2, 2, figsize=(12, 12))
+# increase the font size
 axs = axs.flatten()
-# set a shared x and y axis label
-fig.supxlabel("VMF (%)", fontsize=20)
-fig.supylabel("Mass Fraction (%)", fontsize=20)
-difference_melt = {
-    i: {j: abs(data[1][""])}
-}
-difference_vapor = {
-    i: abs(data[run["run_name"]]["melt_element_mass_fraction_at_vmf"][i] - data[run["run_name"]]["vapor_element_mass_fraction_at_vmf"][i]) * 100
-    for i in data[run["run_name"]]["vapor_element_mass_fraction_at_vmf"].keys()
-}
-for ax in axs:
-    ax.tick_params(axis='both', which='major', labelsize=20)
-    ax.grid(alpha=0.4)
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlim(left=1e-1, right=1e2)
-    ax.set_ylim(bottom=1e-2, top=1e2)
 to_plot = 0
-magma_plot_index = to_plot
-vapor_plot_index = to_plot + 1
-axs[magma_plot_index].set_title(f"{run} - Liquid Composition")
-axs[vapor_plot_index].set_title(f"{run} - Vapor Composition")
-for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
-    # set a vertical line at the VMF
-    ax.axvline(x=data[run]["vmf"], color="black", linestyle="--", alpha=1)
-melt = data[run]["melt_oxide_mass_fraction"]
-vapor = data[run]["vapor_species_mass_fraction"]
-# get the first item in the dictionary to get the species
-magma_species = list(melt[list(melt.keys())[0]].keys())
-vapor_species = list(vapor[list(vapor.keys())[0]].keys())
-# get a unique color for each oxide
-melt_colors = plt.cm.jet(np.linspace(0, 1, len(magma_species)))
-vapor_colors = plt.cm.jet(np.linspace(0, 1, len(vapor_species)))
-for index, species in enumerate(magma_species):
-    axs[magma_plot_index].plot(
-        np.array(list(melt.keys())) * 100,
-        np.array([difference_melt[i][species] for i in melt.keys()]) * 100,
-        linewidth=2,
-        color=melt_colors[index],
-        label=format_species_string(species),
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    ax.grid(alpha=0.5)
+for run in runs:
+    run_name = run['run_name']
+    mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+    k_isotopes = FullSequenceRayleighDistillation(
+        heavy_z=41, light_z=39, vapor_escape_fraction=vapor_loss_fraction,
+        system_element_mass=mass_distribution['K']['bulk system mass'],
+        melt_element_mass=mass_distribution['K']['melt mass'],
+        vapor_element_mass=mass_distribution['K']['bulk vapor mass'], earth_isotope_composition=delta_K_BSE,
+        theia_ejecta_fraction=disk_theia_mass_fraction,
+        total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
+        total_vapor_mass=sum(
+            [mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
     )
-for index, species in enumerate(vapor_species):
-    axs[vapor_plot_index].plot(
-        np.array(list(vapor.keys())) * 100,
-        np.array([difference_vapor[i][species] for i in vapor.keys()]) * 100,
-        linewidth=2,
-        color=vapor_colors[index],
-        label=format_species_string(species),
+    # k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
+    k_isotopes_mixed_model, k_isotopes_mixed_model_best_fit, k_best_fit_results = k_isotopes.run_theia_mass_balance(
+        theia_range=delta_k_theia_range,
+        delta_moon_earth=delta_K_Lunar_BSE
+    )  # assumes ejecta is a mix of Earth and Theia
+    k_isotopes_mixed_model_lower, k_isotopes_mixed_model_best_fit_lower, k_best_fit_lower_results = k_isotopes.run_theia_mass_balance(
+        theia_range=delta_k_theia_range,
+        delta_moon_earth=delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error
+    )  # assumes ejecta is a mix of Earth and Theia
+    k_isotopes_mixed_model_upper, k_isotopes_mixed_model_best_fit_upper, k_best_fit_upper_results = k_isotopes.run_theia_mass_balance(
+        theia_range=delta_k_theia_range,
+        delta_moon_earth=delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error
+    )  # assumes ejecta is a mix of Earth and Theia
+
+    axs[to_plot].plot(
+        k_isotopes_mixed_model.keys(),
+        [k_isotopes_mixed_model[i]['delta_moon_earth'] for i in k_isotopes_mixed_model.keys()],
+        linewidth=2.0,
+        color='black',
+        label="Model",
     )
-for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
-    # labellines.labelLines(ax.get_lines(), zorder=2.5, align=True, fontsize=12)
-    labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
-                          xvals=[uniform(1e-2, 2) for i in ax.get_lines()], fontsize=12)
-# label the subplots
-letters = list(string.ascii_lowercase)
-for index, ax in enumerate(axs):
-    # label each subplot with a letter in the upper-left corner
-    ax.annotate(
-        letters[index], xy=(0.90, 0.98), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
-        fontweight="bold", fontsize=20
+    # shade a region between the error bars of the observed value
+    axs[to_plot].axhspan(
+        delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error, alpha=0.2,
+        color='blue')
+    axs[to_plot].axhline(delta_K_Lunar_BSE, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
+    axs[to_plot].axvspan(
+        k_isotopes_mixed_model_best_fit_lower, k_isotopes_mixed_model_best_fit_upper, alpha=0.2, color='green'
     )
-fig.tight_layout()
-plt.savefig("melt_vapor_species_mass_fraction_difference.png", format='png', dpi=300)
+    axs[to_plot].axvline(x=k_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, color='green',
+                   label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
+    # annotate the best fit value with vertical text
+    axs[to_plot].annotate(
+        r"$\delta \rm ^{41}K_{\rm Theia} = $" + f"{k_isotopes_mixed_model_best_fit:.3f}" + r"$\pm$" + f"{abs(k_isotopes_mixed_model_best_fit - k_isotopes_mixed_model_best_fit_lower):.3f}",
+        (k_isotopes_mixed_model_best_fit - (k_isotopes_mixed_model_best_fit * .2), 0.1),
+        rotation=90, fontsize=10
+    )
+    axs[to_plot].axvspan(delta_K_BSE - delta_K_BSE_std_error, delta_K_BSE + delta_K_BSE_std_error, alpha=0.2, color='red')
+    axs[to_plot].axvline(x=delta_K_BSE, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
+    axs[to_plot].set_title(r"$\rm ^{41/39}K$", fontsize=20)
+
+    # zn_isotopes = FullSequenceRayleighDistillation(
+    #     heavy_z=66, light_z=64, vapor_escape_fraction=vapor_loss_fraction,
+    #     system_element_mass=mass_distribution['Zn']['bulk system mass'],
+    #     melt_element_mass=mass_distribution['Zn']['melt mass'],
+    #     vapor_element_mass=mass_distribution['Zn']['bulk vapor mass'], earth_isotope_composition=delta_Zn_BSE,
+    #     theia_ejecta_fraction=disk_theia_mass_fraction, chemical_frac_factor_exponent=0.5, alpha_chem=0.99,
+    #     total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
+    #     total_vapor_mass=sum(
+    #         [mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
+    # )
+    # # zn_isotopes_starting_earth_isotope_composition = zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
+    # zn_isotopes_mixed_model, zn_isotopes_mixed_model_best_fit, zn_best_fit_results = zn_isotopes.run_theia_mass_balance(
+    #     theia_range=delta_zn_theia_range,
+    #     delta_moon_earth=delta_Zn_Lunar_BSE
+    # )  # assumes ejecta is a mix of Earth and Theia
+    # zn_isotopes_mixed_model_lower, zn_isotopes_mixed_model_best_fit_lower, zn_best_fit_lower_results = zn_isotopes.run_theia_mass_balance(
+    #     theia_range=delta_zn_theia_range,
+    #     delta_moon_earth=delta_Zn_Lunar_BSE - delta_Zn_Lunar_BSE_std_error
+    # )
+    # zn_isotopes_mixed_model_upper, zn_isotopes_mixed_model_best_fit_upper, zn_best_fit_upper_results = zn_isotopes.run_theia_mass_balance(
+    #     theia_range=delta_zn_theia_range,
+    #     delta_moon_earth=delta_Zn_Lunar_BSE + delta_Zn_Lunar_BSE_std_error
+    # )
+    # # assert abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_lower) == abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_upper)
+    #
+    # # export all models to a CSV
+    # headers = k_best_fit_results.keys()
+    # headers = ['model'] + list(headers)
+    # # add all models to a pandas dataframe
+    # df = pd.DataFrame(columns=headers)
+    # for model, i in [('K_best_fit', k_best_fit_results),
+    #                  ("K_best_fit_lower", k_best_fit_lower_results),
+    #                  ("K_best_fit_upper", k_best_fit_upper_results),
+    #                  ("Zn_best_fit", zn_best_fit_results),
+    #                  ("Zn_best_fit_lower", zn_best_fit_lower_results),
+    #                  ("Zn_best_fit_upper", zn_best_fit_upper_results)
+    #                  ]:
+    #     df = df.append({'model': model, **i}, ignore_index=True)
+    # df.to_csv(f'{run_name}_isotope_model.csv', index=False)
+    #
+    # # make a plot of the 66Zn/64Zn fractionation with the Earth-Theia mixing model
+    # axs[to_plot + 1].plot(
+    #     zn_isotopes_mixed_model.keys(),
+    #     [zn_isotopes_mixed_model[i]['delta_moon_earth'] for i in zn_isotopes_mixed_model.keys()],
+    #     linewidth=2.0,
+    #     color='black',
+    #     label="Model"
+    # )
+    #
+    # # shade a region between the error bars of the observed value
+    # axs[to_plot + 1].axhspan(
+    #     delta_Zn_Lunar_BSE - delta_Zn_Lunar_BSE_std_error, delta_Zn_Lunar_BSE + delta_Zn_Lunar_BSE_std_error,
+    #     alpha=0.2, color='blue')
+    # axs[to_plot + 1].axhline(delta_Zn_Lunar_BSE, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64Zn}$ (Observed)")
+    #
+    # axs[to_plot + 1].axvspan(zn_isotopes_mixed_model_best_fit_lower, zn_isotopes_mixed_model_best_fit_upper, alpha=0.2,
+    #                color='green')
+    # axs[to_plot + 1].axvline(x=zn_isotopes_mixed_model_best_fit, linestyle='--', linewidth=2.0, color='green',
+    #                label=r"$\delta \rm ^{66/64}zn_{\rm Theia}$ (Best Fit)")
+    #
+    # axs[to_plot + 1].axvspan(delta_Zn_BSE - delta_Zn_BSE_std_error, delta_Zn_BSE + delta_Zn_BSE_std_error, alpha=0.2,
+    #                color='red')
+    # axs[to_plot + 1].axvline(x=delta_Zn_BSE, color='red', label=r"$\delta \rm ^{66/64}Zn_{\rm Earth}$ (Observed)")
+    # axs[to_plot + 1].set_title(r"$\rm ^{66/64}Zn$", fontsize=20)
+    # axs[to_plot + 1].annotate(
+    #     r"$\delta \rm ^{66}Zn_{\rm Theia} = $" + f"{zn_isotopes_mixed_model_best_fit:.3f}" + r"$\pm$" + f"{abs(zn_isotopes_mixed_model_best_fit - zn_isotopes_mixed_model_best_fit_lower):.3f}",
+    #     (zn_isotopes_mixed_model_best_fit - (zn_isotopes_mixed_model_best_fit * .02), -10),
+    #     rotation=90, fontsize=10
+    # )
+
+    to_plot += 2
 plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# # ========================= PLOT ELEMENTAL VAPOR MASS FRACTION AS FUNCTION OF VMF =========================
+# fig = plt.figure(figsize=(10, 10))
+# ax = fig.add_subplot(111)
+# ax.set_xlabel("Element", fontsize=20)
+# ax.set_ylabel("Vapor Element Mass Fraction (%)", fontsize=20)
+# linestyles = ["-", "--", "-."]
+# for index, run in enumerate(runs):
+#     vapor_masses = data[run["run_name"]]["vapor_element_mass_at_vmf"]
+#     total_vapor_mass = sum(vapor_masses.values())
+#     elements = list(vapor_masses.keys())
+#     color_cycle = list(sns.color_palette("colorblind", len(elements)))
+#     ax.plot(
+#         elements,
+#         [vapor_masses[element] / total_vapor_mass * 100 for element in elements],
+#         linewidth=4,
+#         linestyle=linestyles[index],
+#         label=run["run_name"],
+#     )
+# ax.grid()
+# ax.set_yscale("log")
+# ax.legend(fontsize=18)
+# plt.tight_layout()
+# plt.show()
+#
+#
+# # ========================= PLOT ELEMENTAL VAPOR MOLE FRACTION AS FUNCTION OF VMF =========================
+# fig = plt.figure(figsize=(10, 10))
+# ax = fig.add_subplot(111)
+# ax.set_xlabel("Element", fontsize=20)
+# ax.set_ylabel("Vapor Element Mole Fraction (%)", fontsize=20)
+# linestyles = ["-", "--", "-."]
+# for index, run in enumerate(runs):
+#     vapor_masses = data[run["run_name"]]["vapor_element_mole_fraction_at_vmf"]
+#     total_vapor_mass = sum(vapor_masses.values())
+#     elements = list(vapor_masses.keys())
+#     color_cycle = list(sns.color_palette("colorblind", len(elements)))
+#     ax.plot(
+#         elements,
+#         [vapor_masses[element] / total_vapor_mass * 100 for element in elements],
+#         linewidth=4,
+#         linestyle=linestyles[index],
+#         label=run["run_name"],
+#     )
+# ax.grid()
+# ax.set_yscale("log")
+# ax.set_ylim(bottom=10 ** -4)
+# ax.legend(fontsize=18)
+# plt.tight_layout()
+# plt.show()
 
 
 
