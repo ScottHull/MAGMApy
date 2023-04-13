@@ -43,7 +43,7 @@ class FullSequenceRayleighDistillation:
         self.retained_vapor_mass = self.total_vapor_mass * (1 - self.vapor_escape_fraction)  # mass of vapor after vapor escape, including recondensation
         self.retained_melt_mass_fraction = self.total_melt_mass / (self.total_melt_mass + self.retained_vapor_mass)  # fraction of melt in the system after vapor escape, including recondensation
         self.retained_vapor_mass_fraction = self.retained_vapor_mass / (self.total_melt_mass + self.retained_vapor_mass)  # fraction of vapor in the system after vapor escape, including recondensation
-        print(self.retained_vapor_mass_fraction + self.retained_melt_mass_fraction, self.retained_vapor_mass_fraction, self.retained_melt_mass_fraction)
+        # print(self.retained_vapor_mass_fraction + self.retained_melt_mass_fraction, self.retained_vapor_mass_fraction, self.retained_melt_mass_fraction)
 
     def rayleigh_fractionate_residual(self, delta_initial, alpha, f):
         """
@@ -149,3 +149,15 @@ class FullSequenceRayleighDistillation:
         data['alpha_chemical'] = self.chemical_fractionation_factor
         data['alpha_physical'] = self.physical_fractionation_factor
         return theia_search, theia_value, data
+
+
+class FullSequenceRayleighDistillation_SingleReservior(FullSequenceRayleighDistillation):
+
+    def fractionate(self, reservoir_delta):
+        """
+        Returns the fractionated value of the element.
+        :param reservoir_delta:  The delta-notation abundance of the isotope in equation
+        :return:
+        """
+        return self.run_3_stage_fractionation(delta_initial=reservoir_delta)
+
