@@ -626,6 +626,7 @@ to_plot = 0
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.grid(alpha=0.5)
+    ax.set_ylim(1 - 2, 2 + 2)
 for run in runs:
     run_name = run['run_name']
     mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
@@ -650,22 +651,17 @@ for run in runs:
         reservoir_delta=delta_K_BSE + delta_K_BSE_std_error
     )  # assumes ejecta is a mix of Earth and Theia
 
-    axs[to_plot].errorbar(
-        delta_K_Lunar_BSE, 1,
-        xerr=[[delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error], [delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error]]
-    )
-    axs[to_plot].errorbar(
-        k_data['delta_moon_earth_no_recondensation'], 2,
-        xerr=[[k_data['delta_moon_earth_no_recondensation'] - k_lower_data['delta_moon_earth_no_recondensation']],
-        [k_upper_data['delta_moon_earth_no_recondensation'] - k_data['delta_moon_earth_no_recondensation']]]
-    )
-    axs[to_plot].errorbar(
-        k_data['delta_moon_earth'], 3,
-        xerr=[[k_data['delta_moon_earth'] - k_lower_data['delta_moon_earth']],
-        [k_upper_data['delta_moon_earth'] - k_data['delta_moon_earth']]]
-    )
-    # shade the region of overlap between the 3
-
+    for index, dataset in enumerate([
+        [delta_K_Lunar_BSE, delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error, "Observed"],
+        [k_data['delta_moon_earth_no_recondensation'], k_lower_data['delta_moon_earth_no_recondensation'], k_upper_data['delta_moon_earth_no_recondensation'], "No Recondensation"],
+        [k_data['delta_moon_earth'], k_lower_data['delta_moon_earth'], k_upper_data['delta_moon_earth'], "With Recondensation"],
+    ]):
+        axs[to_plot].errorbar(
+            dataset[0], index,
+            xerr=[[dataset[1]], [dataset[2]]],
+            fmt='o',
+            label=dataset[3],
+        )
 
 
     axs[to_plot].set_title(r"$\rm ^{41/39}K$", fontsize=20)
@@ -681,13 +677,14 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
-    ax.grid()
-    # ax.legend()
 
 for ax, t in [(axs[-2], r"$\delta \rm ^{41}K_{Theia}$"), (axs[-1], r"$\delta \rm ^{66}Zn_{Theia}$")]:
-    ax.set_xlabel(t, fontsize=20)
-for ax, t in [(axs[0], "Canonical"), (axs[2], "Half-Earths")]:
     ax.set_ylabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
+# turn of y axis labels for all subplots
+for ax in axs:
+    ax.set_yticklabels([])
+    ax.set_yticks([])
+axs[0].legend(fontsize=18)
 
 plt.tight_layout()
 plt.show()
