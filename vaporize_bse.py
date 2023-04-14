@@ -649,77 +649,27 @@ for run in runs:
     k_upper_data = k_isotopes.fractionate(
         reservoir_delta=delta_K_BSE + delta_K_BSE_std_error
     )  # assumes ejecta is a mix of Earth and Theia
-    # shade a region between the error bars of the observed value
-    axs[to_plot].axhspan(
-        delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error, alpha=0.2,
-        color='blue')
-    axs[to_plot].axhline(delta_K_Lunar_BSE, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 41/39K}$ (Observed)")
-    axs[to_plot].axvspan(
-        k_lower_data['delta_moon_earth'], k_upper_data['delta_moon_earth'], alpha=0.2, color='green'
+
+    axs[to_plot].errorbar(
+        delta_K_Lunar_BSE, 1,
+        xerr=[[delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error], [delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error]]
     )
-    axs[to_plot].axvline(x=k_data['delta_moon_earth'], linestyle='--', linewidth=2.0, color='green',
-                         label=r"$\delta \rm ^{41/39}K_{\rm Theia}$ (Best Fit)")
-    # annotate the best fit value with vertical text
-    axs[to_plot].annotate(
-        r"$\delta \rm ^{41}K_{\rm Theia} = $" + f"{k_data['delta_moon_earth']:.3f}" + r"$\pm$" + f"{abs(k_data['delta_moon_earth'] - k_lower_data['delta_moon_earth']):.3f}",
-        (k_data['delta_moon_earth'] - (k_data['delta_moon_earth'] * .2), 0.1),
-        rotation=90, fontsize=10
+    axs[to_plot].errorbar(
+        k_data['delta_moon_earth_no_recondensation'], 2,
+        xerr=[[k_data['delta_moon_earth_no_recondensation'] - k_lower_data['delta_moon_earth_no_recondensation']],
+        [k_upper_data['delta_moon_earth_no_recondensation'] - k_data['delta_moon_earth_no_recondensation']]]
     )
-    axs[to_plot].axvspan(delta_K_BSE - delta_K_BSE_std_error, delta_K_BSE + delta_K_BSE_std_error, alpha=0.2,
-                         color='red')
-    axs[to_plot].axvline(x=delta_K_BSE, color='red', label=r"$\delta \rm ^{41/39}K_{\rm Earth}$ (Observed)")
+    axs[to_plot].errorbar(
+        k_data['delta_moon_earth'], 3,
+        xerr=[[k_data['delta_moon_earth'] - k_lower_data['delta_moon_earth']],
+        [k_upper_data['delta_moon_earth'] - k_data['delta_moon_earth']]]
+    )
+    # shade the region of overlap between the 3
+
+
+
     axs[to_plot].set_title(r"$\rm ^{41/39}K$", fontsize=20)
 
-    Zn_isotopes = FullSequenceRayleighDistillation_SingleReservior(
-        heavy_z=66, light_z=64, vapor_escape_fraction=run['vapor_loss_fraction'],
-        system_element_mass=mass_distribution['Zn']['bulk system mass'],
-        melt_element_mass=mass_distribution['Zn']['melt mass'],
-        vapor_element_mass=mass_distribution['Zn']['bulk vapor mass'], earth_isotope_composition=delta_Zn_BSE,
-        theia_ejecta_fraction=0,
-        chemical_frac_factor_exponent=0.5, alpha_chem=0.99,
-        total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
-        total_vapor_mass=sum(
-            [mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
-    )
-    # Zn_isotopes_starting_earth_isotope_composition = Zn_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
-    Zn_data = Zn_isotopes.fractionate(
-        reservoir_delta=delta_Zn_BSE
-    )
-    Zn_lower_data = Zn_isotopes.fractionate(
-        reservoir_delta=delta_Zn_BSE - delta_Zn_BSE_std_error
-    )
-    Zn_upper_data = Zn_isotopes.fractionate(
-        reservoir_delta=delta_Zn_BSE + delta_Zn_BSE_std_error
-    )
-
-    # shade a region between the error bars of the observed value
-    axs[to_plot + 1].axhspan(
-        delta_Zn_Lunar_BSE - delta_Zn_Lunar_BSE_std_error, delta_Zn_Lunar_BSE + delta_Zn_Lunar_BSE_std_error, alpha=0.2,
-        color='blue')
-    axs[to_plot + 1].axhline(delta_Zn_Lunar_BSE, color='blue', label=r"$\Delta_{\rm Lunar - BSE}^{\rm 66/64K}$ (Observed)")
-    axs[to_plot + 1].axvspan(
-        Zn_lower_data['delta_moon_earth'], Zn_upper_data['delta_moon_earth'], alpha=0.2, color='green'
-    )
-    axs[to_plot + 1].axvline(x=Zn_data['delta_moon_earth'], linestyle='--', linewidth=2.0, color='green',
-                         label=r"$\delta \rm ^{66/64}Zn_{\rm Theia}$ (Best Fit)")
-    # annotate the best fit value with vertical text
-    axs[to_plot + 1].annotate(
-        r"$\delta \rm ^{41}Zn_{\rm Theia} = $" + f"{Zn_data['delta_moon_earth']:.3f}" + r"$\pm$" + f"{abs(Zn_data['delta_moon_earth'] - Zn_lower_data['delta_moon_earth']):.3f}",
-        (Zn_data['delta_moon_earth'] - (Zn_data['delta_moon_earth'] * .2), 0.1),
-        rotation=90, fontsize=10
-    )
-    axs[to_plot + 1].axvspan(delta_Zn_BSE - delta_Zn_BSE_std_error, delta_Zn_BSE + delta_Zn_BSE_std_error, alpha=0.2,
-                         color='red')
-    axs[to_plot + 1].axvline(x=delta_Zn_BSE, color='red', label=r"$\delta \rm ^{66/64}Zn_{\rm Earth}$ (Observed)")
-    axs[to_plot + 1].set_title(r"$\rm ^{66/64}Zn$", fontsize=20)
-
-    # combine the K and Zn data into a single dataframe with the index being the element
-    data = pd.DataFrame({
-        i: [k_data[i], k_lower_data[i], k_upper_data[i], Zn_data[i], Zn_lower_data[i], Zn_upper_data[i]] for i in k_data.keys()
-    })
-    data.index = ['K', 'K_lower', 'K_upper', 'Zn', 'Zn_lower', 'Zn_upper']
-    # export the data to a csv file
-    data.to_csv(f"{run_name}_isotope_model_bse.csv")
 
     to_plot += 2
 
