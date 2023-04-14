@@ -652,9 +652,9 @@ for run in runs:
     )  # assumes ejecta is a mix of Earth and Theia
 
     for index, dataset in enumerate([
-        [delta_K_Lunar_BSE, delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error, "Observed"],
-        [k_data['delta_moon_earth_no_recondensation'], k_lower_data['delta_moon_earth_no_recondensation'], k_upper_data['delta_moon_earth_no_recondensation'], "No Recondensation"],
-        [k_data['delta_moon_earth'], k_lower_data['delta_moon_earth'], k_upper_data['delta_moon_earth'], "With Recondensation"],
+        [delta_K_Lunar_BSE, delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE_std_error, "Observed"],
+        [k_data['delta_moon_earth_no_recondensation'], k_data['delta_moon_earth_no_recondensation'] - k_lower_data['delta_moon_earth_no_recondensation'], k_upper_data['delta_moon_earth_no_recondensation'] - k_data['delta_moon_earth_no_recondensation'], "No Recondensation"],
+        [k_data['delta_moon_earth'], k_data['delta_moon_earth'] - k_lower_data['delta_moon_earth'], k_upper_data['delta_moon_earth'] - k_data['delta_moon_earth'], "With Recondensation"],
     ]):
         axs[to_plot].errorbar(
             dataset[0], index,
@@ -679,8 +679,8 @@ for index, ax in enumerate(axs):
     )
 
 for ax, t in [(axs[-2], r"$\delta \rm ^{41}K_{Theia}$"), (axs[-1], r"$\delta \rm ^{66}Zn_{Theia}$")]:
-    ax.set_ylabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
-# turn of y axis labels for all subplots
+    ax.set_xlabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
+# turn of y-axis labels for all subplots
 for ax in axs:
     ax.set_yticklabels([])
     ax.set_yticks([])
