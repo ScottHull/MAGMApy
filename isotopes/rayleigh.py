@@ -36,8 +36,8 @@ class FullSequenceRayleighDistillation:
         assert np.isclose(
             self.system_element_mass - self.retained_element_mass, self.element_vapor_mass_escaping
         )
-        self.retained_element_mass_melt_fraction = self.retained_element_mass / self.element_total_retained_mass  # fraction of element in the melt after vapor escape, including recondensation
-        self.retained_element_mass_vapor_fraction = self.element_vapor_mass_retained / self.element_total_retained_mass  # fraction of element in the vapor after vapor escape, including recondensation
+        self.retained_element_mass_melt_fraction = self.melt_element_mass / self.retained_element_mass  # fraction of element in the melt after vapor escape, including recondensation
+        self.retained_element_mass_vapor_fraction = self.element_vapor_mass_retained / self.retained_element_mass  # fraction of element in the vapor after vapor escape, including recondensation
         self.retained_element_mass_fraction = self.retained_element_mass / self.system_element_mass  # fraction of element in the system after vapor escape, including recondensation
         # bulk melt/vapor mass fractions (used for mixing model of retained melt and retained vapor)
         self.retained_vapor_mass = self.total_vapor_mass * (1 - self.vapor_escape_fraction)  # mass of vapor after vapor escape, including recondensation
@@ -96,18 +96,25 @@ class FullSequenceRayleighDistillation:
         delta_escaping_vapor = self.rayleigh_fractionate_extract(delta_bulk_vapor, self.physical_fractionation_factor,
                                                                  1 - self.vapor_escape_fraction)
         # now, mix the retained vapor with the melt
-        delta_retained_melt = self.rayleigh_mixing(delta_melt, delta_retained_vapor, self.retained_melt_mass_fraction)
+        delta_retained_melt = self.rayleigh_mixing(delta_melt, delta_retained_vapor, self.retained_element_mass_melt_fraction)
         # return everything
         return {
-            'delta_melt': delta_melt,
+            'delta_initial': delta_initial,
             'delta_bulk_vapor': delta_bulk_vapor,
             'delta_retained_vapor': delta_retained_vapor,
             'delta_escaping_vapor': delta_escaping_vapor,
-            'delta_final_melt': delta_retained_melt,
+            'delta_melt': delta_melt,  # no recondensation
+            'delta_melt_with_recondensation': delta_retained_melt,  # with recondensation
             'delta_moon_earth': delta_retained_melt - self.earth_isotope_composition,
             'delta_moon_earth_no_recondensation': delta_melt - self.earth_isotope_composition,
             'element_mass_fraction_in_melt_pre_recondensation': self.element_mass_fraction_in_melt,
-            'element_mass_fraction_in_melt_post_recondensation': self.retained_element_mass_melt_fraction
+            'element_mass_fraction_in_melt_post_recondensation': self.retained_element_mass_fraction,
+            # 'retained element melt mass fraction': self.retained_melt_mass_fraction,
+            'melt mass without recondensation': self.melt_element_mass,
+            'bulk vapor mass': self.vapor_element_mass,
+            'retained vapor mass': self.element_vapor_mass_retained,
+            'escaping vapor mass': self.element_vapor_mass_escaping,
+            'recondensed melt mass': self.retained_element_mass,
         }
 
     def run_theia_mass_balance(self, theia_range, delta_moon_earth):

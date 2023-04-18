@@ -623,10 +623,11 @@ fig, axs = plt.subplots(2, 2, figsize=(12, 12))
 # increase the font size
 axs = axs.flatten()
 to_plot = 0
+k_fractionation_data = {'run': []}
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.grid(alpha=0.5)
-    ax.set_ylim(1 - 2, 2 + 2)
+    ax.set_ylim(0.5 - 2, 0.5 + 2)
 for run in runs:
     run_name = run['run_name']
     mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
@@ -651,8 +652,23 @@ for run in runs:
         reservoir_delta=delta_K_BSE + delta_K_BSE_std_error
     )  # assumes ejecta is a mix of Earth and Theia
 
+    axs[to_plot].axvline(
+        delta_K_Lunar_BSE,
+        color='grey',
+        linestyle='--',
+        alpha=1,
+        label="Observed",
+    )
+    axs[to_plot].axvspan(
+        delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error,
+        delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error,
+        alpha=0.2,
+        color='grey',
+        # label="Observed",
+    )
+
     for index, dataset in enumerate([
-        [delta_K_Lunar_BSE, delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE_std_error, "Observed"],
+        # [delta_K_Lunar_BSE, delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE_std_error, "Observed"],
         [k_data['delta_moon_earth_no_recondensation'], k_data['delta_moon_earth_no_recondensation'] - k_lower_data['delta_moon_earth_no_recondensation'], k_upper_data['delta_moon_earth_no_recondensation'] - k_data['delta_moon_earth_no_recondensation'], "No Recondensation"],
         [k_data['delta_moon_earth'], k_data['delta_moon_earth'] - k_lower_data['delta_moon_earth'], k_upper_data['delta_moon_earth'] - k_data['delta_moon_earth'], "With Recondensation"],
     ]):
@@ -660,12 +676,18 @@ for run in runs:
             dataset[0], index,
             xerr=[[dataset[1]], [dataset[2]]],
             fmt='o',
+            capsize=5,
             label=dataset[3],
         )
 
 
     axs[to_plot].set_title(r"$\rm ^{41/39}K$", fontsize=20)
 
+    k_fractionation_data['run'].append(run_name)
+    for key in k_data.keys():
+        if key not in k_fractionation_data.keys():
+            k_fractionation_data[key] = []
+        k_fractionation_data[key].append(k_data[key])
 
     to_plot += 2
 
@@ -686,7 +708,10 @@ for ax in axs:
     ax.set_yticks([])
 axs[0].legend(fontsize=18)
 
+print(k_fractionation_data)
+pd.DataFrame(k_fractionation_data).to_csv("bse_k_isotope_fractionation.csv", index=False)
 plt.tight_layout()
+plt.savefig("bse_isotope_fractionation.png", dpi=300)
 plt.show()
 
 #
