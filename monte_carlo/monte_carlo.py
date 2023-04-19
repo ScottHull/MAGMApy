@@ -1,11 +1,14 @@
 import copy
 
-from src.composition import Composition, ConvertComposition, get_element_in_base_oxide, oxygen_accounting, get_molecular_mass
+from src.composition import Composition, ConvertComposition, get_element_in_base_oxide, oxygen_accounting, \
+    get_molecular_mass
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data
+
+from recondense.recondense import recondense_vapor
 
 import os
 import sys
@@ -209,7 +212,7 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
     }
 
 
-def __run_full_MAGMApy(composition, target_composition, temperature, to_vmf=90.0, to_dir="monte_carlo_full_solution"):
+def run_full_MAGMApy(composition, target_composition, temperature, to_vmf=90.0, to_dir="monte_carlo_full_solution"):
     major_gas_species = [
         "SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K", "ZnO", "Zn"
     ]
@@ -306,7 +309,7 @@ def run_monte_carlo(initial_composition: dict, target_composition: dict, tempera
     best_vmf = None
     if full_run_vmf is not None:
         print("Running full solution...")
-        c, l, g, t, best_vmf = __run_full_MAGMApy(
+        c, l, g, t, best_vmf = run_full_MAGMApy(
             composition=starting_composition, target_composition=target_composition, temperature=temperature,
             to_vmf=full_run_vmf, to_dir=full_report_path
         )
@@ -362,7 +365,7 @@ def run_monte_carlo_mp(args):
     best_vmf = None
     if full_run_vmf is not None:
         print("Running full solution...")
-        c, l, g, t, best_vmf = __run_full_MAGMApy(
+        c, l, g, t, best_vmf = run_full_MAGMApy(
             composition=starting_composition, target_composition=target_composition, temperature=temperature,
             to_vmf=full_run_vmf, to_dir=full_report_path
         )
@@ -516,7 +519,7 @@ def run_monte_carlo_vapor_loss(initial_composition: dict, target_composition: di
     best_vmf = None
     if full_run_vmf is not None:
         print("Running full solution...")
-        c, l, g, t, best_vmf = __run_full_MAGMApy(
+        c, l, g, t, best_vmf = run_full_MAGMApy(
             composition=starting_composition, target_composition=target_composition, temperature=temperature,
             to_vmf=full_run_vmf, to_dir=full_report_path
         )
@@ -639,7 +642,7 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
         else:
             print("Calculation has converged. Stopping search.")
             print("Running full solution...")
-            c_, l_, g_, t_, best_vmf = __run_full_MAGMApy(
+            c_, l_, g_, t_, best_vmf = run_full_MAGMApy(
                 composition=initial_composition, target_composition=target_composition, temperature=temperature,
                 to_vmf=full_run_vmf, to_dir=full_report_path
             )
@@ -665,3 +668,48 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
                 "g": g,
                 "t": t,
             }
+
+
+def theia_mixing(guess_initial_composition: dict, target_composition: dict, bse_composition: dict, temperature: float,
+                 vmf: float, vapor_loss_fraction: float, full_run_vmf=90.0, full_report_path="theia_composition",
+                 sum_residuals_for_success=0.55, target_melt_composition='recondensed'):
+    # track some metadata
+    iteration = 0
+    residual_error = 1e99  # assign a large number to the initial residual error
+    initial_composition = copy.copy(guess_initial_composition)  # this is what we are searching to find
+    while abs(residual_error) > sum_residuals_for_success:  # while total residual error is greater than a small number
+        data = __monte_carlo_search(initial_composition, temperature, vmf)  # run the Monte Carlo search
+        recondensed_model = recondense_vapor(
+            melt_element_masses=data["liquid_cation_at_vmf"], bulk_vapor_element_masses=data["vapor_element_at_vmf"],
+            vapor_loss_fraction=vapor_loss_fraction
+        )
+        for key in recondensed_model.keys():
+            data[f"recondensed__{key}"] = recondensed_model[key]
+        target_melt_composition = data['liquid_composition_at_vmf']
+        if target_melt_composition == 'recondensed':
+            target_melt_composition = recondensed_model['recondensed__recondensed_melt_oxide_composition']
+        # calculate the residuals
+        residuals = {oxide: target_composition[oxide] - target_melt_composition[oxide] if oxide != "Fe2O3" else 0.0
+                     for oxide in initial_composition.keys()}
+        # calculate the total residual error
+        residual_error = sum([abs(residuals[oxide]) for oxide in residuals.keys()])
+
+        # print out the results
+        print(
+            f"Iteration: {iteration}, \n"
+            f"Residual error: {residual_error}, \n"
+            f"Vapor mass fraction: {vmf * 100}, \n"
+            f"Vapor loss fraction: {vapor_loss_fraction}"
+        )
+
+        # if the residual error is too large, adjust the initial composition and run again
+        if abs(residual_error) > sum_residuals_for_success:
+            print("Calculation has NOT yet converged. Continuing search...")
+            initial_composition = adjust_guess(initial_composition, residuals)
+        else:
+            print("Calculation has converged. Stopping search.")
+            print("Running full solution...")
+
+            print("Finished full solution.")
+            # return the results
+            data
