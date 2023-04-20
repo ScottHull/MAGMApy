@@ -154,6 +154,8 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
     previous_vapor_mass = {}  # stores the previous iteration's vapor mass
     iteration = 0  # the current iteration
     while t.weight_fraction_vaporized < to_vmf:
+        if iteration % 20 == 0:
+            print(f"VMF: {t.weight_fraction_vaporized}%, Iteration: {iteration}")
         iteration += 1
         previous_vmf = t.weight_fraction_vaporized
         previous_liquid_composition = copy.copy(l.liquid_oxide_mass_fraction)
@@ -712,4 +714,4 @@ def theia_mixing(guess_initial_composition: dict, target_composition: dict, bse_
 
             print("Finished full solution.")
             # return the results
-            data
+            return data
