@@ -28,3 +28,14 @@ def recondense_vapor(melt_element_masses: dict, bulk_vapor_element_masses: dict,
                                     element in total_element_mass.keys()}
     fraction_retained_element_in_melt = {element: melt_element_masses[element] / total_retained_element_masses[element]
                                             for element in total_retained_element_masses.keys()}
+    return {
+        "original_melt_element_masses": recondensed_melt_element_masses,
+        "bulk_vapor_element_masses": lost_vapor_element_masses,
+        "lost_vapor_element_masses": lost_vapor_element_masses,
+        "retained_vapor_element_masses": retained_vapor_element_masses,
+        "recondensed_melt_element_masses": recondensed_melt_element_masses,
+        "recondensed_melt_oxide_composition": recondensed_melt_composition,
+        "total_retained_element_masses": total_retained_element_masses,
+        "fraction_element_retained": fraction_element_retained,
+        "fraction_retained_element_in_melt": fraction_retained_element_in_melt,
+    }

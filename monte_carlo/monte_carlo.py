@@ -155,7 +155,7 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
     iteration = 0  # the current iteration
     while t.weight_fraction_vaporized < to_vmf:
         if iteration % 20 == 0:
-            print(f"VMF: {t.weight_fraction_vaporized}%, Iteration: {iteration}")
+            print(f"VMF: {t.weight_fraction_vaporized * 100}%, Iteration: {iteration}")
         iteration += 1
         previous_vmf = t.weight_fraction_vaporized
         previous_liquid_composition = copy.copy(l.liquid_oxide_mass_fraction)
@@ -674,7 +674,7 @@ def test(guess_initial_composition: dict, target_composition: dict, temperature:
 
 def theia_mixing(guess_initial_composition: dict, target_composition: dict, bse_composition: dict, temperature: float,
                  vmf: float, vapor_loss_fraction: float, full_run_vmf=90.0, full_report_path="theia_composition",
-                 sum_residuals_for_success=0.55, target_melt_composition='recondensed'):
+                 sum_residuals_for_success=0.55, target_melt_composition_type='recondensed'):
     # track some metadata
     iteration = 0
     residual_error = 1e99  # assign a large number to the initial residual error
@@ -683,13 +683,13 @@ def theia_mixing(guess_initial_composition: dict, target_composition: dict, bse_
         data = __monte_carlo_search(initial_composition, temperature, vmf)  # run the Monte Carlo search
         recondensed_model = recondense_vapor(
             melt_element_masses=data["liquid_cation_at_vmf"], bulk_vapor_element_masses=data["vapor_element_at_vmf"],
-            vapor_loss_fraction=vapor_loss_fraction
+            vapor_loss_fraction=vapor_loss_fraction, oxides=list(initial_composition.keys())
         )
         for key in recondensed_model.keys():
             data[f"recondensed__{key}"] = recondensed_model[key]
         target_melt_composition = data['liquid_composition_at_vmf']
-        if target_melt_composition == 'recondensed':
-            target_melt_composition = recondensed_model['recondensed__recondensed_melt_oxide_composition']
+        if target_melt_composition_type == 'recondensed':
+            target_melt_composition = recondensed_model['recondensed_melt_oxide_composition']
         # calculate the residuals
         residuals = {oxide: target_composition[oxide] - target_melt_composition[oxide] if oxide != "Fe2O3" else 0.0
                      for oxide in initial_composition.keys()}

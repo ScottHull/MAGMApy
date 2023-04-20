@@ -24,7 +24,7 @@ plt.style.use('seaborn-colorblind')
 
 RUN_NEW_SIMULATIONS = True
 root_path = "/"
-root_path = "/scratch/shull4/vaporize_theia/"
+# root_path = "/scratch/shull4/vaporize_theia/"
 
 if RUN_NEW_SIMULATIONS:
     if not os.path.exists(root_path):
@@ -78,7 +78,7 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
         guess_initial_composition=bse_composition, target_composition=lunar_bulk_composition,
         temperature=run["temperature"],
         vmf=run['vmf'] / 100, vapor_loss_fraction=run['vapor_loss_fraction'] / 100,
-        full_report_path=run_path, target_melt_composition=recondensed, bse_composition=bse_composition
+        full_report_path=run_path, target_melt_composition_type=recondensed, bse_composition=bse_composition
     )
     # write the ejecta data to a file
     run_full_MAGMApy(
@@ -93,18 +93,23 @@ if RUN_NEW_SIMULATIONS:
     with ThreadPoolExecutor(max_workers=1) as executor:
         futures = {}
         for run in runs:
-            for lbc in list(lunar_bulk_compositions.keys())[1:]:
+            for model in list(lunar_bulk_compositions.keys())[1:]:
+                lbc = {
+                    oxide: lunar_bulk_compositions[model].loc[oxide] for oxide in bse_composition.keys() if
+                    oxide != "Fe2O3"
+                }
                 run_name = run["run_name"]
                 for m in ['recondensed', 'not_recondensed']:
-                    run_path = f"{root_path}{run_name}_{lbc}_{m}"
-                    run_name = f"{run_name}_{lbc}_{m}"
-                    futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name, run_path): run_name})
-        for future in as_completed(futures):
-            r = futures[future]
-            try:
-                data = future.result()
-            except Exception as exc:
-                print('%r generated an exception: %s' % (r, exc))
+                    __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{lbc}_{m}")
+        #             run_path = f"{root_path}{run_name}_{lbc}_{m}"
+        #             run_name = f"{run_name}_{lbc}_{m}"
+        #             futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name, run_path): run_name})
+        # for future in as_completed(futures):
+        #     r = futures[future]
+        #     try:
+        #         data = future.result()
+        #     except Exception as exc:
+        #         print('%r generated an exception: %s' % (r, exc))
 
                 # run_path = f"{run_name}_{lbc}_{m}"
                 # ejecta_data = test(
