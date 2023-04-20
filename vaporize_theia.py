@@ -24,7 +24,11 @@ plt.style.use('seaborn-colorblind')
 
 RUN_NEW_SIMULATIONS = True
 root_path = "/"
-root_path = "/scratch/shull4/"
+root_path = "/scratch/shull4/vaporize_theia/"
+
+if RUN_NEW_SIMULATIONS:
+    if not os.path.exists(root_path):
+        os.mkdir(root_path)
 
 
 # ============================== Define Compositions ==============================
