@@ -21,15 +21,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # use colorblind-friendly colors
 plt.style.use('seaborn-colorblind')
 
-
 RUN_NEW_SIMULATIONS = True
-root_path = "/"
+root_path = ""
 # root_path = "/scratch/shull4/vaporize_theia/"
 
 if RUN_NEW_SIMULATIONS:
-    if not os.path.exists(root_path):
+    if not os.path.exists(root_path) and len(root_path) > 0:
         os.mkdir(root_path)
-
 
 # ============================== Define Compositions ==============================
 
@@ -49,6 +47,7 @@ bse_composition = {  # Visscher and Fegley (2013)
 lunar_bulk_compositions = pd.read_csv("data/lunar_bulk_compositions.csv", index_col="Oxide")
 favored_composition = [lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in bse_composition.keys()
                        if oxide != "Fe2O3"]
+mass_moon = 7.34767309e22  # kg, mass of the moon
 
 # ============================== Define Runs ==============================
 
@@ -73,6 +72,7 @@ runs = [
     }
 ]
 
+
 def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, run_path):
     ejecta_data = theia_mixing(
         guess_initial_composition=bse_composition, target_composition=lunar_bulk_composition,
@@ -85,8 +85,21 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
         composition=ejecta_data['ejecta_composition'],
         target_composition=lbc,
         temperature=run["temperature"],
-        to_vmf=.9, to_dir=run_path
+        to_vmf=90, to_dir=run_path
     )
+    # get Theia's composition
+    theia_data = get_theia_composition(starting_composition=ejecta_data['ejecta_composition'],
+                                       earth_composition=bse_composition, disk_mass=run["disk_mass"] * mass_moon,
+                                       earth_mass=run["disk_mass"] * mass_moon -
+                                                  (run["disk_mass"] * mass_moon * (
+                                                              run['disk_theia_mass_fraction'] / 100.0)))
+    # write the ejecta data (dictionary) to a file in text format
+    with open(run_path + "/ejecta_composition.csv", "w") as f:
+        f.write(str({k: v for k, v in ejecta_data.items() if k not in ['c', 'l', 'g', 't']}))
+    # now, write the theia composition dictionary to a file in text format
+    with open(run_path + "/theia_composition.csv", "w") as f:
+        f.write(str({k: v for k, v in theia_data.items() if k not in ['c', 'l', 'g', 't']}))
+
 
 # ============================== Run Simulations ==============================
 if RUN_NEW_SIMULATIONS:
@@ -100,7 +113,7 @@ if RUN_NEW_SIMULATIONS:
                 }
                 run_name = run["run_name"]
                 for m in ['recondensed', 'not_recondensed']:
-                    __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{lbc}_{m}")
+                    __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}")
         #             run_path = f"{root_path}{run_name}_{lbc}_{m}"
         #             run_name = f"{run_name}_{lbc}_{m}"
         #             futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name, run_path): run_name})
@@ -111,17 +124,17 @@ if RUN_NEW_SIMULATIONS:
         #     except Exception as exc:
         #         print('%r generated an exception: %s' % (r, exc))
 
-                # run_path = f"{run_name}_{lbc}_{m}"
-                # ejecta_data = test(
-                #     guess_initial_composition=bse_composition, target_composition=lbc,
-                #     temperature=run["temperature"],
-                #     vmf=run['vmf'] / 100, vapor_loss_fraction=run['vapor_loss_fraction'] / 100,
-                #     full_report_path=run_path, target_melt_composition=m
-                # )
-                # # write the ejecta data to a file
-                # run_full_MAGMApy(
-                #     composition=ejecta_data['ejecta_composition'],
-                #     target_composition=lbc,
-                #     temperature=run["temperature"],
-                #     to_vmf=.9, to_dir=run_path
-                # )
+        # run_path = f"{run_name}_{lbc}_{m}"
+        # ejecta_data = test(
+        #     guess_initial_composition=bse_composition, target_composition=lbc,
+        #     temperature=run["temperature"],
+        #     vmf=run['vmf'] / 100, vapor_loss_fraction=run['vapor_loss_fraction'] / 100,
+        #     full_report_path=run_path, target_melt_composition=m
+        # )
+        # # write the ejecta data to a file
+        # run_full_MAGMApy(
+        #     composition=ejecta_data['ejecta_composition'],
+        #     target_composition=lbc,
+        #     temperature=run["temperature"],
+        #     to_vmf=.9, to_dir=run_path
+        # )

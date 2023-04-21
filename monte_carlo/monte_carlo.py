@@ -713,5 +713,6 @@ def theia_mixing(guess_initial_composition: dict, target_composition: dict, bse_
             print("Running full solution...")
 
             print("Finished full solution.")
+            data.update({'ejecta_composition': initial_composition})
             # return the results
             return data
