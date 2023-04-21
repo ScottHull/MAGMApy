@@ -113,16 +113,16 @@ if RUN_NEW_SIMULATIONS:
                 }
                 run_name = run["run_name"]
                 for m in ['recondensed', 'not_recondensed']:
-                    __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}")
+                    # __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}")
         #             run_path = f"{root_path}{run_name}_{lbc}_{m}"
         #             run_name = f"{run_name}_{lbc}_{m}"
-        #             futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name, run_path): run_name})
-        # for future in as_completed(futures):
-        #     r = futures[future]
-        #     try:
-        #         data = future.result()
-        #     except Exception as exc:
-        #         print('%r generated an exception: %s' % (r, exc))
+                    futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}"): run_name})
+        for future in as_completed(futures):
+            r = futures[future]
+            try:
+                data = future.result()
+            except Exception as exc:
+                print('%r generated an exception: %s' % (r, exc))
 
         # run_path = f"{run_name}_{lbc}_{m}"
         # ejecta_data = test(
