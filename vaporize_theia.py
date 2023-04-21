@@ -103,7 +103,7 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
 
 # ============================== Run Simulations ==============================
 if RUN_NEW_SIMULATIONS:
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    with ThreadPoolExecutor(max_workers=40) as executor:
         futures = {}
         for run in runs:
             for model in list(lunar_bulk_compositions.keys())[1:]:
