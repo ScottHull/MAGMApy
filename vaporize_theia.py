@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # use colorblind-friendly colors
 plt.style.use('seaborn-colorblind')
 
-RUN_NEW_SIMULATIONS = True
+RUN_NEW_SIMULATIONS = False
 root_path = ""
 # root_path = "/scratch/shull4/vaporize_theia/"
 
@@ -92,7 +92,7 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
                                        earth_composition=bse_composition, disk_mass=run["disk_mass"] * mass_moon,
                                        earth_mass=run["disk_mass"] * mass_moon -
                                                   (run["disk_mass"] * mass_moon * (
-                                                              run['disk_theia_mass_fraction'] / 100.0)))
+                                                          run['disk_theia_mass_fraction'] / 100.0)))
     # write the ejecta data (dictionary) to a file in text format
     with open(run_path + "/ejecta_composition.csv", "w") as f:
         f.write(str({k: v for k, v in ejecta_data.items() if k not in ['c', 'l', 'g', 't']}))
@@ -100,6 +100,15 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
     with open(run_path + "/theia_composition.csv", "w") as f:
         f.write(str({k: v for k, v in theia_data.items() if k not in ['c', 'l', 'g', 't']}))
 
+
+all_models = []
+for run in runs:
+    run_name = run["run_name"]
+    for model in list(lunar_bulk_compositions.keys())[1:]:
+        for m in ['recondensed', 'not_recondensed']:
+            name = f"{run_name}_{model}_{m}"
+            path = f"{root_path}{run_name}_{model}_{m}"
+            all_models.append((name, path))
 
 # ============================== Run Simulations ==============================
 if RUN_NEW_SIMULATIONS:
@@ -114,9 +123,10 @@ if RUN_NEW_SIMULATIONS:
                 run_name = run["run_name"]
                 for m in ['recondensed', 'not_recondensed']:
                     # __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}")
-        #             run_path = f"{root_path}{run_name}_{lbc}_{m}"
-        #             run_name = f"{run_name}_{lbc}_{m}"
-                    futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}"): run_name})
+                    #             run_path = f"{root_path}{run_name}_{lbc}_{m}"
+                    #             run_name = f"{run_name}_{lbc}_{m}"
+                    futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name,
+                                                    f"{root_path}{run_name}_{model}_{m}"): run_name})
         for future in as_completed(futures):
             r = futures[future]
             try:
@@ -124,17 +134,21 @@ if RUN_NEW_SIMULATIONS:
             except Exception as exc:
                 print('%r generated an exception: %s' % (r, exc))
 
-        # run_path = f"{run_name}_{lbc}_{m}"
-        # ejecta_data = test(
-        #     guess_initial_composition=bse_composition, target_composition=lbc,
-        #     temperature=run["temperature"],
-        #     vmf=run['vmf'] / 100, vapor_loss_fraction=run['vapor_loss_fraction'] / 100,
-        #     full_report_path=run_path, target_melt_composition=m
-        # )
-        # # write the ejecta data to a file
-        # run_full_MAGMApy(
-        #     composition=ejecta_data['ejecta_composition'],
-        #     target_composition=lbc,
-        #     temperature=run["temperature"],
-        #     to_vmf=.9, to_dir=run_path
-        # )
+# get the range of ejecta compositions and theia compositions
+ejecta_compositions = {}
+theia_compositions = {}
+for model in all_models:
+    ejecta_data = eval(open(model[1] + "/ejecta_composition.csv", 'r').read())
+    theia_composition = eval(open(model[1] + "/theia_composition.csv", 'r').read())
+    ejecta_compositions.update({model[0]: ejecta_data})
+    theia_compositions.update({model[0]: theia_composition})
+
+# get the min and max values for each oxide
+min_max_ejecta_compositions = {}
+min_max_theia_compositions = {}
+for oxide in bse_composition.keys():
+    if oxide != "Fe2O3":
+        min_max_ejecta_compositions.update({oxide: [min([ejecta_compositions[model][oxide] for model in all_models]),
+                                                    max([ejecta_compositions[model][oxide] for model in all_models])]})
+        min_max_theia_compositions.update({oxide: [min([theia_compositions[model][oxide] for model in all_models]),
+                                                   max([theia_compositions[model][oxide] for model in all_models])]})
