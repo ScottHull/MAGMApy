@@ -219,6 +219,8 @@ axs[1].plot(
 )
 axs[1].legend(loc='upper right', fontsize=16)
 
+plt.tight_layout()
+plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
 
 
@@ -270,4 +272,6 @@ axs[1].plot(
 )
 axs[1].legend(loc='upper right', fontsize=16)
 
+plt.tight_layout()
+plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
