@@ -191,8 +191,8 @@ for oxide in bse_composition.keys():
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
 fig, axs = plt.subplots(1, 2, figsize=(16, 9))
 axs = axs.flatten()
-axs[0].set_title("Without Recondensation")
-axs[1].set_title("With Recondensation")
+axs[0].set_title("Without Recondensation", fontsize=16)
+axs[1].set_title("With Recondensation", fontsize=16)
 for ax in axs:
     ax.grid()
     ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
@@ -224,6 +224,17 @@ axs[1].plot(
 )
 axs[1].legend(loc='upper right', fontsize=16)
 
+# set minimum plotted x value
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+
+plt.tight_layout()
+plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
 
 
@@ -232,15 +243,15 @@ plt.show()
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
 fig, axs = plt.subplots(1, 2, figsize=(16, 9))
 axs = axs.flatten()
-axs[0].set_title("Without Recondensation")
-axs[1].set_title("With Recondensation")
+axs[0].set_title("Without Recondensation", fontsize=16)
+axs[1].set_title("With Recondensation", fontsize=16)
 axs[0].set_ylabel("Bulk Composition / BSE Composition", fontsize=16)
 for ax in axs:
     ax.grid()
     ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
     # shade region red underneath y=0
     ax.fill_between(oxides, [0 for oxide in oxides], [-1e99 for oxide in oxides], alpha=0.2, color='red')
-    ax.set_ylim(bottom=-1.0, top=4)
+    ax.set_ylim(bottom=-1.0, top=4.2)
     # make all font size larger
     ax.tick_params(axis='both', which='major', labelsize=16)
     for tick in ax.get_xticklabels():
@@ -273,6 +284,17 @@ axs[1].plot(
 )
 axs[1].legend(loc='upper right', fontsize=16)
 
+# set minimum plotted x value
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+
+plt.tight_layout()
+plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
 
 
