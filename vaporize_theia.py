@@ -188,8 +188,12 @@ for oxide in bse_composition.keys():
                 if theia_compositions[model][oxide] > min_max_theia_compositions['with recondensation'][oxide][1]:
                     min_max_theia_compositions['with recondensation'][oxide][1] = theia_compositions[model][oxide]
 
+
+
+
+
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
-fig, axs = plt.subplots(1, 2, figsize=(16, 9))
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
 axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
@@ -200,6 +204,8 @@ for i, s in enumerate(min_max_ejecta_compositions.keys()):
     to_index = 1
     if "without" in s:
         to_index = 0
+    if "Half-Earths" in s:
+        to_index += 2
     # shade the region between the min and max values
     axs[to_index].fill_between(oxides,
                                [min_max_ejecta_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
@@ -241,7 +247,7 @@ plt.show()
 
 
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
-fig, axs = plt.subplots(1, 2, figsize=(16, 9))
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
 axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
@@ -260,6 +266,8 @@ for i, s in enumerate(min_max_theia_compositions.keys()):
     to_index = 1
     if "without" in s:
         to_index = 0
+    if "Half-Earths" in s:
+        to_index += 2
     # shade the region between the min and max values
     axs[to_index].fill_between(oxides,
                                [min_max_theia_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
@@ -316,6 +324,8 @@ for i, s in enumerate(min_max_ejecta_compositions.keys()):
     to_index = 1
     if "without" in s:
         to_index = 0
+    if "Half-Earths" in s:
+        to_index += 2
     # shade the region between the min and max values
     axs[to_index].fill_between(oxides,
                                [min_max_ejecta_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
@@ -340,58 +350,58 @@ for model in ejecta_compositions.keys():
 )
 
 axs[1].legend(loc='upper right', fontsize=16)
-
+plt.tight_layout()
 plt.show()
 
 
 
 
 # ========================== VERIFY THAT EJECTA COMPOSITION MAKES SENSE ==========================
-# for model in all_models:
-#     base_model = get_base_model_from_run_name(model[0])
-#     vmf = base_model['vmf']
-#     lunar_model = model[0].split("_")[1]
-#     bulk_moon_composition = lunar_bulk_compositions[lunar_model]
-#     ejecta_data = ejecta_data = eval(open(f'{model[1]}/ejecta_composition.csv', 'r').read())
-#     melt_oxide_mass_fraction = collect_data(path=f"{model[1]}/magma_oxide_mass_fraction",
-#                                             x_header='mass fraction vaporized')
-#     fig, ax = plt.subplots(figsize=(16, 9))
-#     ax.tick_params(axis='both', which='major', labelsize=20)
-#     colors = sns.color_palette('husl', n_colors=len([i for i in bulk_moon_composition.keys() if i != 'Fe2O3']))
-#     for index, oxide in enumerate(oxides):
-#         ax.plot(np.array(list(melt_oxide_mass_fraction.keys())) * 100,
-#                 [melt_oxide_mass_fraction[vmf][oxide] * 100 for vmf in melt_oxide_mass_fraction.keys()],
-#                 linewidth=2.0,
-#                 color=colors[index],
-#                 label=oxide
-#                 )
-#         ax.axhline(y=bulk_moon_composition[oxide], color=colors[index], linestyle='--')
-#         ax.scatter(
-#             vmf,
-#             ejecta_data['liquid_composition_at_vmf'][oxide],
-#             color=colors[index],
-#             marker='o'
-#         )
-#         ax.scatter(
-#             min(melt_oxide_mass_fraction.keys()) * 100,
-#             ejecta_data['ejecta_composition'][oxide],
-#             color=colors[index],
-#             marker='s'
-#         )
-#     ax.scatter(
-#         [], [], color='black', marker='d', label="w/o recondensed vapor"
-#     )
-#     ax.scatter(
-#         [], [], color='black', marker='o', label="w/ recondensed vapor"
-#     )
-#     ax.scatter(
-#         [], [], color='black', marker='s', label="Bulk Ejecta"
-#     )
-#     ax.axvline(x=vmf, color='black', linestyle='--', label=f"VMF {vmf} %")
-#     ax.set_title(f"{model[0]}", fontsize=20)
-#     ax.set_xlabel("VMF (%)", fontsize=20)
-#     ax.set_ylabel("Oxide Wt. %", fontsize=20)
-#     ax.grid(alpha=0.4)
-#     ax.legend(loc='lower right', fontsize=20)
-#     plt.tight_layout()
-#     plt.show()
+for model in all_models:
+    base_model = get_base_model_from_run_name(model[0])
+    vmf = base_model['vmf']
+    lunar_model = model[0].split("_")[1]
+    bulk_moon_composition = lunar_bulk_compositions[lunar_model]
+    ejecta_data = ejecta_data = eval(open(f'{model[1]}/ejecta_composition.csv', 'r').read())
+    melt_oxide_mass_fraction = collect_data(path=f"{model[1]}/magma_oxide_mass_fraction",
+                                            x_header='mass fraction vaporized')
+    fig, ax = plt.subplots(figsize=(16, 9))
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    colors = sns.color_palette('husl', n_colors=len([i for i in bulk_moon_composition.keys() if i != 'Fe2O3']))
+    for index, oxide in enumerate(oxides):
+        ax.plot(np.array(list(melt_oxide_mass_fraction.keys())) * 100,
+                [melt_oxide_mass_fraction[vmf][oxide] * 100 for vmf in melt_oxide_mass_fraction.keys()],
+                linewidth=2.0,
+                color=colors[index],
+                label=oxide
+                )
+        ax.axhline(y=bulk_moon_composition[oxide], color=colors[index], linestyle='--')
+        ax.scatter(
+            vmf,
+            ejecta_data['liquid_composition_at_vmf'][oxide],
+            color=colors[index],
+            marker='o'
+        )
+        ax.scatter(
+            min(melt_oxide_mass_fraction.keys()) * 100,
+            ejecta_data['ejecta_composition'][oxide],
+            color=colors[index],
+            marker='s'
+        )
+    ax.scatter(
+        [], [], color='black', marker='d', label="w/o recondensed vapor"
+    )
+    ax.scatter(
+        [], [], color='black', marker='o', label="w/ recondensed vapor"
+    )
+    ax.scatter(
+        [], [], color='black', marker='s', label="Bulk Ejecta"
+    )
+    ax.axvline(x=vmf, color='black', linestyle='--', label=f"VMF {vmf} %")
+    ax.set_title(f"{model[0]}", fontsize=20)
+    ax.set_xlabel("VMF (%)", fontsize=20)
+    ax.set_ylabel("Oxide Wt. %", fontsize=20)
+    ax.grid(alpha=0.4)
+    ax.legend(loc='lower right', fontsize=20)
+    plt.tight_layout()
+    plt.show()

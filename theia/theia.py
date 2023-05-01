@@ -21,6 +21,10 @@ def get_theia_composition(starting_composition, earth_composition, disk_mass, ea
         'theia_weight_pct': theia_weight_pct,
         'theia_moles': theia_moles,
         'theia_cations': theia_cations,
+        'theia_weights': theia_weights,
+        'bse_weights': bse_weights,
+        'initial_weights': starting_weights,
+        'initial_weight_pct': starting_composition,
     }
 
 

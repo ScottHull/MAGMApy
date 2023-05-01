@@ -371,7 +371,7 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.90, 0.98), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
-fig.tight_layout()
+plt.tight_layout()
 plt.savefig("melt_vapor_species_mass_fraction.png", format='png', dpi=300)
 plt.show()
 
@@ -619,16 +619,18 @@ delta_k_theia_range = np.arange(-0.6, 0.6, 0.1)  # range of 41K/39K isotope rati
 delta_Zn_theia_range = np.arange(-900, 900, 20)  # range of 66Zn/64Zn isotope ratios to test for Theia
 
 # make a subplot with 2 columns and 3 rows
-fig, axs = plt.subplots(2, 2, figsize=(12, 12))
+fig, ax = plt.subplots(1, 1, figsize=(10, 10),  sharex='all', sharey='all')
 # increase the font size
-axs = axs.flatten()
+# axs = ax.flatten()
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+# generate a list of markers that is as long as the runs list
+markers = ["o", "D"]
 to_plot = 0
 k_fractionation_data = {'run': []}
-for ax in axs:
-    ax.tick_params(axis='both', which='major', labelsize=14)
-    ax.grid(alpha=0.5)
-    ax.set_ylim(0.5 - 2, 0.5 + 2)
-for run in runs:
+ax.tick_params(axis='both', which='major', labelsize=18)
+ax.grid(alpha=0.5)
+ebar_index = 1
+for run_index, run in enumerate(runs):
     run_name = run['run_name']
     mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
     k_isotopes = FullSequenceRayleighDistillation_SingleReservior(
@@ -652,14 +654,40 @@ for run in runs:
         reservoir_delta=delta_K_BSE + delta_K_BSE_std_error
     )  # assumes ejecta is a mix of Earth and Theia
 
-    axs[to_plot].axvline(
+    # do the same, but assume no physical kinetic fractionation
+    k_isotopes_no_phys = FullSequenceRayleighDistillation_SingleReservior(
+        heavy_z=41, light_z=39, vapor_escape_fraction=run['vapor_loss_fraction'],
+        system_element_mass=mass_distribution['K']['bulk system mass'],
+        melt_element_mass=mass_distribution['K']['melt mass'],
+        vapor_element_mass=mass_distribution['K']['bulk vapor mass'], earth_isotope_composition=delta_K_BSE,
+        theia_ejecta_fraction=0,
+        total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
+        total_vapor_mass=sum(
+            [mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
+        physical_frac_factor_exponent=1
+    )
+    # k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
+    k_data_no_phys = k_isotopes_no_phys.fractionate(
+        reservoir_delta=delta_K_BSE
+    )
+    k_lower_data_no_phys = k_isotopes_no_phys.fractionate(
+        reservoir_delta=delta_K_BSE - delta_K_BSE_std_error
+    )
+    k_upper_data_no_phys = k_isotopes_no_phys.fractionate(
+        reservoir_delta=delta_K_BSE + delta_K_BSE_std_error
+    )  # assumes ejecta is a mix of Earth and Theia
+
+    label = None
+    if to_plot == 0:
+        label = "Observed"
+    ax.axvline(
         delta_K_Lunar_BSE,
         color='grey',
         linestyle='--',
         alpha=1,
-        label="Observed",
+        label=label,
     )
-    axs[to_plot].axvspan(
+    ax.axvspan(
         delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error,
         delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error,
         alpha=0.2,
@@ -667,21 +695,46 @@ for run in runs:
         # label="Observed",
     )
 
-    for index, dataset in enumerate([
+    isotope_runs = [
         # [delta_K_Lunar_BSE, delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE_std_error, "Observed"],
         [k_data['delta_moon_earth_no_recondensation'], k_data['delta_moon_earth_no_recondensation'] - k_lower_data['delta_moon_earth_no_recondensation'], k_upper_data['delta_moon_earth_no_recondensation'] - k_data['delta_moon_earth_no_recondensation'], "No Recondensation"],
         [k_data['delta_moon_earth'], k_data['delta_moon_earth'] - k_lower_data['delta_moon_earth'], k_upper_data['delta_moon_earth'] - k_data['delta_moon_earth'], "With Recondensation"],
-    ]):
-        axs[to_plot].errorbar(
-            dataset[0], index,
+
+        # [k_data_no_phys['delta_moon_earth_no_recondensation'],
+         # k_data_no_phys['delta_moon_earth_no_recondensation'] - k_lower_data_no_phys['delta_moon_earth_no_recondensation'],
+         # k_upper_data_no_phys['delta_moon_earth_no_recondensation'] - k_data_no_phys['delta_moon_earth_no_recondensation'],
+         # "No Phys., No Recondensation"],
+        [k_data_no_phys['delta_moon_earth'], k_data_no_phys['delta_moon_earth'] - k_lower_data_no_phys['delta_moon_earth'],
+         k_upper_data_no_phys['delta_moon_earth'] - k_data_no_phys['delta_moon_earth'], "No Physical Frac.\nWith Recondensation"],
+    ]
+    for index, dataset in enumerate(isotope_runs):
+        label = None
+        if to_plot == 0:
+            label = dataset[3]
+        ax.errorbar(
+            dataset[0], ebar_index,
             xerr=[[dataset[1]], [dataset[2]]],
-            fmt='o',
+            fmt=markers[run_index],
+            markersize=10,
+            elinewidth=2,
             capsize=5,
-            label=dataset[3],
+            capthick=3,
+            color=colors[index],
+            # label=label,
         )
+        ebar_index += 1
 
+    for index, dataset in enumerate(isotope_runs):
+        if to_plot == 0:
+            ax.scatter(
+                [], [], marker='s', color=colors[index], s=100, label=dataset[3]
+            )
+    for run in runs:
+        if to_plot == 0:
+            ax.scatter(
+                [], [], marker=markers[run_index], color='k', s=100, label=run_name
+            )
 
-    axs[to_plot].set_title(r"$\rm ^{41/39}K$", fontsize=20)
 
     k_fractionation_data['run'].append(run_name)
     for key in k_data.keys():
@@ -689,28 +742,30 @@ for run in runs:
             k_fractionation_data[key] = []
         k_fractionation_data[key].append(k_data[key])
 
-    to_plot += 2
+    # to_plot += 1
 
 # annotate a letter in the upper left corner
-letters = list(string.ascii_lowercase)
-for index, ax in enumerate(axs):
-    # label each subplot with a letter in the upper-left corner
-    ax.annotate(
-        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
-        fontweight="bold", fontsize=20
-    )
+# letters = list(string.ascii_lowercase)
+# for index, ax in enumerate(ax):
+#     # label each subplot with a letter in the upper-left corner
+#     ax.annotate(
+#         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+#         fontweight="bold", fontsize=20
+#     )
 
-for ax, t in [(axs[-2], r"$\delta \rm ^{41}K_{Theia}$"), (axs[-1], r"$\delta \rm ^{66}Zn_{Theia}$")]:
+for ax, t in [(ax, r"$\delta \rm ^{41}K_{Theia}$")]:
     ax.set_xlabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
 # turn of y-axis labels for all subplots
-for ax in axs:
-    ax.set_yticklabels([])
-    ax.set_yticks([])
-axs[0].legend(fontsize=18)
+ax.set_yticklabels([])
+ax.set_yticks([])
+# ax.set_ylim(len(isotope_runs) / 2 , 0.5 + 2)
 
-print(k_fractionation_data)
-pd.DataFrame(k_fractionation_data).to_csv("bse_k_isotope_fractionation.csv", index=False)
+ax.set_title(r"$\rm ^{41/39}K$", fontsize=20)
+fig.legend(loc=7, prop={'size': 16})
 plt.tight_layout()
+fig.subplots_adjust(right=0.84)
+
+pd.DataFrame(k_fractionation_data).to_csv("bse_k_isotope_fractionation.csv", index=False)
 plt.savefig("bse_isotope_fractionation.png", dpi=300)
 plt.show()
 
