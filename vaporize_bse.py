@@ -664,8 +664,9 @@ for run_index, run in enumerate(runs):
         total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
         total_vapor_mass=sum(
             [mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
-        physical_frac_factor_exponent=1
+        alpha_phys=1
     )
+
     # k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
     k_data_no_phys = k_isotopes_no_phys.fractionate(
         reservoir_delta=delta_K_BSE
@@ -678,7 +679,7 @@ for run_index, run in enumerate(runs):
     )  # assumes ejecta is a mix of Earth and Theia
 
     label = None
-    if to_plot == 0:
+    if run_index == 0:
         label = "Observed"
     ax.axvline(
         delta_K_Lunar_BSE,
@@ -725,15 +726,14 @@ for run_index, run in enumerate(runs):
         ebar_index += 1
 
     for index, dataset in enumerate(isotope_runs):
-        if to_plot == 0:
+        if run_index == 0:
             ax.scatter(
                 [], [], marker='s', color=colors[index], s=100, label=dataset[3]
             )
-    for run in runs:
-        if to_plot == 0:
-            ax.scatter(
-                [], [], marker=markers[run_index], color='k', s=100, label=run_name
-            )
+
+    ax.scatter(
+        [], [], marker=markers[run_index], color='k', s=100, label=runs[run_index]['run_name']
+    )
 
 
     k_fractionation_data['run'].append(run_name)
@@ -754,16 +754,17 @@ for run_index, run in enumerate(runs):
 #     )
 
 for ax, t in [(ax, r"$\delta \rm ^{41}K_{Theia}$")]:
-    ax.set_xlabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
+    # ax.set_xlabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
+    ax.set_xlabel(r"$\delta \rm ^{41}K_{Lunar-BSE}$", fontsize=20)
 # turn of y-axis labels for all subplots
 ax.set_yticklabels([])
 ax.set_yticks([])
 # ax.set_ylim(len(isotope_runs) / 2 , 0.5 + 2)
 
 ax.set_title(r"$\rm ^{41/39}K$", fontsize=20)
-fig.legend(loc=7, prop={'size': 16})
+ax.legend(loc='lower left', fontsize=18)
 plt.tight_layout()
-fig.subplots_adjust(right=0.84)
+# fig.subplots_adjust(right=0.84)
 
 pd.DataFrame(k_fractionation_data).to_csv("bse_k_isotope_fractionation.csv", index=False)
 plt.savefig("bse_isotope_fractionation.png", dpi=300)
