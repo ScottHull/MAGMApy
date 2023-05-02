@@ -351,6 +351,7 @@ for model in ejecta_compositions.keys():
 
 axs[1].legend(loc='upper right', fontsize=16)
 plt.tight_layout()
+plt.savefig("theia_mixing_ejecta_compositions_distinct.png", dpi=300)
 plt.show()
 
 
