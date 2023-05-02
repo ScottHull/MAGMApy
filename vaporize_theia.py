@@ -83,6 +83,10 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
         vmf=run['vmf'] / 100, vapor_loss_fraction=run['vapor_loss_fraction'] / 100,
         full_report_path=run_path, target_melt_composition_type=recondensed, bse_composition=bse_composition
     )
+
+    disk_mass_in_kg = run["disk_mass"] * mass_moon
+    earth_mass_in_disk_in_kg = disk_mass_in_kg - (disk_mass_in_kg * (run['disk_theia_mass_fraction'] / 100.0))
+
     # write the ejecta data to a file
     run_full_MAGMApy(
         composition=ejecta_data['ejecta_composition'],
@@ -92,10 +96,8 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
     )
     # get Theia's composition
     theia_data = get_theia_composition(starting_composition=ejecta_data['ejecta_composition'],
-                                       earth_composition=bse_composition, disk_mass=run["disk_mass"] * mass_moon,
-                                       earth_mass=run["disk_mass"] * mass_moon -
-                                                  (run["disk_mass"] * mass_moon * (
-                                                          run['disk_theia_mass_fraction'] / 100.0)))
+                                       earth_composition=bse_composition, disk_mass=disk_mass_in_kg,
+                                       earth_mass=earth_mass_in_disk_in_kg)
     # write the ejecta data (dictionary) to a file in text format
     with open(run_path + "/ejecta_composition.csv", "w") as f:
         f.write(str({k: v for k, v in ejecta_data.items() if k not in ['c', 'l', 'g', 't']}))
@@ -193,41 +195,47 @@ for oxide in bse_composition.keys():
 
 
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
-fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
+colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for ax in axs:
     ax.grid()
     ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
-for i, s in enumerate(min_max_ejecta_compositions.keys()):
+for i, s in enumerate(ejecta_compositions.keys()):
     to_index = 1
-    if "without" in s:
+    label = None
+    if "_not_recondensed" in s:
         to_index = 0
     if "Half-Earths" in s:
         to_index += 2
     # shade the region between the min and max values
-    axs[to_index].fill_between(oxides,
-                               [min_max_ejecta_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
-                               [min_max_ejecta_compositions[s][oxide][1] / bse_composition[oxide] for oxide in oxides],
-                               alpha=0.5, color='grey')
+    # axs[to_index].fill_between(oxides,
+    #                            [min_max_ejecta_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
+    #                            [min_max_ejecta_compositions[s][oxide][1] / bse_composition[oxide] for oxide in oxides],
+    #                            alpha=0.5, color='grey')
+    axs[to_index].plot(
+        oxides, [ejecta_compositions[s][oxide] / bse_composition[oxide] for oxide in oxides],
+        color=colors[i], linewidth=2.0, label=label
+    )
 
-axs[0].plot(
-    oxides,
-    [ejecta_compositions["Canonical Model_O'Neill 1991_not_recondensed"][oxide] /
-    bse_composition[oxide] for oxide in oxides],
-    linewidth=2.0,
-    color='blue',
-    label="O'Neill 1991 Model"
-)
-axs[1].plot(
-    oxides,
-    [ejecta_compositions["Canonical Model_O'Neill 1991_recondensed"][oxide] /
-    bse_composition[oxide] for oxide in oxides],
-    linewidth=2.0,
-    color='blue',
-    label="O'Neill 1991 Model"
-)
+# axs[0].plot(
+#     oxides,
+#     [ejecta_compositions["Canonical Model_O'Neill 1991_not_recondensed"][oxide] /
+#     bse_composition[oxide] for oxide in oxides],
+#     linewidth=2.0,
+#     color='blue',
+#     label="O'Neill 1991 Model"
+# )
+# axs[1].plot(
+#     oxides,
+#     [ejecta_compositions["Canonical Model_O'Neill 1991_recondensed"][oxide] /
+#     bse_composition[oxide] for oxide in oxides],
+#     linewidth=2.0,
+#     color='blue',
+#     label="O'Neill 1991 Model"
+# )
 axs[1].legend(loc='upper right', fontsize=16)
 
 # set minimum plotted x value
@@ -239,6 +247,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
 
+axs[0].legend()
 plt.tight_layout()
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
@@ -247,49 +256,55 @@ plt.show()
 
 
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
-fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
 axs[0].set_ylabel("Bulk Composition / BSE Composition", fontsize=16)
+colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for ax in axs:
     ax.grid()
     ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
     # shade region red underneath y=0
     ax.fill_between(oxides, [0 for oxide in oxides], [-1e99 for oxide in oxides], alpha=0.2, color='red')
     ax.set_ylim(bottom=-1.0, top=4.2)
-    # make all font size larger
+for ax in axs[:-2]:
     ax.tick_params(axis='both', which='major', labelsize=16)
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
-for i, s in enumerate(min_max_theia_compositions.keys()):
+for i, s in enumerate(theia_compositions.keys()):
     to_index = 1
-    if "without" in s:
+    mm = None
+    if "_not_recondensed" in s:
         to_index = 0
     if "Half-Earths" in s:
         to_index += 2
     # shade the region between the min and max values
-    axs[to_index].fill_between(oxides,
-                               [min_max_theia_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
-                               [min_max_theia_compositions[s][oxide][1] / bse_composition[oxide] for oxide in oxides],
-                               alpha=0.5, color='grey')
+    # axs[to_index].fill_between(oxides,
+    #                            [min_max_theia_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
+    #                            [min_max_theia_compositions[s][oxide][1] / bse_composition[oxide] for oxide in oxides],
+    #                            alpha=0.5, color='grey')
+    axs[to_index].plot(
+        oxides, [theia_compositions[s][oxide] / bse_composition[oxide] for oxide in oxides],
+        color=colors[i], linewidth=2.0, label=label
+    )
 
-axs[0].plot(
-    oxides,
-    [theia_compositions["Canonical Model_O'Neill 1991_not_recondensed"][oxide] /
-    bse_composition[oxide] for oxide in oxides],
-    linewidth=2.0,
-    color='blue',
-    label="O'Neill 1991 Model"
-)
-axs[1].plot(
-    oxides,
-    [theia_compositions["Canonical Model_O'Neill 1991_recondensed"][oxide] /
-    bse_composition[oxide] for oxide in oxides],
-    linewidth=2.0,
-    color='blue',
-    label="O'Neill 1991 Model"
-)
+# axs[0].plot(
+#     oxides,
+#     [theia_compositions["Canonical Model_O'Neill 1991_not_recondensed"][oxide] /
+#     bse_composition[oxide] for oxide in oxides],
+#     linewidth=2.0,
+#     color='blue',
+#     label="O'Neill 1991 Model"
+# )
+# axs[1].plot(
+#     oxides,
+#     [theia_compositions["Canonical Model_O'Neill 1991_recondensed"][oxide] /
+#     bse_composition[oxide] for oxide in oxides],
+#     linewidth=2.0,
+#     color='blue',
+#     label="O'Neill 1991 Model"
+# )
 axs[1].legend(loc='upper right', fontsize=16)
 
 # set minimum plotted x value
@@ -306,53 +321,53 @@ plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
 
 
-# ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS DISTINCTLY ==========================
-fig, axs = plt.subplots(2, 2, figsize=(16, 9))
-axs = axs.flatten()
-axs[0].set_title("Without Recondensation")
-axs[1].set_title("With Recondensation")
-colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
-for model in lunar_bulk_compositions.keys():
-    color = colors[list(lunar_bulk_compositions.keys()).index(model)]
-    axs[1].plot(
-        [], [], linewidth=2.0, color=color, label=model
-    )
-for ax in axs:
-    ax.grid()
-    ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
-for i, s in enumerate(min_max_ejecta_compositions.keys()):
-    to_index = 1
-    if "without" in s:
-        to_index = 0
-    if "Half-Earths" in s:
-        to_index += 2
-    # shade the region between the min and max values
-    axs[to_index].fill_between(oxides,
-                               [min_max_ejecta_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
-                               [min_max_ejecta_compositions[s][oxide][1] / bse_composition[oxide] for oxide in oxides],
-                               alpha=0.5, color='grey')
-
-for model in ejecta_compositions.keys():
-    lbc_model = model.split("_")[1]
-    color = colors[list(lunar_bulk_compositions.keys()).index(lbc_model)]
-    to_index = 1
-    if "not_recondensed" in model:
-        to_index = 0
-    if "Half-Earths" in model:
-        to_index += 2
-    axs[to_index].plot(
-    oxides,
-    [ejecta_compositions[model][oxide] /
-    bse_composition[oxide] for oxide in oxides],
-    linewidth=2.0,
-    color=color,
-    # label=model.split("_")[1]
-)
-
-axs[1].legend(loc='upper right', fontsize=16)
-plt.tight_layout()
-plt.savefig("theia_mixing_ejecta_compositions_distinct.png", dpi=300)
-plt.show()
+# # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS DISTINCTLY ==========================
+# fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+# axs = axs.flatten()
+# axs[0].set_title("Without Recondensation")
+# axs[1].set_title("With Recondensation")
+# colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
+# for model in lunar_bulk_compositions.keys():
+#     color = colors[list(lunar_bulk_compositions.keys()).index(model)]
+#     axs[1].plot(
+#         [], [], linewidth=2.0, color=color, label=model
+#     )
+# for ax in axs:
+#     ax.grid()
+#     ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
+# for i, s in enumerate(min_max_ejecta_compositions.keys()):
+#     to_index = 1
+#     if "_not_recondensed" in s:
+#         to_index = 0
+#     if "Half-Earths" in s:
+#         to_index += 2
+#     # shade the region between the min and max values
+#     # axs[to_index].fill_between(oxides,
+#     #                            [min_max_ejecta_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
+#     #                            [min_max_ejecta_compositions[s][oxide][1] / bse_composition[oxide] for oxide in oxides],
+#     #                            alpha=0.5, color='grey')
+#
+# for model in ejecta_compositions.keys():
+#     lbc_model = model.split("_")[1]
+#     color = colors[list(lunar_bulk_compositions.keys()).index(lbc_model)]
+#     to_index = 1
+#     if "not_recondensed" in model:
+#         to_index = 0
+#     if "Half-Earths" in model:
+#         to_index += 2
+#     axs[to_index].plot(
+#     oxides,
+#     [ejecta_compositions[model][oxide] /
+#     bse_composition[oxide] for oxide in oxides],
+#     linewidth=2.0,
+#     color=color,
+#     # label=model.split("_")[1]
+# )
+#
+# axs[1].legend(loc='upper right', fontsize=16)
+# plt.tight_layout()
+# plt.savefig("theia_mixing_ejecta_compositions_distinct.png", dpi=300)
+# plt.show()
 
 
 
@@ -405,4 +420,4 @@ for model in all_models:
     ax.grid(alpha=0.4)
     ax.legend(loc='lower right', fontsize=20)
     plt.tight_layout()
-    plt.show()
+    # plt.show()
