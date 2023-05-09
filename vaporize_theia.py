@@ -77,6 +77,8 @@ runs = [
 
 
 def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, run_path):
+    if not os.path.exists(run_path):
+        os.mkdir(run_path)
     ejecta_data = theia_mixing(
         guess_initial_composition=bse_composition, target_composition=lunar_bulk_composition,
         temperature=run["temperature"],
