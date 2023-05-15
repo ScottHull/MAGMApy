@@ -136,7 +136,7 @@ def get_all_models(gather=False):
             all_models.append((name, path))
     return all_models
 
-def format_compositions_for_latex(compositions: pd.DataFrame):
+def format_compositions_for_latex(name:str, compositions: pd.DataFrame):
     """
     Formats a LaTeX table for the given compositions, which are to be given as a pandas DataFrame.
     The headers are the element/oxide names, and the index is the model name.
@@ -159,7 +159,7 @@ def format_compositions_for_latex(compositions: pd.DataFrame):
     # create the table
     table = tabulate(compositions_list, headers=oxide_names_latex, showindex=model_names, tablefmt="latex_raw")
     # write the table to a file
-    with open(f"{root_path}compositions.tex", "w") as f:
+    with open(f"{name}_compositions.tex", "w") as f:
         f.write(table)
 
 
@@ -201,8 +201,8 @@ for model in all_models:
 # export the ejecta and theia compositions to a pandas DataFrame, and then to a latex table
 ejecta_compositions_df = pd.DataFrame(ejecta_compositions).transpose()
 theia_compositions_df = pd.DataFrame(theia_compositions).transpose()
-format_compositions_for_latex(ejecta_compositions_df)
-format_compositions_for_latex(theia_compositions_df)
+format_compositions_for_latex("bulk_ejecta", ejecta_compositions_df)
+format_compositions_for_latex("bulk_theia", theia_compositions_df)
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides}, 'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
