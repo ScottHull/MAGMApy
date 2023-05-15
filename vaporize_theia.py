@@ -293,7 +293,7 @@ for index, ax in enumerate(axs):
 
 plt.tight_layout()
 fig.legend(loc=7)
-fig.subplots_adjust(right=0.84)
+fig.subplots_adjust(right=0.86)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
@@ -308,7 +308,7 @@ axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
 axs[0].set_ylabel("Bulk Composition / BSE Composition", fontsize=16)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
-for ax in axs:
+for index, ax in enumerate(axs):
     ax.grid()
     label = None
     if index == 0:
@@ -371,7 +371,7 @@ for index, ax in enumerate(axs):
 
 plt.tight_layout()
 fig.legend(loc=7)
-fig.subplots_adjust(right=0.84)
+fig.subplots_adjust(right=0.86)
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
 
