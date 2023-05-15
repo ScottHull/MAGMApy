@@ -211,7 +211,7 @@ for run in runs:
         ejecta_compositions_df_subset = ejecta_compositions_df.loc[[model for model in ejecta_compositions_df.index if run_name in model and m in model]]
         theia_compositions_df_subset = theia_compositions_df.loc[[model for model in theia_compositions_df.index if run_name in model and m in model]]
         format_compositions_for_latex(f"bulk_ejecta_{run_name}_{m}", ejecta_compositions_df_subset)
-        format_compositions_for_latex("bulk_theia_{run_name}_{m}", theia_compositions_df_subset)
+        format_compositions_for_latex(f"bulk_theia_{run_name}_{m}", theia_compositions_df_subset)
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides}, 'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
@@ -302,7 +302,7 @@ for index, ax in enumerate(axs):
 
 plt.tight_layout()
 fig.legend(loc=7)
-fig.subplots_adjust(right=0.80)
+fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
@@ -380,7 +380,7 @@ for index, ax in enumerate(axs):
 
 plt.tight_layout()
 fig.legend(loc=7)
-fig.subplots_adjust(right=0.80)
+fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
 
