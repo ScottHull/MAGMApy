@@ -26,7 +26,7 @@ RUN_NEW_SIMULATIONS = False
 NUM_THREADS = 40
 GATHER = True
 # root_path = ""
-#root_path = "C:/Users/Scott/OneDrive/Desktop/vaporize_theia/"
+# root_path = "C:/Users/Scott/OneDrive/Desktop/vaporize_theia/"
 root_path = "/scratch/shull4/vaporize_theia/"
 
 if RUN_NEW_SIMULATIONS:
@@ -117,6 +117,17 @@ def get_base_model_from_run_name(run_name):
         if rn == run_name_in_run:
             return run
 
+
+def format_species_string(species):
+    """
+    Splits by _ and converts all numbers to subscripts.
+    :param species:
+    :return:
+    """
+    formatted = species.split("_")[0]
+    return rf"$\rm {formatted.replace('2', '_{2}').replace('3', '_{3}')}$"
+
+
 def get_all_models(gather=False):
     all_models = []
     if not gather:
@@ -136,7 +147,8 @@ def get_all_models(gather=False):
             all_models.append((name, path))
     return all_models
 
-def format_compositions_for_latex(name:str, compositions: pd.DataFrame):
+
+def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
     """
     Formats a LaTeX table for the given compositions, which are to be given as a pandas DataFrame.
     The headers are the element/oxide names, and the index is the model name.
@@ -211,14 +223,18 @@ for run in runs:
         relevant_models = [model for model in ejecta_compositions_df.index if run_name in model and m in model]
         if m == "recondensed":  # remove any model with "not_" in it
             relevant_models = [model for model in relevant_models if "not_" not in model]
-        ejecta_compositions_df_subset = ejecta_compositions_df.loc[[model for model in ejecta_compositions_df.index if run_name in model and m in model]]
-        theia_compositions_df_subset = theia_compositions_df.loc[[model for model in theia_compositions_df.index if run_name in model and m in model]]
+        ejecta_compositions_df_subset = ejecta_compositions_df.loc[
+            [model for model in ejecta_compositions_df.index if run_name in model and m in model]]
+        theia_compositions_df_subset = theia_compositions_df.loc[
+            [model for model in theia_compositions_df.index if run_name in model and m in model]]
         format_compositions_for_latex(f"bulk_ejecta_{run_name}_{m}", ejecta_compositions_df_subset)
         format_compositions_for_latex(f"bulk_theia_{run_name}_{m}", theia_compositions_df_subset)
 
 # get the min and max values for each oxide
-min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides}, 'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
-min_max_theia_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides}, 'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
+min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides},
+                               'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
+min_max_theia_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides},
+                              'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
 for oxide in bse_composition.keys():
     for model, path in all_models:
         if oxide != "Fe2O3":
@@ -240,10 +256,6 @@ for oxide in bse_composition.keys():
                     min_max_theia_compositions['with recondensation'][oxide][0] = theia_compositions[model][oxide]
                 if theia_compositions[model][oxide] > min_max_theia_compositions['with recondensation'][oxide][1]:
                     min_max_theia_compositions['with recondensation'][oxide][1] = theia_compositions[model][oxide]
-
-
-
-
 
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
@@ -309,9 +321,6 @@ fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
-
-
-
 
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
@@ -387,7 +396,6 @@ fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
 
-
 # # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS DISTINCTLY ==========================
 # fig, axs = plt.subplots(2, 2, figsize=(16, 9))
 # axs = axs.flatten()
@@ -435,8 +443,6 @@ plt.show()
 # plt.tight_layout()
 # plt.savefig("theia_mixing_ejecta_compositions_distinct.png", dpi=300)
 # plt.show()
-
-
 
 
 # ========================== VERIFY THAT EJECTA COMPOSITION MAKES SENSE ==========================
