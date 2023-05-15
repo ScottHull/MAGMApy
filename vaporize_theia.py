@@ -137,7 +137,7 @@ if RUN_NEW_SIMULATIONS:
     with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
         futures = {}
         for run in runs:
-            for model in list(lunar_bulk_compositions.keys())[1:3]:
+            for model in list(lunar_bulk_compositions.keys())[1:]:
                 lbc = {
                     oxide: lunar_bulk_compositions[model].loc[oxide] for oxide in bse_composition.keys() if
                     oxide != "Fe2O3"

@@ -202,11 +202,11 @@ def __monte_carlo_search(starting_composition: dict, temperature: float, to_vmf:
     # return the results as a dictionary
     return {
         "liquid_composition_at_vmf": liquid_composition_at_vmf,
-        "vapor_species_at_vmf": vapor_species_at_vmf,
-        "vapor_element_at_vmf": vapor_element_at_vmf,
-        "liquid_cation_at_vmf": liquid_cation_at_vmf,
-        "liquid_mass_at_vmf": liquid_mass_at_vmf,
-        "vapor_mass_at_vmf": vapor_mass_at_vmf,
+        "vapor_species_mass_at_vmf": vapor_species_at_vmf,
+        "vapor_element_mass_at_vmf": vapor_element_at_vmf,
+        "liquid_cation_mass_at_vmf": liquid_cation_at_vmf,
+        # "liquid_mass_at_vmf": liquid_mass_at_vmf,
+        # "vapor_mass_at_vmf": vapor_mass_at_vmf,
         'c': c,
         'l': l,
         'g': g,
