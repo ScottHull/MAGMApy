@@ -210,8 +210,8 @@ for run in runs:
         # subset the dataframe for each model that includes the run name and the recondensation scenario
         ejecta_compositions_df_subset = ejecta_compositions_df.loc[[model for model in ejecta_compositions_df.index if run_name in model and m in model]]
         theia_compositions_df_subset = theia_compositions_df.loc[[model for model in theia_compositions_df.index if run_name in model and m in model]]
-        format_compositions_for_latex("bulk_ejecta", ejecta_compositions_df_subset)
-        format_compositions_for_latex("bulk_theia", theia_compositions_df_subset)
+        format_compositions_for_latex(f"bulk_ejecta_{run_name}_{m}", ejecta_compositions_df_subset)
+        format_compositions_for_latex("bulk_theia_{run_name}_{m}", theia_compositions_df_subset)
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides}, 'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
