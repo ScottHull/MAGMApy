@@ -26,8 +26,8 @@ RUN_NEW_SIMULATIONS = False
 NUM_THREADS = 40
 GATHER = True
 # root_path = ""
-root_path = "C:/Users/Scott/OneDrive/Desktop/vaporize_theia/"
-# root_path = "/scratch/shull4/vaporize_theia/"
+#root_path = "C:/Users/Scott/OneDrive/Desktop/vaporize_theia/"
+root_path = "/scratch/shull4/vaporize_theia/"
 
 if RUN_NEW_SIMULATIONS:
     if not os.path.exists(root_path) and len(root_path) > 0:
@@ -208,6 +208,9 @@ for run in runs:
     run_name = run["run_name"]
     for m in ['recondensed', 'not_recondensed']:
         # subset the dataframe for each model that includes the run name and the recondensation scenario
+        relevant_models = [model for model in ejecta_compositions_df.index if run_name in model and m in model]
+        if m == "recondensed":  # remove any model with "not_" in it
+            relevant_models = [model for model in relevant_models if "not_" not in model]
         ejecta_compositions_df_subset = ejecta_compositions_df.loc[[model for model in ejecta_compositions_df.index if run_name in model and m in model]]
         theia_compositions_df_subset = theia_compositions_df.loc[[model for model in theia_compositions_df.index if run_name in model and m in model]]
         format_compositions_for_latex(f"bulk_ejecta_{run_name}_{m}", ejecta_compositions_df_subset)
