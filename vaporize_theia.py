@@ -201,8 +201,17 @@ for model in all_models:
 # export the ejecta and theia compositions to a pandas DataFrame, and then to a latex table
 ejecta_compositions_df = pd.DataFrame(ejecta_compositions).transpose()
 theia_compositions_df = pd.DataFrame(theia_compositions).transpose()
-format_compositions_for_latex("bulk_ejecta", ejecta_compositions_df)
-format_compositions_for_latex("bulk_theia", theia_compositions_df)
+# we need ejecta and theia compositions split into the following groups:
+# between the Canonical and Half-Earths models, and between models with and without recondensation
+# so loop through each scenario and subset the DataFrame accordingly
+for run in runs:
+    run_name = run["run_name"]
+    for m in ['recondensed', 'not_recondensed']:
+        # subset the dataframe for each model that includes the run name and the recondensation scenario
+        ejecta_compositions_df_subset = ejecta_compositions_df.loc[[model for model in ejecta_compositions_df.index if run_name in model and m in model]]
+        theia_compositions_df_subset = theia_compositions_df.loc[[model for model in theia_compositions_df.index if run_name in model and m in model]]
+        format_compositions_for_latex("bulk_ejecta", ejecta_compositions_df_subset)
+        format_compositions_for_latex("bulk_theia", theia_compositions_df_subset)
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides}, 'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
