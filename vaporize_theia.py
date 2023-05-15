@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from tabulate import tabulate
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # use colorblind-friendly colors
@@ -135,6 +136,33 @@ def get_all_models(gather=False):
             all_models.append((name, path))
     return all_models
 
+def format_compositions_for_latex(compositions: pd.DataFrame):
+    """
+    Formats a LaTeX table for the given compositions, which are to be given as a pandas DataFrame.
+    The headers are the element/oxide names, and the index is the model name.
+    Exports the table to a file.
+    :param compositions:
+    :return:
+    """
+    # get the model names
+    model_names = list(compositions.index)
+    # get the oxide names
+    oxide_names = list(compositions.columns)
+    # get the oxide names, but with the LaTeX formatting
+    oxide_names_latex = [f"${oxide}$" for oxide in oxide_names]
+    # get the compositions as a numpy array
+    compositions_array = compositions.to_numpy()
+    # round each composition to 2 decimal places
+    compositions_array = np.round(compositions_array, 2)
+    # get the compositions as a list of lists
+    compositions_list = compositions_array.tolist()
+    # create the table
+    table = tabulate(compositions_list, headers=oxide_names_latex, showindex=model_names, tablefmt="latex_raw")
+    # write the table to a file
+    with open(f"{root_path}compositions.tex", "w") as f:
+        f.write(table)
+
+
 all_models = get_all_models(gather=GATHER)
 
 # ============================== Run Simulations ==============================
@@ -169,6 +197,12 @@ for model in all_models:
     theia_composition = eval(open(model[1] + "/theia_composition.csv", 'r').read())
     ejecta_compositions.update({model[0]: ejecta_data['ejecta_composition']})
     theia_compositions.update({model[0]: theia_composition['theia_weight_pct']})
+
+# export the ejecta and theia compositions to a pandas DataFrame, and then to a latex table
+ejecta_compositions_df = pd.DataFrame(ejecta_compositions).transpose()
+theia_compositions_df = pd.DataFrame(theia_compositions).transpose()
+format_compositions_for_latex(ejecta_compositions_df)
+format_compositions_for_latex(theia_compositions_df)
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides}, 'without recondensation': {oxide: [1e99, -1e99] for oxide in oxides}}
