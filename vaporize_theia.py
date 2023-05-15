@@ -128,7 +128,9 @@ def get_all_models(gather=False):
     else:  # the model names are the directory names in the root path
         for model in os.listdir(root_path):
             name = model
-            path = f"{root_path}{model}/{model}"
+            path = f"{root_path}{model}"
+            if "scratch" not in root_path:
+                path += f"/{model}"
             all_models.append((name, path))
     return all_models
 
