@@ -1,4 +1,4 @@
-from src.composition import Composition, ConvertComposition
+from src.composition import Composition, ConvertComposition, normalize
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
 from src.thermosystem import ThermoSystem
@@ -46,7 +46,7 @@ runs = [
     }
 ]
 
-bse_composition = {  # Visscher and Fegley (2013)
+bse_composition = normalize({  # Visscher and Fegley (2013)
     "SiO2": 45.40,
     'MgO': 36.76,
     'Al2O3': 4.48,
@@ -57,8 +57,8 @@ bse_composition = {  # Visscher and Fegley (2013)
     'Na2O': 0.349,
     'K2O': 0.031,
     'ZnO': 6.7e-3,
-}
-bulk_moon_composition = {  # O'Neill 1991
+})
+bulk_moon_composition = normalize({  # O'Neill 1991
     "SiO2": 44.37,
     'MgO': 34.90,
     'Al2O3': 3.90,
@@ -69,7 +69,7 @@ bulk_moon_composition = {  # O'Neill 1991
     'Na2O': 3.55e-3,
     'K2O': 3.78e-4,
     'ZnO': 2.39e-5,
-}
+})
 
 major_gas_species = [
     "SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K", "Zn"

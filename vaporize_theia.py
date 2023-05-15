@@ -34,7 +34,7 @@ if RUN_NEW_SIMULATIONS:
 
 # ============================== Define Compositions ==============================
 
-bse_composition = {  # Visscher and Fegley (2013)
+bse_composition = normalize({  # Visscher and Fegley (2013)
     "SiO2": 45.40,
     'MgO': 36.76,
     'Al2O3': 4.48,
@@ -45,10 +45,11 @@ bse_composition = {  # Visscher and Fegley (2013)
     'Na2O': 0.349,
     'K2O': 0.031,
     'ZnO': 6.7e-3,
-}
+})
 
 oxides = [i for i in bse_composition.keys() if i != "Fe2O3"]
 lunar_bulk_compositions = pd.read_csv("data/lunar_bulk_compositions.csv", index_col="Oxide")
+# normalize and replace the lunar bulk composition with the normalized values
 favored_composition = [lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides]
 mass_moon = 7.34767309e22  # kg, mass of the moon
 
@@ -120,7 +121,7 @@ def get_all_models(gather=False):
     if not gather:
         for run in runs:
             run_name = run["run_name"]
-            for model in list(lunar_bulk_compositions.keys())[1:]:
+            for model in list(lunar_bulk_compositions.keys()):
                 for m in ['recondensed', 'not_recondensed']:
                     name = f"{run_name}_{model}_{m}"
                     path = f"{root_path}{run_name}_{model}_{m}"
@@ -203,11 +204,12 @@ fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
-colors = sns.color_palette('husl', n_colors=len(ejecta_compositions.keys()))
+colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for ax in axs:
     ax.grid()
     ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
 for i, s in enumerate(ejecta_compositions.keys()):
+    base_model = s.split("_")[1]
     to_index = 1
     label = None
     if "_not_recondensed" in s:
@@ -221,7 +223,7 @@ for i, s in enumerate(ejecta_compositions.keys()):
     #                            alpha=0.5, color='grey')
     axs[to_index].plot(
         oxides, [ejecta_compositions[s][oxide] / bse_composition[oxide] for oxide in oxides],
-        color=colors[i], linewidth=2.0, label=label
+        color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
     )
 
 # axs[0].plot(
@@ -253,6 +255,7 @@ for index, ax in enumerate(axs):
 
 axs[0].legend()
 plt.tight_layout()
+fig.subplots_adjust(right=0.84)
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
 
@@ -265,7 +268,7 @@ axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
 axs[0].set_ylabel("Bulk Composition / BSE Composition", fontsize=16)
-colors = sns.color_palette('husl', n_colors=len(theia_compositions.keys()))
+colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for ax in axs:
     ax.grid()
     ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
@@ -290,7 +293,7 @@ for i, s in enumerate(theia_compositions.keys()):
     #                            alpha=0.5, color='grey')
     axs[to_index].plot(
         oxides, [theia_compositions[s][oxide] / bse_composition[oxide] for oxide in oxides],
-        color=colors[i], linewidth=2.0, label=label
+        color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
     )
 
 # axs[0].plot(
