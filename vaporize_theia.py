@@ -219,6 +219,8 @@ for i, s in enumerate(ejecta_compositions.keys()):
         to_index = 0
     if "Half-Earths" in s:
         to_index += 2
+    if to_index == 0:
+        label = base_model
     # shade the region between the min and max values
     # axs[to_index].fill_between(oxides,
     #                            [min_max_ejecta_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
@@ -287,12 +289,15 @@ for ax in axs[:-2]:
         tick.set_rotation(45)
 for i, s in enumerate(theia_compositions.keys()):
     base_model = s.split("_")[1]
+    label = None
     to_index = 1
     mm = None
     if "_not_recondensed" in s:
         to_index = 0
     if "Half-Earths" in s:
         to_index += 2
+    if to_index == 0:
+        label = base_model
     # shade the region between the min and max values
     # axs[to_index].fill_between(oxides,
     #                            [min_max_theia_compositions[s][oxide][0] / bse_composition[oxide] for oxide in oxides],
