@@ -205,9 +205,12 @@ axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
-for ax in axs:
+for index, ax in enumerate(axs):
     ax.grid()
-    ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
+    label = None
+    if index == 0:
+        label = "BSE"
+    ax.axhline(y=1, color="black", linewidth=4, alpha=1, label=label)
 for i, s in enumerate(ejecta_compositions.keys()):
     base_model = s.split("_")[1]
     to_index = 1
@@ -242,7 +245,6 @@ for i, s in enumerate(ejecta_compositions.keys()):
 #     color='blue',
 #     label="O'Neill 1991 Model"
 # )
-axs[1].legend(loc='upper right', fontsize=16)
 
 # set minimum plotted x value
 letters = list(string.ascii_lowercase)
@@ -272,7 +274,10 @@ axs[0].set_ylabel("Bulk Composition / BSE Composition", fontsize=16)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for ax in axs:
     ax.grid()
-    ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
+    label = None
+    if index == 0:
+        label = "BSE"
+    ax.axhline(y=1, color="black", linewidth=4, alpha=1, label=label)
     # shade region red underneath y=0
     ax.fill_between(oxides, [0 for oxide in oxides], [-1e99 for oxide in oxides], alpha=0.2, color='red')
     ax.set_ylim(bottom=-1.0, top=4.2)
@@ -281,6 +286,7 @@ for ax in axs[:-2]:
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
 for i, s in enumerate(theia_compositions.keys()):
+    base_model = s.split("_")[1]
     to_index = 1
     mm = None
     if "_not_recondensed" in s:
