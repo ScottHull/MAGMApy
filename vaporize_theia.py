@@ -253,9 +253,10 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
 
-axs[0].legend()
 plt.tight_layout()
+fig.legend(loc=7)
 fig.subplots_adjust(right=0.84)
+# add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
 
@@ -324,6 +325,8 @@ for index, ax in enumerate(axs):
     )
 
 plt.tight_layout()
+fig.legend(loc=7)
+fig.subplots_adjust(right=0.84)
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
 
