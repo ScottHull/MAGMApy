@@ -235,9 +235,9 @@ for run in runs:
                 m_prfix = "nr"
             name = f"{run_name}_{model}_{m}"
             for oxide in [i for i in bse_composition.keys() if i != "Fe2O3"]:
-                ejecta_compositions_df_subset.loc[model][f"{m_prfix}_{oxide}"] = ejecta_compositions_df.loc[name][
+                ejecta_compositions_df_subset[model][f"{m_prfix}_{oxide}"] = ejecta_compositions_df.loc[name][
                     oxide]
-                theia_compositions_df_subset.loc[model][f"{m_prfix}_{oxide}"] = theia_compositions_df.loc[name][
+                theia_compositions_df_subset[model][f"{m_prfix}_{oxide}"] = theia_compositions_df.loc[name][
                     oxide]
 
     format_compositions_for_latex(f"bulk_ejecta_{run_name}", ejecta_compositions_df_subset)
