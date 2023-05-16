@@ -223,6 +223,11 @@ for run in runs:
     # make the index column the model names
     ejecta_compositions_df_subset.index = [i.split("_")[1] for i in ejecta_compositions_df.index]
     theia_compositions_df_subset.index = [i.split("_")[1] for i in theia_compositions_df.index]
+    # remove redundant index columns
+    ejecta_compositions_df_subset = ejecta_compositions_df_subset.loc[
+        ~ejecta_compositions_df_subset.index.duplicated(keep='first')]
+    theia_compositions_df_subset = theia_compositions_df_subset.loc[
+        ~theia_compositions_df_subset.index.duplicated(keep='first')]
     for m in ['recondensed', 'not_recondensed']:
         # subset the dataframe for each model that includes the run name and the recondensation scenario
         relevant_models = [model for model in ejecta_compositions_df.index if run_name in model and m in model]
