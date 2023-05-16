@@ -218,17 +218,27 @@ theia_compositions_df = pd.DataFrame(theia_compositions).transpose()
 # so loop through each scenario and subset the DataFrame accordingly
 for run in runs:
     run_name = run["run_name"]
+    ejecta_compositions_df_subset = pd.DataFrame({})
+    theia_compositions_df_subset = pd.DataFrame({})
     for m in ['recondensed', 'not_recondensed']:
         # subset the dataframe for each model that includes the run name and the recondensation scenario
         relevant_models = [model for model in ejecta_compositions_df.index if run_name in model and m in model]
         if m == "recondensed":  # remove any model with "not_" in it
             relevant_models = [model for model in relevant_models if "not_" not in model]
-        ejecta_compositions_df_subset = ejecta_compositions_df.loc[
+        ejecta_compositions_df_subset2 = ejecta_compositions_df.loc[
             [model for model in ejecta_compositions_df.index if run_name in model and m in model]]
-        theia_compositions_df_subset = theia_compositions_df.loc[
+        theia_compositions_df_subset2 = theia_compositions_df.loc[
             [model for model in theia_compositions_df.index if run_name in model and m in model]]
-        format_compositions_for_latex(f"bulk_ejecta_{run_name}_{m}", ejecta_compositions_df_subset)
-        format_compositions_for_latex(f"bulk_theia_{run_name}_{m}", theia_compositions_df_subset)
+        # change the headers to prepend "recondensed" or "not_recondensed"
+        ejecta_compositions_df_subset2.columns = [f"{m}_{oxide}" for oxide in ejecta_compositions_df_subset2.columns]
+        theia_compositions_df_subset2.columns = [f"{m}_{oxide}" for oxide in theia_compositions_df_subset2.columns]
+        # merge the subsetted dataframes into the main subsetted dataframe
+        ejecta_compositions_df_subset = pd.concat([ejecta_compositions_df_subset, ejecta_compositions_df_subset2],
+                                                    axis=1)
+        theia_compositions_df_subset = pd.concat([theia_compositions_df_subset, theia_compositions_df_subset2],
+                                                    axis=1)
+    format_compositions_for_latex(f"bulk_ejecta_{run_name}_{m}", ejecta_compositions_df_subset)
+    format_compositions_for_latex(f"bulk_theia_{run_name}_{m}", theia_compositions_df_subset)
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides},
