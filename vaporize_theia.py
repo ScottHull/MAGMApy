@@ -220,6 +220,9 @@ for run in runs:
     run_name = run["run_name"]
     ejecta_compositions_df_subset = pd.DataFrame({})
     theia_compositions_df_subset = pd.DataFrame({})
+    # make the index column the model names
+    ejecta_compositions_df_subset.index = [i.split("_")[1] for i in ejecta_compositions_df.index]
+    theia_compositions_df_subset.index = [i.split("_")[1] for i in theia_compositions_df.index]
     for m in ['recondensed', 'not_recondensed']:
         # subset the dataframe for each model that includes the run name and the recondensation scenario
         relevant_models = [model for model in ejecta_compositions_df.index if run_name in model and m in model]
