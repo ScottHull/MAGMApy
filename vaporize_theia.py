@@ -223,19 +223,23 @@ for run in runs:
     # make the index column the model names
     ejecta_compositions_df_subset.index = [i.split("_")[1] for i in ejecta_compositions_df.index]
     theia_compositions_df_subset.index = [i.split("_")[1] for i in theia_compositions_df.index]
+    # make the columns the not_recondensed and recondensed oxides
+    ejecta_compositions_df_subset.columns = [
+        f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
+    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"]
     # remove redundant index columns
     ejecta_compositions_df_subset = ejecta_compositions_df_subset.loc[
         ~ejecta_compositions_df_subset.index.duplicated(keep='first')]
     theia_compositions_df_subset = theia_compositions_df_subset.loc[
         ~theia_compositions_df_subset.index.duplicated(keep='first')]
     for model in ejecta_compositions_df_subset.index:
-        # get both the not recondensed and recondensed models from the ejecta_compositions_df DataFrame
-        ejecta_not_recondensed = ejecta_compositions_df_subset.loc[model]
-        ejecta_recondensed = ejecta_compositions_df_subset.loc[f"{model}_recondensed"]
-        theia_not_recondensed = theia_compositions_df_subset.loc[model]
-        theia_recondensed = theia_compositions_df_subset.loc[f"{model}_recondensed"]
-        print(ejecta_recondensed)
-        print(ejecta_not_recondensed)
+        # get the ejecta and theia compositions for this model
+        ec_not_recondensed = ejecta_compositions_df.loc[f"{run_name}_{model}_not_recondensed"].to_dict()
+        ec_recondensed = ejecta_compositions_df.loc[f"{run_name}_{model}_recondensed"].to_dict()
+        tc_not_recondensed = theia_compositions_df.loc[f"{run_name}_{model}_not_recondensed"].to_dict()
+        tc_recondensed = theia_compositions_df.loc[f"{run_name}_{model}_recondensed"].to_dict()
+        # add to their respective DataFrames
+        print(ec_not_recondensed)
 
 
 
