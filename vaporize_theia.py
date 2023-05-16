@@ -221,8 +221,8 @@ for run in runs:
     cols = [
         f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
     ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"]
-    ejecta_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])))
-    theia_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])))
+    ejecta_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])), index=list(lunar_bulk_compositions.keys()[1:]))
+    theia_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])), index=list(lunar_bulk_compositions.keys()[1:]))
     # make the index column the model names
     ejecta_compositions_df_subset.index = [i.split("_")[1] for i in ejecta_compositions_df.index]
     theia_compositions_df_subset.index = [i.split("_")[1] for i in theia_compositions_df.index]
