@@ -218,15 +218,15 @@ theia_compositions_df = pd.DataFrame(theia_compositions).transpose()
 # so loop through each scenario and subset the DataFrame accordingly
 for run in runs:
     run_name = run["run_name"]
-    ejecta_compositions_df_subset = pd.DataFrame({})
-    theia_compositions_df_subset = pd.DataFrame({})
+    ejecta_compositions_df_subset = pd.DataFrame({}, columns=[
+        f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
+    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"])
+    theia_compositions_df_subset = pd.DataFrame({}, columns=[
+        f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
+    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"])
     # make the index column the model names
     ejecta_compositions_df_subset.index = [i.split("_")[1] for i in ejecta_compositions_df.index]
     theia_compositions_df_subset.index = [i.split("_")[1] for i in theia_compositions_df.index]
-    # make the columns the not_recondensed and recondensed oxides
-    ejecta_compositions_df_subset.columns = [
-        f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
-    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"]
     # remove redundant index columns
     ejecta_compositions_df_subset = ejecta_compositions_df_subset.loc[
         ~ejecta_compositions_df_subset.index.duplicated(keep='first')]
