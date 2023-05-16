@@ -218,12 +218,11 @@ theia_compositions_df = pd.DataFrame(theia_compositions).transpose()
 # so loop through each scenario and subset the DataFrame accordingly
 for run in runs:
     run_name = run["run_name"]
-    ejecta_compositions_df_subset = pd.DataFrame({}, columns=[
+    cols = [
         f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
-    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"])
-    theia_compositions_df_subset = pd.DataFrame({}, columns=[
-        f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
-    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"])
+    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"]
+    ejecta_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])))
+    theia_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])))
     # make the index column the model names
     ejecta_compositions_df_subset.index = [i.split("_")[1] for i in ejecta_compositions_df.index]
     theia_compositions_df_subset.index = [i.split("_")[1] for i in theia_compositions_df.index]
