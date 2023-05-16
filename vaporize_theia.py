@@ -228,26 +228,20 @@ for run in runs:
         ~ejecta_compositions_df_subset.index.duplicated(keep='first')]
     theia_compositions_df_subset = theia_compositions_df_subset.loc[
         ~theia_compositions_df_subset.index.duplicated(keep='first')]
-    for m in ['recondensed', 'not_recondensed']:
-        # subset the dataframe for each model that includes the run name and the recondensation scenario
-        relevant_models = [model for model in ejecta_compositions_df.index if run_name in model and m in model]
-        if m == "recondensed":  # remove any model with "not_" in it
-            relevant_models = [model for model in relevant_models if "not_" not in model]
-        ejecta_compositions_df_subset2 = ejecta_compositions_df.loc[
-            [model for model in ejecta_compositions_df.index if run_name in model and m in model]]
-        theia_compositions_df_subset2 = theia_compositions_df.loc[
-            [model for model in theia_compositions_df.index if run_name in model and m in model]]
-        # rename index column by splitting the model name
-        ejecta_compositions_df_subset2.index = [i.split("_")[1] for i in ejecta_compositions_df_subset2.index]
-        theia_compositions_df_subset2.index = [i.split("_")[1] for i in theia_compositions_df_subset2.index]
-        # change the headers to prepend "recondensed" or "not_recondensed"
-        ejecta_compositions_df_subset2.columns = [f"{m}_{oxide}" for oxide in ejecta_compositions_df_subset2.columns]
-        theia_compositions_df_subset2.columns = [f"{m}_{oxide}" for oxide in theia_compositions_df_subset2.columns]
-        # merge the subsetted dataframes into the main subsetted dataframe
-        ejecta_compositions_df_subset = pd.concat([ejecta_compositions_df_subset, ejecta_compositions_df_subset2],
-                                                    axis=1)
-        theia_compositions_df_subset = pd.concat([theia_compositions_df_subset, theia_compositions_df_subset2],
-                                                    axis=1)
+    for model in ejecta_compositions_df_subset.index:
+        # get both the not recondensed and recondensed models from the ejecta_compositions_df DataFrame
+        ejecta_not_recondensed = ejecta_compositions_df_subset.loc[model]
+        ejecta_recondensed = ejecta_compositions_df_subset.loc[f"{model}_recondensed"]
+        theia_not_recondensed = theia_compositions_df_subset.loc[model]
+        theia_recondensed = theia_compositions_df_subset.loc[f"{model}_recondensed"]
+        print(ejecta_recondensed)
+        print(ejecta_not_recondensed)
+
+
+
+
+
+
     format_compositions_for_latex(f"bulk_ejecta_{run_name}", ejecta_compositions_df_subset)
     format_compositions_for_latex(f"bulk_theia_{run_name}", theia_compositions_df_subset)
 
