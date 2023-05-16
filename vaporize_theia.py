@@ -164,10 +164,11 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
     oxide_names_latex = [f"${oxide}$" for oxide in oxide_names]
     # get the compositions as a numpy array
     compositions_array = compositions.to_numpy()
-    # convert all values < 0.01 to scientific notation
-    compositions_array[compositions_array < 0.01] = np.round(compositions_array[compositions_array < 0.01], 2)
-    # round all values to 2 decimal places
-    compositions_array = np.round(compositions_array, 2)
+    # convert all values to scientific notation with 2 decimal places
+    compositions_array = np.array([["{:.2e}".format(value) for value in row] for row in compositions_array])
+    # for values > 1e-2, convert to 2 decimal places number
+    compositions_array = np.array([[float(value) if float(value) > 1e-2 else value for value in row] for row in
+                                      compositions_array])
     # get the compositions as a list of lists
     compositions_list = compositions_array.tolist()
     # create the table
