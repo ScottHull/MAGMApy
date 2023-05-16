@@ -228,6 +228,7 @@ for run in runs:
     for model in list(lunar_bulk_compositions.keys())[1:]:
         # create a placeholder row
         ejecta_compositions_df_subset.loc[model] = [0 for _ in range(len(cols))]
+        theia_compositions_df_subset.loc[model] = [0 for _ in range(len(cols))]
         for m in ['not_recondensed', 'recondensed']:
             m_prfix = "r"
             if m == 'not_recondensed':
