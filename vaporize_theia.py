@@ -237,8 +237,8 @@ for run in runs:
                                                     axis=1)
         theia_compositions_df_subset = pd.concat([theia_compositions_df_subset, theia_compositions_df_subset2],
                                                     axis=1)
-    format_compositions_for_latex(f"bulk_ejecta_{run_name}_{m}", ejecta_compositions_df_subset)
-    format_compositions_for_latex(f"bulk_theia_{run_name}_{m}", theia_compositions_df_subset)
+    format_compositions_for_latex(f"bulk_ejecta_{run_name}", ejecta_compositions_df_subset)
+    format_compositions_for_latex(f"bulk_theia_{run_name}", theia_compositions_df_subset)
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides},
