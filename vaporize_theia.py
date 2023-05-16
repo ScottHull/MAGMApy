@@ -232,6 +232,9 @@ for run in runs:
             [model for model in ejecta_compositions_df.index if run_name in model and m in model]]
         theia_compositions_df_subset2 = theia_compositions_df.loc[
             [model for model in theia_compositions_df.index if run_name in model and m in model]]
+        # rename index column by splitting the model name
+        ejecta_compositions_df_subset2.index = [i.split("_")[1] for i in ejecta_compositions_df_subset2.index]
+        theia_compositions_df_subset2.index = [i.split("_")[1] for i in theia_compositions_df_subset2.index]
         # change the headers to prepend "recondensed" or "not_recondensed"
         ejecta_compositions_df_subset2.columns = [f"{m}_{oxide}" for oxide in ejecta_compositions_df_subset2.columns]
         theia_compositions_df_subset2.columns = [f"{m}_{oxide}" for oxide in theia_compositions_df_subset2.columns]
