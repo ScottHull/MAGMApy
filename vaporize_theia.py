@@ -221,29 +221,23 @@ for run in runs:
     cols = [
         f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
     ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"]
-    ejecta_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])), index=list(lunar_bulk_compositions.keys()[1:]))
-    theia_compositions_df_subset = pd.DataFrame(dict(zip(cols, [[] for _ in range(len(cols))])), index=list(lunar_bulk_compositions.keys()[1:]))
-    # make the index column the model names
-    ejecta_compositions_df_subset.index = [i.split("_")[1] for i in ejecta_compositions_df.index]
-    theia_compositions_df_subset.index = [i.split("_")[1] for i in theia_compositions_df.index]
-    # remove redundant index columns
-    ejecta_compositions_df_subset = ejecta_compositions_df_subset.loc[
-        ~ejecta_compositions_df_subset.index.duplicated(keep='first')]
-    theia_compositions_df_subset = theia_compositions_df_subset.loc[
-        ~theia_compositions_df_subset.index.duplicated(keep='first')]
-    for model in ejecta_compositions_df_subset.index:
-        # get the ejecta and theia compositions for this model
-        ec_not_recondensed = ejecta_compositions_df.loc[f"{run_name}_{model}_not_recondensed"].to_dict()
-        ec_recondensed = ejecta_compositions_df.loc[f"{run_name}_{model}_recondensed"].to_dict()
-        tc_not_recondensed = theia_compositions_df.loc[f"{run_name}_{model}_not_recondensed"].to_dict()
-        tc_recondensed = theia_compositions_df.loc[f"{run_name}_{model}_recondensed"].to_dict()
-        # add to their respective DataFrames
-        print(ec_not_recondensed)
-
-
-
-
-
+    # create placeholder dataframes
+    ejecta_compositions_df_subset = pd.DataFrame(columns=cols)
+    theia_compositions_df_subset = pd.DataFrame(columns=cols)
+    # loop through each model and subset the dataframes
+    for model in list(lunar_bulk_compositions.keys())[1:]:
+        # create a placeholder row
+        ejecta_compositions_df_subset.loc[model] = [0 for _ in range(len(cols))]
+        for m in ['not_recondensed', 'recondensed']:
+            m_prfix = "r"
+            if m == 'not_recondensed':
+                m_prfix = "nr"
+            name = f"{run_name}_{model}_{m}"
+            for oxide in [i for i in bse_composition.keys() if i != "Fe2O3"]:
+                ejecta_compositions_df_subset.loc[model][f"{m_prfix}_{oxide}"] = ejecta_compositions_df.loc[name][
+                    oxide]
+                theia_compositions_df_subset.loc[model][f"{m_prfix}_{oxide}"] = theia_compositions_df.loc[name][
+                    oxide]
 
     format_compositions_for_latex(f"bulk_ejecta_{run_name}", ejecta_compositions_df_subset)
     format_compositions_for_latex(f"bulk_theia_{run_name}", theia_compositions_df_subset)
