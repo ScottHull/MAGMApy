@@ -339,6 +339,7 @@ for ax in axs[-2:]:
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=16)
 
+fig.suptitle("Ejecta Bulk Composition", fontsize=18)
 plt.tight_layout()
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
@@ -412,6 +413,8 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
+
+fig.suptitle("Theia Bulk Composition", fontsize=18)
 
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
