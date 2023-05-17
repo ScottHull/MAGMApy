@@ -334,10 +334,10 @@ for index, ax in enumerate(axs):
 fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
-    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45, labelsize=16)
 
 plt.tight_layout()
-fig.legend(loc=7, fontsize=16)
+fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
@@ -412,10 +412,10 @@ for index, ax in enumerate(axs):
 
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
-    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45, labelsize=16)
 
 plt.tight_layout()
-fig.legend(loc=7, fontsize=16)
+fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
