@@ -331,6 +331,11 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
 
+fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
+# replace the x-axis labels with the formatted oxide names
+for ax in axs[-2:]:
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
+
 plt.tight_layout()
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
@@ -343,7 +348,7 @@ fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 axs[0].set_title("Without Recondensation", fontsize=16)
 axs[1].set_title("With Recondensation", fontsize=16)
-axs[0].set_ylabel("Bulk Composition / BSE Composition", fontsize=16)
+fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for index, ax in enumerate(axs):
     ax.grid()
@@ -395,7 +400,6 @@ for i, s in enumerate(theia_compositions.keys()):
 #     color='blue',
 #     label="O'Neill 1991 Model"
 # )
-axs[1].legend(loc='upper right', fontsize=16)
 
 # set minimum plotted x value
 letters = list(string.ascii_lowercase)
@@ -405,6 +409,10 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
+
+# replace the x-axis labels with the formatted oxide names
+for ax in axs[-2:]:
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
 
 plt.tight_layout()
 fig.legend(loc=7)
