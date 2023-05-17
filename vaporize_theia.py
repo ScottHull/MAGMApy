@@ -337,7 +337,7 @@ for ax in axs[-2:]:
     ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
 
 plt.tight_layout()
-fig.legend(loc=7)
+fig.legend(loc=7, fontsize=16)
 fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
@@ -415,7 +415,7 @@ for ax in axs[-2:]:
     ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
 
 plt.tight_layout()
-fig.legend(loc=7)
+fig.legend(loc=7, fontsize=16)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
