@@ -334,7 +334,10 @@ for index, ax in enumerate(axs):
 fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
-    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45, labelsize=16)
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
+# set the axis font size to be 16 for each subplot
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=16)
 
 plt.tight_layout()
 fig.legend(loc=7)
@@ -412,7 +415,11 @@ for index, ax in enumerate(axs):
 
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
-    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45, labelsize=16)
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
+
+# set the axis font size to be 16 for each subplot
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=16)
 
 plt.tight_layout()
 fig.legend(loc=7)
