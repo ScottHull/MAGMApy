@@ -276,8 +276,8 @@ for oxide in bse_composition.keys():
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
-axs[0].set_title("Without Recondensation", fontsize=16)
-axs[1].set_title("With Recondensation", fontsize=16)
+axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=16)
+axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=16)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for index, ax in enumerate(axs):
     ax.grid()
@@ -339,7 +339,6 @@ for ax in axs[-2:]:
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=16)
 
-fig.suptitle("Ejecta Bulk Composition", fontsize=18)
 plt.tight_layout()
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
@@ -350,8 +349,8 @@ plt.show()
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
-axs[0].set_title("Without Recondensation", fontsize=16)
-axs[1].set_title("With Recondensation", fontsize=16)
+axs[0].set_title("Theia Bulk Composition (Without Recondensation)", fontsize=16)
+axs[1].set_title("Theia Bulk Composition (With Recondensation)", fontsize=16)
 fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for index, ax in enumerate(axs):
@@ -413,8 +412,6 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
-
-fig.suptitle("Theia Bulk Composition", fontsize=18)
 
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
