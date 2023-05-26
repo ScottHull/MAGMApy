@@ -18,6 +18,9 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import labellines
 
 # use colorblind-friendly colors
@@ -769,6 +772,59 @@ plt.tight_layout()
 pd.DataFrame(k_fractionation_data).to_csv("bse_k_isotope_fractionation.csv", index=False)
 plt.savefig("bse_isotope_fractionation.png", dpi=300)
 plt.show()
+
+
+
+
+# ============================= Plot K/K0 and Na/Na0 as function of VMF =============================
+# collect atmosphere mass fraction data
+d_v = collect_data(path=f"{run_name}/total_vapor_element_mass", x_header='mass fraction vaporized')
+d_l = collect_data(path=f"{run_name}/magma_element_mass", x_header='mass fraction vaporized')
+d_t = {v: {element: d_v[v][element] + d_l[v][element] for element in d_v[v].keys()} for v in d_v.keys()}
+d = {}
+# bse_cation_wt_pct = Composition(composition=bse_composition).oxide_wt_pct_to_cation_wt_pct(composition=bse_composition)
+# drop O from each sub-dictionary and re-normalize
+for key in d_v.keys():
+    d[key] = {element: mass / d_t[key][element] for element, mass in d_v[key].items()}
+
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+normalizer = Normalize(min(d.keys()) * 100, max(d.keys()) * 100)
+cmap = cm.get_cmap('jet')
+ax.scatter(
+    [d[key]['K'] for key in d.keys()],
+    [d[key]['Na'] for key in d.keys()],
+    color=[cmap(normalizer(key * 100)) for key in d.keys()],
+    s=100,
+)
+ax.set_xlabel(r"K/K$_0$", fontsize=20)
+ax.set_ylabel(r"Na/Na$_0$", fontsize=20)
+ax.set_title("Mass Ratios of K and Na relative to Liquid + Vapor (Total) Mass", fontsize=16)
+ax.grid()
+
+sm = cm.ScalarMappable(norm=normalizer, cmap=cmap)
+sm.set_array([])
+cbaxes = inset_axes(ax, width="30%", height="3%", loc='lower right', borderpad=1.8)
+cbar = plt.colorbar(sm, cax=cbaxes, orientation='horizontal')
+cbar.ax.tick_params(labelsize=12)
+# cbar.ax.set_title("Entropy", fontsize=6)
+cbar.ax.set_title("VMF (%)", fontsize=12)
+
+# make both axes log scale
+ax.set_xscale('log')
+ax.set_yscale('log')
+
+plt.show()
+plt.savefig("bse_k_na_vapor_comp.png", dpi=300)
+
+
+
+
+
+
+
+
+
 
 #
 # # ========================= PLOT ELEMENTAL VAPOR MASS FRACTION AS FUNCTION OF VMF =========================

@@ -185,7 +185,7 @@ if RUN_NEW_SIMULATIONS:
     with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
         futures = {}
         for run in runs:
-            for model in list(lunar_bulk_compositions.keys())[1:]:
+            for model in list(lunar_bulk_compositions.keys()):
                 lbc = {
                     oxide: lunar_bulk_compositions[model].loc[oxide] for oxide in bse_composition.keys() if
                     oxide != "Fe2O3"
@@ -228,7 +228,7 @@ for run in runs:
     ejecta_compositions_df_subset = pd.DataFrame(columns=cols)
     theia_compositions_df_subset = pd.DataFrame(columns=cols)
     # loop through each model and subset the dataframes
-    for model in list(lunar_bulk_compositions.keys())[1:]:
+    for model in list(lunar_bulk_compositions.keys()):
         # create a placeholder row
         ejecta_compositions_df_subset.loc[model] = [0 for _ in range(len(cols))]
         theia_compositions_df_subset.loc[model] = [0 for _ in range(len(cols))]
