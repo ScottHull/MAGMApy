@@ -513,3 +513,10 @@ class Composition(ConvertComposition):
         # take the ratio of current liquid cations to initial cations, initially will be 1
         self.liquid_cation_ratio = self.initial_liquid_cations / total_liquid_cations
         return abundances
+
+    def __initial_liquid_element_masses(self):
+        """
+        Calculates the initial mass of each element in the liquid from the given initial liquid bulk oxide wt%.
+        :return:
+        """
+

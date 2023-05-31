@@ -73,6 +73,8 @@ class LiquidActivity:
         self.liquid_oxide_moles = None  # absolute molar abundances of liquid cations in the liquid
         self.complex_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 3",
                                                   index_col="Product")
+        self.initial_oxide_melt_masses = {}  # initial oxide melt masses
+        self.initial_element_melt_masses = {}  # initial element melt masses
         self.complex_species = complex_species  # a list of complex species to consider in the model
         if complex_species == "__all__":  # include all complex species in the spreadsheet
             self.complex_species = self.complex_species_data.index.tolist()
@@ -134,13 +136,23 @@ class LiquidActivity:
         Returns the initial mass of the melt for vaporization
         :return:
         """
+        self.initial_oxide_melt_masses = {}
+        self.initial_element_melt_masses = {}
         initial_melt_mass = 0.0
         for i in self.composition.cation_fraction.keys():
             # get the base oxide for the elment (i.e. SiO2 for Si)
             base_oxide = get_element_in_base_oxide(element=i, oxides=self.composition.mole_pct_composition)
             oxide_mw = self.composition.get_molecule_mass(molecule=base_oxide)  # get molecular weight of oxide
             oxide_stoich = get_molecule_stoichiometry(molecule=base_oxide)
-            initial_melt_mass += self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+            oxide_mass = self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
+            for element in oxide_stoich.keys():
+                if element not in self.initial_element_melt_masses.keys():
+                    self.initial_element_melt_masses.update({element: 0.0})
+                self.initial_element_melt_masses[element] += oxide_mass / oxide_mw * self.composition.get_molecule_mass(element)
+            initial_melt_mass += oxide_mass
+        # check conservation of mass between all three values
+        if sum(self.initial_oxide_melt_masses.values()) != sum(self.initial_element_melt_masses) != initial_melt_mass:
+            raise Exception("Mass of melt was not conserved in initial melt mass calculation.")
         return initial_melt_mass
 
     def __get_initial_activty_coefficients(self):

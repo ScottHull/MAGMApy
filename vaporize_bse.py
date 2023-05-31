@@ -36,7 +36,7 @@ runs = [
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 74.0,  # %
-        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     },
     {
         "run_name": "Half-Earths Model",
@@ -45,7 +45,7 @@ runs = [
         "disk_theia_mass_fraction": 51.97,  # %
         "disk_mass": 1.70,  # lunar masses
         "vapor_loss_fraction": 16.0,  # %
-        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 
@@ -817,6 +817,95 @@ ax.set_yscale('log')
 plt.show()
 plt.savefig("bse_k_na_vapor_comp.png", dpi=300)
 
+
+# ================== Plot the mass fraction of each element lost relative to initial ==================
+for index, run in enumerate(runs):
+    run_name = run['run_name']
+    vapor_loss_fraction = run['vapor_loss_fraction']
+    # read in the ejecta composition file
+    mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+    # get the loss fraction of each element
+    loss_fraction = {element: mass_distribution.loc[element, 'escaping vapor mass'] / (mass_distribution.loc[element, 'melt mass'] + mass_distribution.loc[element, 'bulk vapor mass']) * 100.0 for element in elements}
+    # sort cations by 50% condensation temperature
+    cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    # plot arrows at the bottom of the plot to indicate the range of volatility
+    ax.arrow(
+        0, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        3, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Refractory", xy=(3 / 2, 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        3, 10 ** -0.9, 2, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        5, 10 ** -0.9, -2, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Transitional", xy=((5 - 2 / 2), 10 ** -0.8), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        8, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Moderately Volatile", xy=((8 - 3 / 2)
+                                   , 10 ** -0.8), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    # get a unique color for each oxide
+    ax.plot(
+        magma_species,
+        np.array([melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
+                                                                        for species in magma_species],
+        linewidth=4,
+        color=color_cycle[index],
+        label=run['run_name']
+    )
+    # scatter the loss fraction on top of the line
+    ax.scatter(
+        magma_species,
+        np.array([melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
+                                                                        for species in magma_species],
+        color=color_cycle[index],
+        s=100,
+        zorder=10
+    )
+    # scatter the melt abundance on top of the line
+    ax.scatter(
+        magma_species,
+        np.array([recondensed_melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
+                                                                                    for species in magma_species],
+        color=color_cycle[index],
+        s=100,
+        marker='d',
+        zorder=10
+    )
+ax.plot(
+    [], [], linewidth=4, linestyle="--", color='black', label="Including Retained\nVapor Recondensation"
+)
+
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.set_xticklabels([format_species_string(species) for species in magma_species], rotation=45)
+ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="Bulk Moon")
+ax.set_ylabel("Melt Species Mass (Relative to Bulk Moon)", fontsize=20)
+ax.grid()
+ax.set_ylim(bottom=10 ** -1, top=10 ** 2.5)
+ax.set_yscale("log")
+ax.legend(fontsize=18)
+plt.tight_layout()
 
 
 
