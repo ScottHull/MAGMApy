@@ -151,7 +151,7 @@ class LiquidActivity:
                 self.initial_element_melt_masses[element] += oxide_mass / oxide_mw * self.composition.get_molecule_mass(element)
             initial_melt_mass += oxide_mass
         # check conservation of mass between all three values
-        if sum(self.initial_oxide_melt_masses.values()) != sum(self.initial_element_melt_masses) != initial_melt_mass:
+        if sum(self.initial_oxide_melt_masses.values()) != sum(self.initial_element_melt_masses.values()) != initial_melt_mass:
             raise Exception("Mass of melt was not conserved in initial melt mass calculation.")
         return initial_melt_mass
 
