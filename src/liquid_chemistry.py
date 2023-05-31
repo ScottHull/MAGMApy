@@ -152,7 +152,12 @@ class LiquidActivity:
             initial_melt_mass += oxide_mass
         # check conservation of mass between all three values
         if sum(self.initial_oxide_melt_masses.values()) != sum(self.initial_element_melt_masses.values()) != initial_melt_mass:
-            raise Exception("Mass of melt was not conserved in initial melt mass calculation.")
+            raise Exception(
+                f"Mass of melt was not conserved in initial melt mass calculation.\n"
+                f"Inital oxide mass: {sum(self.initial_oxide_melt_masses.values())}\n"
+                f"Initial element mass: {sum(self.initial_element_melt_masses.values())}\n"
+                f"Initial melt mass: {initial_melt_mass}"
+            )
         return initial_melt_mass
 
     def __get_initial_activty_coefficients(self):
