@@ -682,7 +682,7 @@ def theia_mixing(guess_initial_composition: dict, target_composition: dict, bse_
     while abs(residual_error) > sum_residuals_for_success:  # while total residual error is greater than a small number
         data = __monte_carlo_search(initial_composition, temperature, vmf)  # run the Monte Carlo search
         recondensed_model = recondense_vapor(
-            melt_element_masses=data["liquid_cation_at_vmf"], bulk_vapor_element_masses=data["vapor_element_at_vmf"],
+            melt_element_masses=data["liquid_cation_mass_at_vmf"], bulk_vapor_element_masses=data["vapor_element_mass_at_vmf"],
             vapor_loss_fraction=vapor_loss_fraction, oxides=list(initial_composition.keys())
         )
         for key in recondensed_model.keys():
