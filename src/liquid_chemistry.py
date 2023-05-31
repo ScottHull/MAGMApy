@@ -154,7 +154,8 @@ class LiquidActivity:
             initial_melt_mass += oxide_mass
             self.initial_oxide_melt_masses[base_oxide] += oxide_mass
         # check conservation of mass between all three values
-        if sum(self.initial_oxide_melt_masses.values()) != sum(self.initial_element_melt_masses.values()) != initial_melt_mass:
+        if abs(sum(self.initial_oxide_melt_masses.values()) - sum(self.initial_element_melt_masses.values())) > \
+                10 ** -3 and abs(initial_melt_mass - sum(self.initial_element_melt_masses.values())) > 10 ** -3:
             raise Exception(
                 f"Mass of melt was not conserved in initial melt mass calculation.\n"
                 f"Inital oxide mass: {sum(self.initial_oxide_melt_masses.values())}\n"
