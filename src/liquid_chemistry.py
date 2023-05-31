@@ -148,8 +148,11 @@ class LiquidActivity:
             for element in oxide_stoich.keys():
                 if element not in self.initial_element_melt_masses.keys():
                     self.initial_element_melt_masses.update({element: 0.0})
+                if base_oxide not in self.initial_oxide_melt_masses.keys():
+                    self.initial_oxide_melt_masses.update({base_oxide: 0.0})
                 self.initial_element_melt_masses[element] += oxide_mass / oxide_mw * self.composition.get_molecule_mass(element)
             initial_melt_mass += oxide_mass
+            self.initial_oxide_melt_masses[base_oxide] += oxide_mass
         # check conservation of mass between all three values
         if sum(self.initial_oxide_melt_masses.values()) != sum(self.initial_element_melt_masses.values()) != initial_melt_mass:
             raise Exception(
