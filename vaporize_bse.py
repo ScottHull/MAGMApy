@@ -22,6 +22,7 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import labellines
+from adjustText import adjust_text
 
 # use colorblind-friendly colors
 plt.style.use('seaborn-colorblind')
@@ -36,7 +37,7 @@ runs = [
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 74.0,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
         "run_name": "Half-Earths Model",
@@ -45,7 +46,7 @@ runs = [
         "disk_theia_mass_fraction": 51.97,  # %
         "disk_mass": 1.70,  # lunar masses
         "vapor_loss_fraction": 16.0,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 
@@ -424,21 +425,21 @@ for index, run in enumerate(runs):
     magma_species = magma_species2
     # plot arrows at the bottom of the plot to indicate the range of volatility
     ax.arrow(
-        0, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        -0.5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        3, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Refractory", xy=(3 / 2, 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        "Refractory", xy=(2 / 2, 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        3, 10 ** -0.9, 2, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        5, 10 ** -0.9, -2, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
@@ -447,14 +448,14 @@ for index, run in enumerate(runs):
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        8, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        8, 10 ** -0.9, -2.5, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Moderately Volatile", xy=((8 - 3 / 2)
+        "Moderately Volatile", xy=((8.5 - 3 / 2)
                                    , 10 ** -0.8), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
@@ -531,7 +532,7 @@ ax.set_ylim(bottom=10 ** -1, top=10 ** 2.5)
 ax.set_yscale("log")
 ax.legend(fontsize=18)
 plt.tight_layout()
-plt.savefig("melt_spider_plot.png", format='png', dpi=300)
+plt.savefig("bse_melt_spider_plot.png", format='png', dpi=300)
 plt.show()
 
 # ========================= VAPOR ELEMENTS AS A FUNCTION OF VOLATILITY =========================
@@ -819,93 +820,103 @@ plt.savefig("bse_k_na_vapor_comp.png", dpi=300)
 
 
 # ================== Plot the mass fraction of each element lost relative to initial ==================
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+texts = []
 for index, run in enumerate(runs):
     run_name = run['run_name']
     vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
     mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
     # get the loss fraction of each element
-    loss_fraction = {element: mass_distribution.loc[element, 'escaping vapor mass'] / (mass_distribution.loc[element, 'melt mass'] + mass_distribution.loc[element, 'bulk vapor mass']) * 100.0 for element in elements}
+    loss_fraction = {element: mass_distribution.loc['escaping vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
     # sort cations by 50% condensation temperature
     cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    # convert loss fraction to a LaTex table
+    table = pd.DataFrame(loss_fraction, index=['loss fraction']).to_latex()
+    # save the table to a file
+    with open(f"{run_name}_loss_fraction.tex", 'w') as f:
+        f.write(table)
+    # remove O from the list of cations
+    cations.remove('O')
     # plot arrows at the bottom of the plot to indicate the range of volatility
     ax.arrow(
-        0, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        -0.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        3, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Refractory", xy=(3 / 2, 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        "Refractory", xy=(2 / 2, 10 ** -4.4), xycoords="data", horizontalalignment="center", verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        3, 10 ** -0.9, 2, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        5, 10 ** -0.9, -2, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Transitional", xy=((5 - 2 / 2), 10 ** -0.8), xycoords="data", horizontalalignment="center",
+        "Transitional", xy=((5 - 2 / 2), 10 ** -4.4), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        8, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        8, 10 ** -4.5, -2.5, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Moderately Volatile", xy=((8 - 3 / 2)
-                                   , 10 ** -0.8), xycoords="data", horizontalalignment="center",
+        "Moderately Volatile", xy=((8.5 - 3 / 2)
+                                   , 10 ** -4.4), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     # get a unique color for each oxide
     ax.plot(
-        magma_species,
-        np.array([melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
-                                                                        for species in magma_species],
+        cations, [loss_fraction[cation] for cation in cations],
         linewidth=4,
         color=color_cycle[index],
         label=run['run_name']
     )
     # scatter the loss fraction on top of the line
     ax.scatter(
-        magma_species,
-        np.array([melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
-                                                                        for species in magma_species],
+        cations, [loss_fraction[cation] for cation in cations],
         color=color_cycle[index],
         s=100,
         zorder=10
     )
-    # scatter the melt abundance on top of the line
-    ax.scatter(
-        magma_species,
-        np.array([recondensed_melt[species] for species in magma_species]) * 100 / [bulk_moon_composition[species]
-                                                                                    for species in magma_species],
-        color=color_cycle[index],
-        s=100,
-        marker='d',
-        zorder=10
-    )
-ax.plot(
-    [], [], linewidth=4, linestyle="--", color='black', label="Including Retained\nVapor Recondensation"
-)
+    # annotate the loss fraction on top of the scatter
+    for i in range(0, len(cations)):
+        label = f"{loss_fraction[cations[i]]:.2f}%"
+        # if the loss fraction is less than 1%, then use scientific notation with 1 decimal place
+        if loss_fraction[cations[i]] < 0.01:
+            label = f"{loss_fraction[cations[i]]:.1e}%"
+        x = i
+        y = loss_fraction[cations[i]]
+        # add noise to the x and y coordinates to avoid overlapping text
+        # x += np.random.normal(-0.1 * x, 0.1 * x)
+        # y += np.random.normal(-0.2 * y, 0.2 * y)
+        # ax.annotate(
+        #     label, xy=(x, y), xycoords="data",
+        #     horizontalalignment="center", verticalalignment="bottom", fontsize=12, fontweight="bold",
+        #     color=color_cycle[index], backgroundcolor="w"
+        # )
 
 ax.tick_params(axis='both', which='major', labelsize=20)
-ax.set_xticklabels([format_species_string(species) for species in magma_species], rotation=45)
-ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="Bulk Moon")
-ax.set_ylabel("Melt Species Mass (Relative to Bulk Moon)", fontsize=20)
+ax.set_ylabel("Mass Loss Fraction", fontsize=20)
 ax.grid()
-ax.set_ylim(bottom=10 ** -1, top=10 ** 2.5)
-ax.set_yscale("log")
+ax.set_yscale('log')
+ax.set_ylim(bottom=10 ** -5, top=10 ** 2)
 ax.legend(fontsize=18)
 plt.tight_layout()
+plt.savefig("bse_vaporize_mass_loss_fraction.png", dpi=300)
+plt.show()
 
 
 

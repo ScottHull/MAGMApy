@@ -243,7 +243,7 @@ def run_full_MAGMApy(composition, target_composition, temperature, to_vmf=90.0, 
         output_interval = 100
         if t.weight_fraction_vaporized * 100.0 > 5:  # vmf changes very fast towards end of simulation
             output_interval = 5
-        if 80 < t.weight_fraction_vaporized:
+        if 80 < t.weight_fraction_vaporized * 100:
             output_interval = 50
         l.calculate_activities(temperature=temperature)
         g.calculate_pressures(temperature=temperature, liquid_system=l)

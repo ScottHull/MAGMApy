@@ -195,14 +195,18 @@ if RUN_NEW_SIMULATIONS:
                     # __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}")
                     #             run_path = f"{root_path}{run_name}_{lbc}_{m}"
                     #             run_name = f"{run_name}_{lbc}_{m}"
-                    futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name,
-                                                    f"{root_path}{run_name}_{model}_{m}"): run_name})
-        for future in as_completed(futures):
-            r = futures[future]
-            try:
-                data = future.result()
-            except Exception as exc:
-                print('%r generated an exception: %s' % (r, exc))
+                    if NUM_THREADS > 1:
+                        futures.update({executor.submit(__run, run, bse_composition, lbc, m, run_name,
+                                                        f"{root_path}{run_name}_{model}_{m}"): run_name})
+                    else:
+                        __run(run, bse_composition, lbc, m, run_name, f"{root_path}{run_name}_{model}_{m}")
+        if NUM_THREADS > 1:
+            for future in as_completed(futures):
+                r = futures[future]
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (r, exc))
 
 # get the range of ejecta compositions and theia compositions
 ejecta_compositions = {}
