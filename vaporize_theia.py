@@ -570,8 +570,8 @@ for i, s in enumerate(ejecta_compositions.keys()):
         cations = list(ejecta_data[s]['recondensed__lost_vapor_element_masses'].keys())
         cations = list(reversed(
             sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-        total_mass = {cation: ejecta_data[s]['recondensed__lost_vapor_element_masses'][cation] + ejecta_data[s]['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
-        loss_fraction = {cation: ejecta_data[s]['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation in cations}
+        total_mass = {cation: ejecta_data['recondensed__original_melt_element_masses'][cation] + ejecta_data['recondensed__lost_vapor_element_masses'][cation] + ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
+        loss_fraction = {cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation in cations}
         axs[to_index].plot(
             [i for i in cations if i != "O"], [loss_fraction[cation] for cation in cations if cation != "O"],
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
