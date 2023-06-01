@@ -579,10 +579,17 @@ for i, s in enumerate(ejecta_compositions.keys()):
     loss_fraction_not_recondensed = {
         cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation
         in cations}
-    axs[to_index].plot(
-        [i for i in cations if i != "O"], [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
-        color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
-    )
+    if "_not_recondensed" in s:
+        axs[to_index].plot(
+            [i for i in cations if i != "O"],
+            [loss_fraction_not_recondensed[cation] for cation in cations if cation != "O"],
+            color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
+        )
+    else:
+        axs[to_index].plot(
+            [i for i in cations if i != "O"], [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
+            color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
+        )
 
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
