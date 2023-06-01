@@ -565,10 +565,10 @@ for i, s in enumerate(ejecta_compositions.keys()):
         to_index = 1
     if to_index == 0:
         label = base_model
-    cations = list(ejecta_compositions[s]['recondensed___lost_vapor_element_masses'].keys())
+    cations = list(ejecta_compositions[s]['recondensed__lost_vapor_element_masses'].keys())
     cations = list(reversed(
         sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-    total_mass = {cation: ejecta_compositions[s]['recondensed___lost_vapor_element_masses'][cation] + ejecta_compositions[s]['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
+    total_mass = {cation: ejecta_compositions[s]['recondensed__lost_vapor_element_masses'][cation] + ejecta_compositions[s]['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
     loss_fraction = {cation: ejecta_compositions[s]['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation in cations}
     axs[to_index].plot(
         [i for i in cations if i != "O"], [loss_fraction[cation] for cation in cations if cation != "O"],
