@@ -589,7 +589,7 @@ for index, ax in enumerate(axs):
 
 axs[0].set_ylabel("Mass Loss Fraction (%)", fontsize=20)
 plt.tight_layout()
-axs[1].legend(loc='lower right', fontsize=16)
+axs[1].legend(loc='lower right', fontsize=14)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
