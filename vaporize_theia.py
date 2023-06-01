@@ -600,7 +600,8 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
-
+axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
+axs[1].set_title("Mass Loss Fraction (With Recondensation)", fontsize=16)
 axs[0].set_ylabel("Mass Loss Fraction (%)", fontsize=20)
 plt.tight_layout()
 # axs[1].legend(loc='lower right', fontsize=14)
