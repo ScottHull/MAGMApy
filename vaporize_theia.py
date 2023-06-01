@@ -557,33 +557,32 @@ axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 for i, s in enumerate(ejecta_compositions.keys()):
     ejecta_data = eval(open(f"{root_path}/{s}" + "/ejecta_composition.csv", 'r').read())
-    if not "not_recondensed" in s:
-        base_model = s.split("_")[1]
-        to_index = 1
-        label = None
-        if "_not_recondensed" in s:
-            to_index = 0
-        if "Half-Earths" in s:
-            to_index += 2
-        if to_index == 0:
-            label = base_model
-        cations = list(ejecta_data['recondensed__lost_vapor_element_masses'].keys())
-        cations = list(reversed(
-            sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-        total_mass = {cation: ejecta_data['recondensed__original_melt_element_masses'][cation] +
-                              ejecta_data['recondensed__lost_vapor_element_masses'][cation] +
-                              ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
-        total_vapor_mass = {cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] + ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
-        loss_fraction_recondensed = {
-            cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
-            in cations}
-        loss_fraction_not_recondensed = {
-            cation: total_vapor_mass / total_mass[cation] * 100 for cation
-            in cations}
-        axs[to_index].plot(
-            [i for i in cations if i != "O"], [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
-            color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
-        )
+    base_model = s.split("_")[1]
+    to_index = 1
+    label = None
+    if "_not_recondensed" in s:
+        to_index = 0
+    if "Half-Earths" in s:
+        to_index += 2
+    if to_index == 0:
+        label = base_model
+    cations = list(ejecta_data['recondensed__lost_vapor_element_masses'].keys())
+    cations = list(reversed(
+        sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    total_mass = {cation: ejecta_data['recondensed__original_melt_element_masses'][cation] +
+                          ejecta_data['recondensed__lost_vapor_element_masses'][cation] +
+                          ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
+    total_vapor_mass = {cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] + ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
+    loss_fraction_recondensed = {
+        cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
+        in cations}
+    loss_fraction_not_recondensed = {
+        cation: total_vapor_mass / total_mass[cation] * 100 for cation
+        in cations}
+    axs[to_index].plot(
+        [i for i in cations if i != "O"], [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
+        color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
+    )
 
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
