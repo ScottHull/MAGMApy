@@ -567,7 +567,7 @@ for i, s in enumerate(ejecta_compositions.keys()):
             to_index = 1
         if to_index == 0:
             label = base_model
-        cations = list(ejecta_data[s]['recondensed__lost_vapor_element_masses'].keys())
+        cations = list(ejecta_data['recondensed__lost_vapor_element_masses'].keys())
         cations = list(reversed(
             sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
         total_mass = {cation: ejecta_data['recondensed__original_melt_element_masses'][cation] + ejecta_data['recondensed__lost_vapor_element_masses'][cation] + ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
