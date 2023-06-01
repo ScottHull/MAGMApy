@@ -587,6 +587,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
 
+plt.supylabel("Mass Loss Fraction (%)", fontsize=20)
 plt.tight_layout()
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
