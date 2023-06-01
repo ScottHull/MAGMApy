@@ -577,7 +577,7 @@ for i, s in enumerate(ejecta_compositions.keys()):
         cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
         in cations}
     loss_fraction_not_recondensed = {
-        cation: total_vapor_mass / total_mass[cation] * 100 for cation
+        cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation
         in cations}
     axs[to_index].plot(
         [i for i in cations if i != "O"], [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
