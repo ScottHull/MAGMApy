@@ -553,7 +553,7 @@ for model in all_models:
 
 # ================================= Loss Fraction of From Each Model =================================
 # assume recondensed model only
-fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
+fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 for i, s in enumerate(ejecta_compositions.keys()):
@@ -565,7 +565,7 @@ for i, s in enumerate(ejecta_compositions.keys()):
         mm = None
         if "Half-Earths" in s:
             to_index = 1
-        if to_index == 0:
+        if to_index == 1:
             label = base_model
         cations = list(ejecta_data['recondensed__lost_vapor_element_masses'].keys())
         cations = list(reversed(
@@ -587,10 +587,9 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
 
-plt.supylabel("Mass Loss Fraction (%)", fontsize=20)
+axs[0].set_ylabel("Mass Loss Fraction (%)", fontsize=20)
 plt.tight_layout()
-fig.legend(loc=7)
-fig.subplots_adjust(right=0.76)
+axs[0].legend(loc='lower right', fontsize=16)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
