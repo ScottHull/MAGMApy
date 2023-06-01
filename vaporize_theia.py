@@ -576,10 +576,16 @@ for i, s in enumerate(ejecta_compositions.keys()):
             [i for i in cations if i != "O"], [loss_fraction[cation] for cation in cations if cation != "O"],
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
         )
+
+letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.grid()
     ax.set_yscale('log')
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
 
 plt.tight_layout()
 fig.legend(loc=7)
