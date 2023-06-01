@@ -78,6 +78,26 @@ runs = [
 ]
 
 
+def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_name,
+                                 escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf):
+    if os.path.exists(f"{run_name}_mass_distribution.csv"):
+        os.remove(f"{run_name}_mass_distribution.csv")
+    with open(f"{run_name}_mass_distribution.csv", "w") as f:
+        header = "component," + ",".join([str(i) for i in melt_mass_at_vmf.keys()]) + "\n"
+        f.write(header)
+        f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
+        f.write("bulk vapor mass," + ",".join([str(i) for i in bulk_vapor_mass_at_vmf.values()]) + "\n")
+        f.write("bulk system mass," + ",".join([str(i) for i in (np.array(list(melt_mass_at_vmf.values())) + np.array(
+            list(bulk_vapor_mass_at_vmf.values()))).tolist()]) + "\n")
+        f.write("escaping vapor mass," + ",".join([str(i) for i in escaping_vapor_mass_at_vmf.values()]) + "\n")
+        f.write("retained vapor mass," + ",".join([str(i) for i in retained_vapor_mass_at_vmf.values()]) + "\n")
+        f.write(
+            "recondensed melt mass," + ",".join([str(i) for i in (np.array(list(melt_mass_at_vmf.values())) + np.array(
+                list(retained_vapor_mass_at_vmf.values()))).tolist()]) + "\n")
+    print(f"wrote file {run_name}_mass_distribution.csv")
+    f.close()
+
+
 def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, run_path):
     if not os.path.exists(run_path):
         os.mkdir(run_path)
@@ -168,7 +188,7 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
     compositions_array = np.array([["{:.2e}".format(value) for value in row] for row in compositions_array])
     # for values > 1e-2, convert to 2 decimal places number
     compositions_array = np.array([[float(value) if float(value) > 1e-2 else value for value in row] for row in
-                                      compositions_array])
+                                   compositions_array])
     # get the compositions as a list of lists
     compositions_list = compositions_array.tolist()
     # create the table
@@ -226,8 +246,8 @@ theia_compositions_df = pd.DataFrame(theia_compositions).transpose()
 for run in runs:
     run_name = run["run_name"]
     cols = [
-        f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
-    ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"]
+               f"nr_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"
+           ] + [f"r_{oxide}" for oxide in bse_composition.keys() if oxide != "Fe2O3"]
     # create placeholder dataframes
     ejecta_compositions_df_subset = pd.DataFrame(columns=cols)
     theia_compositions_df_subset = pd.DataFrame(columns=cols)
