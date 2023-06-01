@@ -30,7 +30,7 @@ def recondense_vapor(melt_element_masses: dict, bulk_vapor_element_masses: dict,
                                             for element in total_retained_element_masses.keys()}
     return {
         "original_melt_element_masses": recondensed_melt_element_masses,
-        "bulk_vapor_element_masses": lost_vapor_element_masses,
+        "bulk_vapor_element_masses": bulk_vapor_element_masses,
         "lost_vapor_element_masses": lost_vapor_element_masses,
         "retained_vapor_element_masses": retained_vapor_element_masses,
         "recondensed_melt_element_masses": recondensed_melt_element_masses,

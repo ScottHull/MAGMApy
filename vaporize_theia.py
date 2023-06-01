@@ -549,3 +549,39 @@ for model in all_models:
     ax.legend(loc='lower right', fontsize=20)
     plt.tight_layout()
     # plt.show()
+
+
+# ================================= Loss Fraction of From Each Model =================================
+# assume recondensed model only
+fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
+axs = axs.flatten()
+pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
+for i, s in enumerate(ejecta_compositions.keys()):
+    to_index = 0
+    base_model = s.split("_")[1]
+    label = None
+    mm = None
+    if "Half-Earths" in s:
+        to_index = 1
+    if to_index == 0:
+        label = base_model
+        cations = list(ejecta_compositions[s]['recondensed___lost_vapor_element_masses'].keys())
+    cations = list(reversed(
+        sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    total_mass = {cation: ejecta_compositions[s]['recondensed___lost_vapor_element_masses'][cation] + ejecta_compositions[s]['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
+    loss_fraction = {cation: ejecta_compositions[s]['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation in cations}
+    axs[to_index].plot(
+        [i for i in cations if i != "O"], [loss_fraction[cation] for cation in cations if cation != "O"],
+        color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
+    )
+for index, ax in enumerate(axs):
+    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.grid()
+    ax.set_yscale('log')
+
+plt.tight_layout()
+fig.legend(loc=7)
+fig.subplots_adjust(right=0.76)
+# add legend to the right of the figure
+plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
+plt.show()
