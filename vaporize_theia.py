@@ -602,8 +602,9 @@ for index, ax in enumerate(axs):
     )
 axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
 axs[1].set_title("Mass Loss Fraction (With Recondensation)", fontsize=16)
-for ax in axs:
-    ax.set_ylabel("Mass Loss Fraction (%)", fontsize=20)
+for index, ax in enumerate(axs):
+    if index % 2 == 0:
+        ax.set_ylabel("Mass Loss Fraction (%)", fontsize=20)
 plt.tight_layout()
 # axs[1].legend(loc='lower right', fontsize=14)
 # add legend to the right of the figure
