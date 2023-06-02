@@ -603,10 +603,10 @@ for index, ax in enumerate(axs):
 axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
 axs[1].set_title("Mass Loss Fraction (With Recondensation)", fontsize=16)
 plt.tight_layout()
+axs[0].set_ylabel("Mass Loss Fraction (%)", fontsize=20, y=-0.2)
 # axs[1].legend(loc='lower right', fontsize=14)
 # add legend to the right of the figure
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
-axs[0].set_ylabel("Mass Loss Fraction (%)", fontsize=20, y=-0.5)
 plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
