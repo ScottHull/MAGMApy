@@ -918,7 +918,104 @@ plt.tight_layout()
 plt.savefig("bse_vaporize_mass_loss_fraction.png", dpi=300)
 plt.show()
 
+# ================== Plot the bulk vapor fraction of each element ==================
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+texts = []
+for index, run in enumerate(runs):
+    run_name = run['run_name']
+    vapor_loss_fraction = run['vapor_loss_fraction']
+    # read in the ejecta composition file
+    mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+    # get the loss fraction of each element
+    vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
+    # sort cations by 50% condensation temperature
+    cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    # convert loss fraction to a LaTex table
+    table = pd.DataFrame(loss_fraction, index=['vapor mass fraction']).to_latex()
+    # save the table to a file
+    with open(f"{run_name}_vapor_mass_fraction.tex", 'w') as f:
+        f.write(table)
+    # remove O from the list of cations
+    cations.remove('O')
+    # plot arrows at the bottom of the plot to indicate the range of volatility
+    ax.arrow(
+        -0.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        2.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Refractory", xy=(2 / 2, 10 ** -4.4), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        2.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        5.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Transitional", xy=((5 - 2 / 2), 10 ** -4.4), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        5.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        8, 10 ** -4.5, -2.5, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Moderately Volatile", xy=((8.5 - 3 / 2)
+                                   , 10 ** -4.4), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    # get a unique color for each oxide
+    ax.plot(
+        cations, [vapor_fraction[cation] for cation in cations],
+        linewidth=4,
+        color=color_cycle[index],
+        label=run['run_name']
+    )
+    # scatter the loss fraction on top of the line
+    ax.scatter(
+        cations, [vapor_fraction[cation] for cation in cations],
+        color=color_cycle[index],
+        s=100,
+        zorder=10
+    )
+    # annotate the loss fraction on top of the scatter
+    for i in range(0, len(cations)):
+        label = f"{vapor_fraction[cations[i]]:.2f}%"
+        # if the loss fraction is less than 1%, then use scientific notation with 1 decimal place
+        if vapor_fraction[cations[i]] < 0.01:
+            label = f"{vapor_fraction[cations[i]]:.1e}%"
+        x = i
+        y = vapor_fraction[cations[i]]
+        # add noise to the x and y coordinates to avoid overlapping text
+        # x += np.random.normal(-0.1 * x, 0.1 * x)
+        # y += np.random.normal(-0.2 * y, 0.2 * y)
+        # ax.annotate(
+        #     label, xy=(x, y), xycoords="data",
+        #     horizontalalignment="center", verticalalignment="bottom", fontsize=12, fontweight="bold",
+        #     color=color_cycle[index], backgroundcolor="w"
+        # )
 
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.set_ylabel("Vapor Mass Fraction", fontsize=20)
+ax.grid()
+ax.set_yscale('log')
+ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
+ax.legend(fontsize=18)
+plt.tight_layout()
+plt.savefig("bse_vaporize_element_vapor_mass_fraction.png", dpi=300)
+plt.show()
 
 
 
