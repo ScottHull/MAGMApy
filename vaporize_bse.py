@@ -22,7 +22,6 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import labellines
-from adjustText import adjust_text
 
 # use colorblind-friendly colors
 plt.style.use('seaborn-colorblind')
@@ -820,8 +819,8 @@ plt.savefig("bse_k_na_vapor_comp.png", dpi=300)
 
 
 # ================== Plot the mass fraction of each element lost relative to initial ==================
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(111)
+fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
+ax = axs[0]
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
 for index, run in enumerate(runs):
@@ -909,18 +908,17 @@ for index, run in enumerate(runs):
         # )
 
 ax.tick_params(axis='both', which='major', labelsize=20)
-ax.set_ylabel("Mass Loss Fraction", fontsize=20)
+ax.set_ylabel("Mass Loss Fraction (%)", fontsize=20)
 ax.grid()
 ax.set_yscale('log')
-ax.set_ylim(bottom=10 ** -5, top=10 ** 2)
-ax.legend(fontsize=18)
-plt.tight_layout()
-plt.savefig("bse_vaporize_mass_loss_fraction.png", dpi=300)
-plt.show()
+ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
+# ax.legend(fontsize=18)
+# plt.tight_layout()
+# plt.savefig("bse_vaporize_mass_loss_fraction.png", dpi=300)
+# plt.show()
 
 # ================== Plot the bulk vapor fraction of each element ==================
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(111)
+ax = axs[1]
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
 for index, run in enumerate(runs):
@@ -1008,7 +1006,7 @@ for index, run in enumerate(runs):
         # )
 
 ax.tick_params(axis='both', which='major', labelsize=20)
-ax.set_ylabel("Vapor Mass Fraction", fontsize=20)
+ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 ax.grid()
 ax.set_yscale('log')
 ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
