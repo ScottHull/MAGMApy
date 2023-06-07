@@ -756,9 +756,9 @@ for run_index, run in enumerate(runs):
 #         fontweight="bold", fontsize=20
 #     )
 
-for ax, t in [(ax, r"$\delta \rm ^{41}K_{Theia}$")]:
+for ax, t in [(ax, r"$\Delta \rm ^{41}K_{Theia}$")]:
     # ax.set_xlabel(r"$\Delta_{\rm Lunar-BSE}$ " + f"({t})", fontsize=20)
-    ax.set_xlabel(r"$\delta \rm ^{41}K_{Lunar-BSE}$", fontsize=20)
+    ax.set_xlabel(r"$\Delta \rm ^{41}K_{Lunar-BSE}$", fontsize=20)
 # turn of y-axis labels for all subplots
 ax.set_yticklabels([])
 ax.set_yticks([])
