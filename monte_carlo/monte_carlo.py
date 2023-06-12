@@ -8,7 +8,7 @@ from src.thermosystem import ThermoSystem
 from src.report import Report
 from src.plots import collect_data
 
-from recondense.recondense import recondense_vapor
+from recondense.recondense import recondense_vapor, no_recondense_vapor
 
 import os
 import sys
@@ -685,8 +685,14 @@ def theia_mixing(guess_initial_composition: dict, target_composition: dict, bse_
             melt_element_masses=data["liquid_cation_mass_at_vmf"], bulk_vapor_element_masses=data["vapor_element_mass_at_vmf"],
             vapor_loss_fraction=vapor_loss_fraction, oxides=list(initial_composition.keys())
         )
+        not_recondensed_model = no_recondense_vapor(
+            melt_element_masses=data["liquid_cation_mass_at_vmf"], bulk_vapor_element_masses=data["vapor_element_mass_at_vmf"],
+            vapor_loss_fraction=vapor_loss_fraction, oxides=list(initial_composition.keys())
+        )
         for key in recondensed_model.keys():
             data[f"recondensed__{key}"] = recondensed_model[key]
+        for key in not_recondensed_model.keys():
+            data[f"not_recondensed__{key}"] = not_recondensed_model[key]
         target_melt_composition = data['liquid_composition_at_vmf']
         if target_melt_composition_type == 'recondensed':
             target_melt_composition = recondensed_model['recondensed_melt_oxide_composition']

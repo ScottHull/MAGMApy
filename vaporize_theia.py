@@ -79,10 +79,13 @@ runs = [
 
 
 def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_name,
-                                 escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf):
+                                 escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf, to_path):
     if os.path.exists(f"{run_name}_mass_distribution.csv"):
         os.remove(f"{run_name}_mass_distribution.csv")
-    with open(f"{run_name}_mass_distribution.csv", "w") as f:
+    # if to_path doesn't end with a /, add one
+    if to_path[-1] != "/":
+        to_path += "/"
+    with open(f"{to_path}{run_name}_mass_distribution.csv", "w") as f:
         header = "component," + ",".join([str(i) for i in melt_mass_at_vmf.keys()]) + "\n"
         f.write(header)
         f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
@@ -122,6 +125,10 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
     theia_data = get_theia_composition(starting_composition=ejecta_data['ejecta_composition'],
                                        earth_composition=bse_composition, disk_mass=disk_mass_in_kg,
                                        earth_mass=earth_mass_in_disk_in_kg)
+    write_mass_distribution_file(
+        melt_mass_at_vmf=, bulk_vapor_mass_at_vmf, run_name,
+        escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf, to_path
+    )
     # write the ejecta data (dictionary) to a file in text format
     with open(run_path + "/ejecta_composition.csv", "w") as f:
         f.write(str({k: v for k, v in ejecta_data.items() if k not in ['c', 'l', 'g', 't']}))
@@ -623,7 +630,7 @@ for index, run in enumerate(runs):
     run_name = run['run_name']
     vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
-    mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+    mass_distribution = pd.read_csv(f"{}{run_name}_mass_distribution.csv", index_col='component')
     # get the loss fraction of each element
     vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
     # sort cations by 50% condensation temperature
