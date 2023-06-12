@@ -126,8 +126,12 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
                                        earth_composition=bse_composition, disk_mass=disk_mass_in_kg,
                                        earth_mass=earth_mass_in_disk_in_kg)
     write_mass_distribution_file(
-        melt_mass_at_vmf=, bulk_vapor_mass_at_vmf, run_name,
-        escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf, to_path
+        melt_mass_at_vmf=ejecta_data['vapor_element_mass_at_vmf'],
+        bulk_vapor_mass_at_vmf=ejecta_data['recondensed__bulk_vapor_element_masses'],
+        run_name=run_name,
+        escaping_vapor_mass_at_vmf=ejecta_data['recondensed__lost_vapor_element_masses'],
+        retained_vapor_mass_at_vmf=ejecta_data['recondensed__retained_vapor_element_masses'],
+        to_path=run_path
     )
     # write the ejecta data (dictionary) to a file in text format
     with open(run_path + "/ejecta_composition.csv", "w") as f:
@@ -572,15 +576,18 @@ for i, s in enumerate(ejecta_compositions.keys()):
         to_index += 2
     if to_index == 0:
         label = base_model
-    cations = list(ejecta_data['recondensed__lost_vapor_element_masses'].keys())
+    prefix = "recondensed"
+    if "_not_recondensed" in s:
+        prefix = "not_recondensed"
+    cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
     cations = list(reversed(
         sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-    total_mass = {cation: ejecta_data['recondensed__original_melt_element_masses'][cation] +
-                          ejecta_data['recondensed__lost_vapor_element_masses'][cation] +
-                          ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
-    total_vapor_mass = {cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] + ejecta_data['recondensed__retained_vapor_element_masses'][cation] for cation in cations}
+    total_mass = {cation: ejecta_data[f'{prefix}__original_melt_element_masses'][cation] +
+                          ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
+                          ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
+    total_vapor_mass = {cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] + ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
     loss_fraction_recondensed = {
-        cation: ejecta_data['recondensed__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
+        cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
         in cations}
     loss_fraction_not_recondensed = {
         cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation
@@ -626,17 +633,20 @@ fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
-for index, run in enumerate(runs):
+for i, s in enumerate(ejecta_compositions.keys()):
+    cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
+    cations = list(reversed(
+        sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
     run_name = run['run_name']
     vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
-    mass_distribution = pd.read_csv(f"{}{run_name}_mass_distribution.csv", index_col='component')
+    mass_distribution = eval(open(f"{root_path}/{s}" + "/mass_distribution.csv", 'r').read())
     # get the loss fraction of each element
-    vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
+    vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in cations}
     # sort cations by 50% condensation temperature
-    cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    cations = list(reversed(sorted(list(vapor_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
     # convert loss fraction to a LaTex table
-    table = pd.DataFrame(loss_fraction, index=['vapor mass fraction']).to_latex()
+    table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction']).to_latex()
     # save the table to a file
     with open(f"{run_name}_vapor_mass_fraction.tex", 'w') as f:
         f.write(table)
