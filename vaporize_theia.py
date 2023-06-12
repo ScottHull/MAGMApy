@@ -82,10 +82,11 @@ def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_n
                                  escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf, to_path):
     if os.path.exists(f"{run_name}_mass_distribution.csv"):
         os.remove(f"{run_name}_mass_distribution.csv")
+    tp_copy = to_path
     # if to_path doesn't end with a /, add one
-    if to_path[-1] != "/":
-        to_path += "/"
-    with open(f"{to_path}{run_name}_mass_distribution.csv", "w") as f:
+    if tp_copy[-1] != "/":
+        tp_copy += "/"
+    with open(f"{tp_copy}{run_name}_mass_distribution.csv", "w") as f:
         header = "component," + ",".join([str(i) for i in melt_mass_at_vmf.keys()]) + "\n"
         f.write(header)
         f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
