@@ -80,13 +80,13 @@ runs = [
 
 def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_name,
                                  escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf, to_path):
-    if os.path.exists(f"{run_name}_mass_distribution.csv"):
-        os.remove(f"{run_name}_mass_distribution.csv")
+    if os.path.exists(f"mass_distribution.csv"):
+        os.remove(f"mass_distribution.csv")
     tp_copy = to_path
     # if to_path doesn't end with a /, add one
     if tp_copy[-1] != "/":
         tp_copy += "/"
-    with open(f"{tp_copy}{run_name}_mass_distribution.csv", "w") as f:
+    with open(f"{tp_copy}mass_distribution.csv", "w") as f:
         header = "component," + ",".join([str(i) for i in melt_mass_at_vmf.keys()]) + "\n"
         f.write(header)
         f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
@@ -98,7 +98,7 @@ def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_n
         f.write(
             "recondensed melt mass," + ",".join([str(i) for i in (np.array(list(melt_mass_at_vmf.values())) + np.array(
                 list(retained_vapor_mass_at_vmf.values()))).tolist()]) + "\n")
-    print(f"wrote file {run_name}_mass_distribution.csv")
+    print(f"wrote file mass_distribution.csv")
     f.close()
 
 
