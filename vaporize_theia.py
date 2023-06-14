@@ -641,7 +641,7 @@ for i, s in enumerate(ejecta_compositions.keys()):
     run_name = run['run_name']
     vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
-    mass_distribution = eval(open(f"{root_path}/{s}" + "/mass_distribution.csv", 'r').read())
+    mass_distribution = pd.read_csv(f"{root_path}/{s}" + "/mass_distribution.csv", 'r')
     # get the loss fraction of each element
     vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in cations}
     # sort cations by 50% condensation temperature
