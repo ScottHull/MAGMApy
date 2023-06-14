@@ -630,11 +630,20 @@ plt.show()
 
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(111)
+fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
+axs = axs.flatten()
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
 for i, s in enumerate(ejecta_compositions.keys()):
+    base_model = s.split("_")[1]
+    to_index = 1
+    label = None
+    if "_not_recondensed" in s:
+        to_index = 0
+    if "Half-Earths" in s:
+        to_index += 2
+    if to_index == 0:
+        label = base_model
     cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
     cations = list(reversed(
         sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
