@@ -632,7 +632,6 @@ plt.show()
 # ================================= Vapor Mass Fraction of From Each Model =================================
 fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
-color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
 for index, s in enumerate(ejecta_compositions.keys()):
     base_model = s.split("_")[1]
@@ -645,7 +644,6 @@ for index, s in enumerate(ejecta_compositions.keys()):
     cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
     cations = list(reversed(
         sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-    run_name = run['run_name']
     vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
     mass_distribution = pd.read_csv(f"{root_path}/{s}" + "/mass_distribution.csv", index_col='component')
@@ -666,13 +664,13 @@ for index, s in enumerate(ejecta_compositions.keys()):
     axs[to_index].plot(
         cations, [vapor_fraction[cation] for cation in cations],
         linewidth=4,
-        color=color_cycle[index],
-        label=run['run_name']
+        color=colors[list(lunar_bulk_compositions).index(base_model)],
+        label=label
     )
     # scatter the loss fraction on top of the line
     axs[to_index].scatter(
         cations, [vapor_fraction[cation] for cation in cations],
-        color=color_cycle[index],
+        color=colors[list(lunar_bulk_compositions).index(base_model)],
         s=100,
         zorder=10
     )
