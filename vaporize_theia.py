@@ -127,8 +127,8 @@ def __run(run, bse_composition, lunar_bulk_composition, recondensed, run_name, r
                                        earth_composition=bse_composition, disk_mass=disk_mass_in_kg,
                                        earth_mass=earth_mass_in_disk_in_kg)
     write_mass_distribution_file(
-        melt_mass_at_vmf=ejecta_data['vapor_element_mass_at_vmf'],
-        bulk_vapor_mass_at_vmf=ejecta_data['recondensed__bulk_vapor_element_masses'],
+        melt_mass_at_vmf=ejecta_data['recondensed__original_melt_element_masses'],
+        bulk_vapor_mass_at_vmf=ejecta_data['vapor_element_mass_at_vmf'],
         run_name=run_name,
         escaping_vapor_mass_at_vmf=ejecta_data['recondensed__lost_vapor_element_masses'],
         retained_vapor_mass_at_vmf=ejecta_data['recondensed__retained_vapor_element_masses'],
@@ -644,7 +644,6 @@ for index, s in enumerate(ejecta_compositions.keys()):
     cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
     cations = list(reversed(
         sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-    vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
     mass_distribution = pd.read_csv(f"{root_path}/{s}" + "/mass_distribution.csv", index_col='component')
     # get the loss fraction of each element
