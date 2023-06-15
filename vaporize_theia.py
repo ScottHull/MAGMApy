@@ -630,18 +630,16 @@ plt.show()
 
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
-fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
 for i, s in enumerate(ejecta_compositions.keys()):
     base_model = s.split("_")[1]
-    to_index = 1
+    to_index = 0
     label = None
-    if "_not_recondensed" in s:
-        to_index = 0
     if "Half-Earths" in s:
-        to_index += 2
+        to_index = 1
     if to_index == 0:
         label = base_model
     cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
@@ -664,6 +662,22 @@ for i, s in enumerate(ejecta_compositions.keys()):
         f.write(table)
     # remove O from the list of cations
     cations.remove('O')
+    # get a unique color for each oxide
+    axs[to_index].plot(
+        cations, [vapor_fraction[cation] for cation in cations],
+        linewidth=4,
+        color=color_cycle[index],
+        label=run['run_name']
+    )
+    # scatter the loss fraction on top of the line
+    axs[to_index].scatter(
+        cations, [vapor_fraction[cation] for cation in cations],
+        color=color_cycle[index],
+        s=100,
+        zorder=10
+    )
+
+for ax in axs:
     # plot arrows at the bottom of the plot to indicate the range of volatility
     ax.arrow(
         -0.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
@@ -701,43 +715,16 @@ for i, s in enumerate(ejecta_compositions.keys()):
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
-    # get a unique color for each oxide
-    ax.plot(
-        cations, [vapor_fraction[cation] for cation in cations],
-        linewidth=4,
-        color=color_cycle[index],
-        label=run['run_name']
-    )
-    # scatter the loss fraction on top of the line
-    ax.scatter(
-        cations, [vapor_fraction[cation] for cation in cations],
-        color=color_cycle[index],
-        s=100,
-        zorder=10
-    )
-    # annotate the loss fraction on top of the scatter
-    for i in range(0, len(cations)):
-        label = f"{vapor_fraction[cations[i]]:.2f}%"
-        # if the loss fraction is less than 1%, then use scientific notation with 1 decimal place
-        if vapor_fraction[cations[i]] < 0.01:
-            label = f"{vapor_fraction[cations[i]]:.1e}%"
-        x = i
-        y = vapor_fraction[cations[i]]
-        # add noise to the x and y coordinates to avoid overlapping text
-        # x += np.random.normal(-0.1 * x, 0.1 * x)
-        # y += np.random.normal(-0.2 * y, 0.2 * y)
-        # ax.annotate(
-        #     label, xy=(x, y), xycoords="data",
-        #     horizontalalignment="center", verticalalignment="bottom", fontsize=12, fontweight="bold",
-        #     color=color_cycle[index], backgroundcolor="w"
-        # )
 
-ax.tick_params(axis='both', which='major', labelsize=20)
-ax.set_ylabel("Vapor Mass Fraction", fontsize=20)
-ax.grid()
-ax.set_yscale('log')
-ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
-ax.legend(fontsize=18)
+
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.grid()
+    ax.set_yscale('log')
+    ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
+axs[0].set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 plt.tight_layout()
+fig.legend(loc=7)
+fig.subplots_adjust(right=0.76)
 plt.savefig("theia_vaporize_element_vapor_mass_fraction.png", dpi=300)
 plt.show()
