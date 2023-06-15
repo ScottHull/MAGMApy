@@ -630,7 +630,7 @@ plt.show()
 
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
-fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
+fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 texts = []
 for index, s in enumerate(ejecta_compositions.keys()):
