@@ -634,7 +634,7 @@ fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
-for i, s in enumerate(ejecta_compositions.keys()):
+for index, s in enumerate(ejecta_compositions.keys()):
     base_model = s.split("_")[1]
     to_index = 0
     label = None
