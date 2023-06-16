@@ -820,7 +820,7 @@ plt.savefig("bse_k_na_vapor_comp.png", dpi=300)
 
 # ================== Plot the mass fraction of each element lost relative to initial ==================
 fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
-ax = axs[0]
+ax = axs[1]
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
 for index, run in enumerate(runs):
@@ -848,7 +848,7 @@ for index, run in enumerate(runs):
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Refractory", xy=(2 / 2, 10 ** -4.4), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        "Refractory", xy=(2 / 2, 10 ** -4.3), xycoords="data", horizontalalignment="center", verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
@@ -859,7 +859,7 @@ for index, run in enumerate(runs):
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Transitional", xy=((5 - 2 / 2), 10 ** -4.4), xycoords="data", horizontalalignment="center",
+        "Transitional", xy=((5 - 2 / 2), 10 ** -4.3), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
@@ -872,7 +872,7 @@ for index, run in enumerate(runs):
     # annotate in the center above the arrows
     ax.annotate(
         "Moderately Volatile", xy=((8.5 - 3 / 2)
-                                   , 10 ** -4.4), xycoords="data", horizontalalignment="center",
+                                   , 10 ** -4.3), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
@@ -908,7 +908,7 @@ for index, run in enumerate(runs):
         # )
 
 ax.tick_params(axis='both', which='major', labelsize=20)
-ax.set_ylabel("Mass Loss Fraction (%)", fontsize=20)
+ax.set_ylabel("Hydrodynamic Loss Fraction (%)", fontsize=20)
 ax.grid()
 ax.set_yscale('log')
 ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
@@ -918,7 +918,7 @@ ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
 # plt.show()
 
 # ================== Plot the bulk vapor fraction of each element ==================
-ax = axs[1]
+ax = axs[0]
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 texts = []
 for index, run in enumerate(runs):
@@ -931,7 +931,7 @@ for index, run in enumerate(runs):
     # sort cations by 50% condensation temperature
     cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
     # convert loss fraction to a LaTex table
-    table = pd.DataFrame(loss_fraction, index=['vapor mass fraction']).to_latex()
+    table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction']).to_latex()
     # save the table to a file
     with open(f"{run_name}_vapor_mass_fraction.tex", 'w') as f:
         f.write(table)
@@ -946,7 +946,7 @@ for index, run in enumerate(runs):
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Refractory", xy=(2 / 2, 10 ** -4.4), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        "Refractory", xy=(2 / 2, 10 ** -4.3), xycoords="data", horizontalalignment="center", verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
@@ -957,7 +957,7 @@ for index, run in enumerate(runs):
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Transitional", xy=((5 - 2 / 2), 10 ** -4.4), xycoords="data", horizontalalignment="center",
+        "Transitional", xy=((5 - 2 / 2), 10 ** -4.3), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
@@ -970,7 +970,7 @@ for index, run in enumerate(runs):
     # annotate in the center above the arrows
     ax.annotate(
         "Moderately Volatile", xy=((8.5 - 3 / 2)
-                                   , 10 ** -4.4), xycoords="data", horizontalalignment="center",
+                                   , 10 ** -4.3), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
