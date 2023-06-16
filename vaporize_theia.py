@@ -210,6 +210,24 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
         f.write(table)
 
 
+# ========================== PLOT THE LUNAR BULK COMPOSITIONS ==========================
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
+for model in lunar_bulk_compositions.keys():
+    ax.plot(
+        lunar_bulk_compositions.index.tolist(),
+        [lunar_bulk_compositions[model][oxide] / bse_composition[oxide] for oxide in lunar_bulk_compositions[model].keys() if oxide != "Fe2O3"],
+        color=colors[list(lunar_bulk_compositions).index(model)], linewidth=2.0, label=model
+    )
+ax.tick_params(axis='both', which='major', labelsize=16)
+ax.set_title("Lunar Bulk Composition", fontsize=16)
+ax.set_ylabel("Lunar Bulk Composition /  (%)", fontsize=16)
+ax.grid()
+ax.legend(fontsize=12)
+plt.tight_layout()
+plt.savefig("lunar_bulk_compositions.png", format='png', dpi=300)
+
 all_models = get_all_models(gather=GATHER)
 
 # ============================== Run Simulations ==============================
@@ -314,7 +332,6 @@ fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=16)
 axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=16)
-colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for index, ax in enumerate(axs):
     ax.grid()
     label = None
@@ -586,7 +603,8 @@ for i, s in enumerate(ejecta_compositions.keys()):
     total_mass = {cation: ejecta_data[f'{prefix}__original_melt_element_masses'][cation] +
                           ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
                           ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
-    total_vapor_mass = {cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] + ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
+    total_vapor_mass = {cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
+                                ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
     loss_fraction_recondensed = {
         cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
         in cations}
@@ -601,7 +619,8 @@ for i, s in enumerate(ejecta_compositions.keys()):
         )
     else:
         axs[to_index].plot(
-            [i for i in cations if i != "O"], [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
+            [i for i in cations if i != "O"],
+            [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
         )
 
@@ -627,8 +646,6 @@ fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
 
-
-
 # ================================= Vapor Mass Fraction of From Each Model =================================
 fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
@@ -647,7 +664,9 @@ for index, s in enumerate(ejecta_compositions.keys()):
     # read in the ejecta composition file
     mass_distribution = pd.read_csv(f"{root_path}/{s}" + "/mass_distribution.csv", index_col='component')
     # get the loss fraction of each element
-    vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in cations}
+    vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (
+                mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0
+                      for element in cations}
     # sort cations by 50% condensation temperature
     cations = list(reversed(sorted(list(vapor_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
     # convert loss fraction to a LaTex table
@@ -677,10 +696,12 @@ for index, s in enumerate(ejecta_compositions.keys()):
 for ax in axs:
     # plot arrows at the bottom of the plot to indicate the range of volatility
     ax.arrow(
-        -0.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        -0.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
     )
     ax.arrow(
-        2.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
@@ -688,10 +709,12 @@ for ax in axs:
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        2.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
     )
     ax.arrow(
-        5.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
@@ -700,10 +723,12 @@ for ax in axs:
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        5.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
     )
     ax.arrow(
-        8, 10 ** -4.5, -2.5, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        8, 10 ** -4.5, -2.5, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
@@ -712,7 +737,6 @@ for ax in axs:
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
-
 
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=20)
