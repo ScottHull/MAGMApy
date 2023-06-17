@@ -929,9 +929,9 @@ for index, run in enumerate(runs):
     # get the loss fraction of each element
     vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
     # sort cations by 50% condensation temperature
-    cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    cations = list(reversed(sorted(list(vapor_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
     # convert loss fraction to a LaTex table
-    table = pd.DataFrame(loss_fraction, index=['vapor mass fraction']).to_latex()
+    table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction']).to_latex()
     # save the table to a file
     with open(f"{run_name}_vapor_mass_fraction.tex", 'w') as f:
         f.write(table)

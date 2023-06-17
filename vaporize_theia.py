@@ -214,15 +214,17 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
-for model in lunar_bulk_compositions.keys():
+for index, model in enumerate(lunar_bulk_compositions.keys()):
     ax.plot(
         lunar_bulk_compositions.index.tolist(),
         [lunar_bulk_compositions[model][oxide] / bse_composition[oxide] for oxide in lunar_bulk_compositions[model].keys() if oxide != "Fe2O3"],
         color=colors[list(lunar_bulk_compositions).index(model)], linewidth=2.0, label=model
     )
+    if index + 1 == len(lunar_bulk_compositions.keys()):
+        ax.set_xticklabels([format_species_string(oxide) for oxide in lunar_bulk_compositions[model].keys()], rotation=45)
 ax.tick_params(axis='both', which='major', labelsize=16)
 ax.set_title("Lunar Bulk Composition", fontsize=16)
-ax.set_ylabel("Lunar Bulk Composition /  (%)", fontsize=16)
+ax.set_ylabel("Lunar Bulk Composition / BSE Composition", fontsize=16)
 ax.grid()
 ax.legend(fontsize=12)
 plt.tight_layout()
