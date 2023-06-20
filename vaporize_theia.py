@@ -780,7 +780,7 @@ for index, s in enumerate(theia_compositions.keys()):
     # read in the theia composition file
     theia_composition = eval(open(f"{root_path}{s}/theia_composition.csv", 'r').read())
     # get the mass of each bulk oxide from Theia
-    theia_oxide_masses = theia_composition['theia masses']
+    theia_oxide_masses = theia_composition['theia_weights']
     # convert bulk oxide masses to bulk element masses
     theia_element_masses = ConvertComposition().oxide_wt_to_cation_wt(theia_oxide_masses)
     # get the Mg/Si and Mg/Al ratios
