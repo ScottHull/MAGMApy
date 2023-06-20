@@ -751,3 +751,11 @@ fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_vaporize_element_vapor_mass_fraction.png", dpi=300)
 plt.show()
+
+
+# ================================== THEIA MG/SI VS MG/AL ==================================
+# https://www.lpi.usra.edu/books/MESSII/9039.pdf
+# See Figure 6
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+
