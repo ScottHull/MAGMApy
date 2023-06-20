@@ -785,13 +785,17 @@ for index, s in enumerate(theia_compositions.keys()):
     theia_element_masses = ConvertComposition().oxide_wt_to_cation_wt(theia_oxide_masses)
     # get the Mg/Si and Mg/Al ratios
     mg_si = theia_element_masses['Mg'] / theia_element_masses['Si']
-    mg_al = theia_element_masses['Mg'] / theia_element_masses['Al']
-    # scatter the Mg/Si vs Mg/Al
-    ax.scatter(mg_si, mg_al, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker, label=label)
+    al_si = theia_element_masses['Al'] / theia_element_masses['Si']
+    # scatter the Mg/Si vs Al/Si
+    ax.scatter(mg_si, mg_al, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker)
+    ax.scatter([], [], color='k', s=100, marker="s", label=label)
+for m, model in zip(markers, ["Canonical (Not Recondensed)", "Canonical (Recondensed)", "Half-Earths (Not Recondensed)",
+                              "Half-Earths (Recondensed)"]):
+    ax.scatter([], [], color='k', s=100, marker=m, label=model)
 
-ax.set_xlabel("Mg/Si", fontsize=20)
-ax.set_ylabel("Mg/Al", fontsize=20)
+ax.set_xlabel("Mg/Si (mass ratio)", fontsize=20)
+ax.set_ylabel("Al/Si (mass ratio)", fontsize=20)
 ax.tick_params(axis='both', which='major', labelsize=20)
 ax.grid()
 ax.legend()
-plt.savefig("theia_mg_si_vs_mg_al.png", dpi=300)
+plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)
