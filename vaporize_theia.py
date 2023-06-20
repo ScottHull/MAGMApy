@@ -787,7 +787,7 @@ for index, s in enumerate(theia_compositions.keys()):
     mg_si = theia_element_masses['Mg'] / theia_element_masses['Si']
     mg_al = theia_element_masses['Mg'] / theia_element_masses['Al']
     # scatter the Mg/Si vs Mg/Al
-    ax.scatter(mg_si, mg_al, color=colors[list(theia_compositions).index(base_model)], s=100, marker=marker, label=label)
+    ax.scatter(mg_si, mg_al, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker, label=label)
 
 ax.set_xlabel("Mg/Si", fontsize=20)
 ax.set_ylabel("Mg/Al", fontsize=20)
