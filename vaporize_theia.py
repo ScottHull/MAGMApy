@@ -758,4 +758,6 @@ plt.show()
 # See Figure 6
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
+# plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
+for index, s in enumerate(theia_compositions.keys()):
 
