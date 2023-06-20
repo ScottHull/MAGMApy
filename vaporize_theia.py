@@ -769,6 +769,7 @@ for index, s in enumerate(theia_compositions.keys()):
     if base_model not in found_base_models:
         label = base_model
         found_base_models.append(base_model)
+        ax.scatter([], [], color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker="s", label=label)
     if "not_recondensed" in s and "Canonical" in s:
         marker = markers[0]
     elif not "not_recondensed" in s and "Canonical" in s:
@@ -788,7 +789,6 @@ for index, s in enumerate(theia_compositions.keys()):
     al_si = theia_element_masses['Al'] / theia_element_masses['Si']
     # scatter the Mg/Si vs Al/Si
     ax.scatter(mg_si, al_si, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker)
-    ax.scatter([], [], color='k', s=100, marker="s", label=label)
 for m, model in zip(markers, ["Canonical (Not Recondensed)", "Canonical (Recondensed)", "Half-Earths (Not Recondensed)",
                               "Half-Earths (Recondensed)"]):
     ax.scatter([], [], color='k', s=100, marker=m, label=model)
