@@ -407,6 +407,30 @@ class ConvertComposition:
                     cations[cation] += stoich[cation] * composition[oxide]
         return cations
 
+    def oxide_wt_to_cation_wt(self, composition: dict):
+        """
+        Converts absolute oxide mass to absolute cation mass.
+        :param composition:
+        :return:
+        """
+        total_oxide_mass = sum(composition.values())
+        cation_mass = {}
+        # convert the oxide mass to moles
+        oxide_moles = self.mass_to_moles(composition)
+        # convert the oxide moles to cation moles
+        element_moles = {}
+        for oxide in oxide_moles.keys():
+            stoich = get_molecule_stoichiometry(molecule=oxide)
+            for element in stoich.keys():
+                if element not in element_moles:
+                    element_moles[element] = 0
+                element_moles[element] += stoich[element] * oxide_moles[oxide]
+        # convert element moles to element mass
+        element_mass = self.moles_to_mass(element_moles)
+        # make sure that the element mass equals the oxide mass
+        assert np.isclose(sum(element_mass.values()), total_oxide_mass)
+        return element_mass
+
     def oxide_wt_pct_to_cation_wt_pct(self, composition: dict):
         """
         Given an oxide weight percent composition, returns the cation weight percent composition.

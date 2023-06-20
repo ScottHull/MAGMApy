@@ -4,7 +4,7 @@ from monte_carlo.monte_carlo import run_monte_carlo_vapor_loss
 from theia.theia import get_theia_composition, recondense_vapor
 from monte_carlo.monte_carlo import theia_mixing, run_full_MAGMApy
 from src.plots import collect_data, collect_metadata
-from src.composition import normalize, get_molecular_mass
+from src.composition import normalize, get_molecular_mass, ConvertComposition
 from isotopes.rayleigh import FullSequenceRayleighDistillation
 
 import os
@@ -758,6 +758,40 @@ plt.show()
 # See Figure 6
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
+found_base_models = []
+# generate a list of 4 different markers
+markers = ['o', 's', 'D', '^']
 # plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
 for index, s in enumerate(theia_compositions.keys()):
+    base_model = s.split("_")[1]
+    label = None
+    marker = None
+    if base_model not in found_base_models:
+        label = base_model
+        found_base_models.append(base_model)
+    if "not_recondensed" in s and "Canonical" in s:
+        marker = markers[0]
+    elif not "not_recondensed" in s and "Canonical" in s:
+        marker = markers[1]
+    elif "not_recondensed" in s and "Half-Earths" in s:
+        marker = markers[2]
+    elif not "not_recondensed" in s and "Half-Earths" in s:
+        marker = markers[3]
+    # read in the theia composition file
+    theia_composition = eval(open(f"{root_path}{s}/theia_composition.csv", 'r').read())
+    # get the mass of each bulk oxide from Theia
+    theia_oxide_masses = theia_composition['theia masses']
+    # convert bulk oxide masses to bulk element masses
+    theia_element_masses = ConvertComposition().oxide_wt_to_cation_wt(theia_oxide_masses)
+    # get the Mg/Si and Mg/Al ratios
+    mg_si = theia_element_masses['Mg'] / theia_element_masses['Si']
+    mg_al = theia_element_masses['Mg'] / theia_element_masses['Al']
+    # scatter the Mg/Si vs Mg/Al
+    ax.scatter(mg_si, mg_al, color=colors[list(theia_compositions).index(base_model)], s=100, marker=marker, label=label)
 
+ax.set_xlabel("Mg/Si", fontsize=20)
+ax.set_ylabel("Mg/Al", fontsize=20)
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.grid()
+ax.legend()
+plt.savefig("theia_mg_si_vs_mg_al.png", dpi=300)
