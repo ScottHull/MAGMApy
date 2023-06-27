@@ -811,6 +811,7 @@ ax.set_ylabel("Mg/Si (mass ratio)", fontsize=20)
 ax.tick_params(axis='both', which='major', labelsize=20)
 ax.grid()
 ax.legend()
+plt.tight_layout()
 plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)
 
 
