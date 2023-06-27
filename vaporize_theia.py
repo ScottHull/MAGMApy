@@ -2,6 +2,7 @@ import copy
 
 from monte_carlo.monte_carlo import run_monte_carlo_vapor_loss
 from theia.theia import get_theia_composition, recondense_vapor
+from theia.chondrites import plot_chondrites
 from monte_carlo.monte_carlo import theia_mixing, run_full_MAGMApy
 from src.plots import collect_data, collect_metadata
 from src.composition import normalize, get_molecular_mass, ConvertComposition
@@ -758,6 +759,8 @@ plt.show()
 # See Figure 6
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
+# add chondrites
+plot_chondrites(ax)
 found_base_models = []
 # generate a list of 4 different markers
 markers = ['o', 's', 'D', '^']
