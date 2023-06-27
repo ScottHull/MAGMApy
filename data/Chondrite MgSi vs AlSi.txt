@@ -1,0 +1,36 @@
+Chondrite	Type	General Type	Mg/Si	Al/Si	Notes
+NWA5958	C2	CM	0.478100402	0.049485743	Carbonaceous chondrite
+Orgueil	CI1	CI	0.8953271	0.0794393	Carbonaceous chondrite
+Maralinga	CK4	CK	0.802344931	0.084357333	Carbonaceous chondrite
+Banten	CM2	CM	0.546961409	0.052157064	Carbonaceous chondrite
+Murray	CM2	CM	0.47753638	0.057815703	Carbonaceous chondrite
+Murchison MTF 2005	CM2	CM	0.346451836	0.033295635	Carbonaceous chondrite
+Murchison Fragment	CM2	CM	0.528481243	0.056551469	Carbonaceous chondrite
+Orans	CO3	CO	0.9023286	0.0912031	Carbonaceous chondrite
+Felix	CO3	CO	0.9128015	0.0865801	Carbonaceous chondrite
+Lance	CO3	CO	0.9188498	0.0875399	Carbonaceous chondrite
+Warrenton	CO3	CO	0.9431605	0.0874453	Carbonaceous chondrite
+Kainsaz	CO3	CO	0.8950276	0.0877839	Carbonaceous chondrite
+GRA06101	CV3	CV	0.927477044	0.129120934	Carbonaceous chondrite
+Leoville	CV3	CV	0.955627	0.1176849	Carbonaceous chondrite
+Coolidge	CV3	CV	0.9539642	0.1067775	Carbonaceous chondrite
+Efremovka	CV3	CV	0.9134199	0.1020408	Carbonaceous chondrite
+LON91400	EL6	E	0.72481289	0.049335804	Enstatite chondrite
+Eagle	EL6	E	0.730503276	0.055001006	Enstatite chondrite
+Atlanta	EL6	E	0.642549175	0.054432539	Enstatite chondrite
+Khaipur	EL6	E	0.661795958	0.039490143	Enstatite chondrite
+Fayateville	H4	H	0.863262269	0.066804518	Ordinary chondrite
+Pultusk	H5	H	0.864320138	0.068006924	Ordinary chondrite
+Forest City	H5	H	0.813142491	0.062803637	Ordinary chondrite
+Richardton Fragment	H5	H	0.839531954	0.065115032	Ordinary chondrite
+NWA869	L3-6	L	0.740408205	0.064481524	Ordinary chondrite
+Saratov	L4	L	0.579784744	0.041634852	Ordinary chondrite
+Air	L6	L	0.760307575	0.057692229	Ordinary chondrite
+Kunashak Slice	L6	L	0.527349322	0.042272137	Ordinary chondrite
+Kunashak Fragment	L6	L	0.515791132	0.041152883	Ordinary chondrite
+Kyle	L6	L	0.663226016	0.051949097	Ordinary chondrite
+Peace River Fragment	L6	L	0.682015905	0.056418435	Ordinary chondrite
+Larkman	LL	L	0.615461604	0.054112768	Ordinary chondrite
+Larkman	LL	L	0.797777834	0.065203313	Ordinary chondrite
+Chelyabinsk (With FC)	LL5	L	0.547353568	0.044024913	Ordinary chondrite
+Chelyabinsk (Without FC)	LL5	L	0.500369483	0.038457587	Ordinary chondrite

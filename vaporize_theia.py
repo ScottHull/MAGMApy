@@ -761,6 +761,12 @@ ax = fig.add_subplot(111)
 found_base_models = []
 # generate a list of 4 different markers
 markers = ['o', 's', 'D', '^']
+bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
+bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
+bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
+ax.scatter(
+    bse_al_si, bse_mg_si, color="k", s=100, marker="*", label="BSE"
+)
 # plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
 for index, s in enumerate(theia_compositions.keys()):
     base_model = s.split("_")[1]
@@ -789,7 +795,7 @@ for index, s in enumerate(theia_compositions.keys()):
     al_si = theia_element_masses['Al'] / theia_element_masses['Si']
     # scatter the Mg/Si vs Al/Si
     ax.scatter(al_si, mg_si, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker)
-for m, model in zip(markers, ["Canonical (Not Recondensed)", "Canonical (Recondensed)", "Half-Earths (Not Recondensed)",
+for m, model in zip(markers, ["Canonical (No Recondensation)", "Canonical (Recondensed)", "Half-Earths (No Recondensation)",
                               "Half-Earths (Recondensed)"]):
     ax.scatter([], [], color='k', s=100, marker=m, label=model)
 
