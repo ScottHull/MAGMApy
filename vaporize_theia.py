@@ -799,6 +799,8 @@ for m, model in zip(markers, ["Canonical (No Recondensation)", "Canonical (Recon
                               "Half-Earths (Recondensed)"]):
     ax.scatter([], [], color='k', s=100, marker=m, label=model)
 
+
+
 ax.set_xlabel("Al/Si (mass ratio)", fontsize=20)
 ax.set_ylabel("Mg/Si (mass ratio)", fontsize=20)
 ax.tick_params(axis='both', which='major', labelsize=20)

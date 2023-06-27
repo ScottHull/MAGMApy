@@ -5,13 +5,6 @@ from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
 import matplotlib.pyplot as plt
 
-path = "data/Chondrite MgSi vs AlSi.txt"
-df = pd.read_csv(path, delimiter='\t')
-df = df[df['Include?'] == "Y"]
-# get all unique values of the type column
-types = df["General Type"].unique()
-
-
 def get_ellipse_params(points, ax, scale=1.5, **kwargs):
     '''
     Calculate the parameters needed to graph an ellipse around a cluster of points in 2D.
@@ -60,33 +53,27 @@ def get_ellipse_params(points, ax, scale=1.5, **kwargs):
 
         return width * SCALE, height * SCALE, angle
 
+def plot_chondrites(ax, path="data/Chondrite MgSi vs AlSi.txt", scatter_groups=False):
+    # load in chondrite data
+    df = pd.read_csv(path, delimiter='\t')
+    df = df[df['Include?'] == "Y"]
+    # get all unique values of the type column
+    types = df["General Type"].unique()
+    # get a unique color for each type
+    colors = plt.cm.rainbow(np.linspace(0, 1, len(types)))
+    for index, t in enumerate(types):
+        print(f"Plotting {t} (num points = {len(df[df['Type'] == t])})")
+        # get the rows for each type
+        rows = df[df["General Type"] == t]
+        if scatter_groups:
+            ax.scatter(rows["Al/Si"], rows["Mg/Si"], color=colors[index], label=t)
 
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(111)
-# get a unique color for each type
-colors = plt.cm.rainbow(np.linspace(0, 1, len(types)))
-for index, t in enumerate(types):
-    print(f"Plotting {t} (num points = {len(df[df['Type'] == t])})")
-    # get the rows for each type
-    rows = df[df["General Type"] == t]
-    # rows = rows[rows["Type"] == "CO3"]
-    # plot the rows
-    ax.scatter(rows["Al/Si"], rows["Mg/Si"], color=colors[index], label=t)
+        if len(rows) > 1:
+            n = np.array(list(zip(rows["Al/Si"].values, rows["Mg/Si"].values)))
+            width, height, angle = get_ellipse_params(n, ax, edgecolor='k', fill=True,
+                                                      facecolor='grey', alpha=0.3, scale=1.2)
+            # annotate the type on the outside edge of the ellipse
+            ax.annotate(t, xy=(np.mean(rows["Al/Si"]), np.mean(rows["Mg/Si"])),
+                        horizontalalignment='center', verticalalignment='center', fontsize=14)
 
-    if len(rows) > 1:
-        n = np.array(list(zip(rows["Al/Si"].values, rows["Mg/Si"].values)))
-        width, height, angle = get_ellipse_params(n, ax, edgecolor='k', fill=True,
-                                                  facecolor='grey', alpha=0.3, scale=1.2)
-        # annotate the type on the outside edge of the ellipse
-        ax.annotate(t, xy=(np.mean(rows["Al/Si"]), np.mean(rows["Mg/Si"])),
-                    horizontalalignment='center', verticalalignment='center', fontsize=14)
-# increase font size
-plt.rcParams.update({'font.size': 16})
-ax.set_xlabel("Al/Si", fontsize=16)
-ax.set_ylabel("Mg/Si", fontsize=16)
-# ax.set_xlim(0, 0.2)
-# ax.set_ylim(0, 1.4)
-ax.legend()
-ax.grid()
-plt.tight_layout()
-plt.show()
+    return ax
