@@ -768,7 +768,11 @@ bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
 bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
 bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
 ax.scatter(
-    bse_al_si, bse_mg_si, color="k", s=100, marker="*", label="BSE"
+    bse_al_si, bse_mg_si, color="k", s=300, marker="*", label="BSE"
+)
+# annotate the BSE
+ax.annotate(
+    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.01, bse_mg_si + 0.01),
 )
 # plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
 for index, s in enumerate(theia_compositions.keys()):
@@ -802,11 +806,12 @@ for m, model in zip(markers, ["Canonical (No Recondensation)", "Canonical (Recon
                               "Half-Earths (Recondensed)"]):
     ax.scatter([], [], color='k', s=100, marker=m, label=model)
 
-
-
 ax.set_xlabel("Al/Si (mass ratio)", fontsize=20)
 ax.set_ylabel("Mg/Si (mass ratio)", fontsize=20)
 ax.tick_params(axis='both', which='major', labelsize=20)
 ax.grid()
 ax.legend()
 plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)
+
+
+# ================================== Lunar Models MG/SI VS MG/AL ==================================

@@ -72,8 +72,12 @@ def plot_chondrites(ax, path="data/Chondrite MgSi vs AlSi.txt", scatter_groups=F
             n = np.array(list(zip(rows["Al/Si"].values, rows["Mg/Si"].values)))
             width, height, angle = get_ellipse_params(n, ax, edgecolor='k', fill=True,
                                                       facecolor='grey', alpha=0.3, scale=1.2)
-            # annotate the type on the outside edge of the ellipse
-            ax.annotate(t, xy=(np.mean(rows["Al/Si"]), np.mean(rows["Mg/Si"])),
-                        horizontalalignment='center', verticalalignment='center', fontsize=14)
+        else:
+            ax.scatter(
+                rows['Al/Si'], rows['Mg/Si'], s=400, marker="o", color='k'
+            )
+        # annotate the type on the outside edge of the ellipse
+        ax.annotate(t, xy=(np.mean(rows["Al/Si"]), np.mean(rows["Mg/Si"])),
+                    horizontalalignment='center', verticalalignment='center', fontsize=14)
 
     return ax
