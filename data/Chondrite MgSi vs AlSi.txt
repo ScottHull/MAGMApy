@@ -2,7 +2,7 @@ Chondrite	Type	General Type	Include?	Mg/Si	Al/Si	Notes
 Tagish Lake	C2		N	0.537651298	0.050999787	Carbonaceous chondrite
 NWA5958	C2	CM	N	0.478100402	0.049485743	Carbonaceous chondrite
 Orgueil	CI1	CI	Y	0.8953271	0.0794393	Carbonaceous chondrite
-Maralinga	CK4	CK	Y	0.802344931	0.084357333	Carbonaceous chondrite
+Maralinga	CK4	CK	N	0.802344931	0.084357333	Carbonaceous chondrite
 Banten	CM2	CM	N	0.546961409	0.052157064	Carbonaceous chondrite
 Murray	CM2	CM	N	0.47753638	0.057815703	Carbonaceous chondrite
 Murchison MTF 2005	CM2	CM	N	0.346451836	0.033295635	Carbonaceous chondrite

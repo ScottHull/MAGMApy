@@ -768,11 +768,11 @@ bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
 bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
 bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
 ax.scatter(
-    bse_al_si, bse_mg_si, color="k", s=300, marker="*", label="BSE"
+    bse_al_si, bse_mg_si, color="k", s=300, marker="*"
 )
 # annotate the BSE
 ax.annotate(
-    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.01, bse_mg_si + 0.01),
+    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.005, bse_mg_si + 0.005), fontsize=14
 )
 # plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
 for index, s in enumerate(theia_compositions.keys()):
