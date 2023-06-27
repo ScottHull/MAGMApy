@@ -5,11 +5,17 @@ from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
 import matplotlib.pyplot as plt
 
+from src.composition import ConvertComposition
+from theia.chondrites import plot_chondrites
+
+
 path = "data/Chondrite MgSi vs AlSi.txt"
 df = pd.read_csv(path, delimiter='\t')
 df = df[df['Include?'] == "Y"]
 # get all unique values of the type column
 types = df["General Type"].unique()
+
+lunar_bulk_compositions = pd.read_csv("data/lunar_bulk_compositions.csv", index_col="Oxide")
 
 
 def get_ellipse_params(points, ax, scale=1.5, **kwargs):
@@ -87,6 +93,27 @@ ax.set_ylabel("Mg/Si", fontsize=16)
 # ax.set_xlim(0, 0.2)
 # ax.set_ylim(0, 1.4)
 ax.legend()
+ax.grid()
+plt.tight_layout()
+plt.show()
+
+
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+plot_chondrites(ax)
+for model in lunar_bulk_compositions.keys():
+    composition = {
+        oxide: lunar_bulk_compositions.loc[oxide, model] for oxide in lunar_bulk_compositions.index
+    }
+    composition = ConvertComposition().oxide_wt_to_cation_wt(composition)
+    print(composition)
+    ax.scatter(composition["Al"] / composition['Si'], composition["Mg"] / composition['Si'], s=300, label=model)
+plt.rcParams.update({'font.size': 16})
+ax.set_xlabel("Al/Si", fontsize=16)
+ax.set_ylabel("Mg/Si", fontsize=16)
+# ax.set_xlim(0, 0.2)
+# ax.set_ylim(0, 1.4)
+ax.legend(loc='lower right')
 ax.grid()
 plt.tight_layout()
 plt.show()
