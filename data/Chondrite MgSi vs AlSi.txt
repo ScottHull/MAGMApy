@@ -33,10 +33,10 @@ Kunashak Slice	L6	L	Y	0.527349322	0.042272137	Ordinary chondrite
 Kunashak Fragment	L6	L	Y	0.515791132	0.041152883	Ordinary chondrite
 Kyle	L6	L	Y	0.663226016	0.051949097	Ordinary chondrite
 Peace River Fragment	L6	L	Y	0.682015905	0.056418435	Ordinary chondrite
-Larkman	LL	L	Y	0.615461604	0.054112768	Ordinary chondrite
-Larkman	LL	L	Y	0.797777834	0.065203313	Ordinary chondrite
-Chelyabinsk (With FC)	LL5	L	Y	0.547353568	0.044024913	Ordinary chondrite
-Chelyabinsk (Without FC)	LL5	L	Y	0.500369483	0.038457587	Ordinary chondrite
+Larkman	LL	LL	Y	0.615461604	0.054112768	Ordinary chondrite
+Larkman	LL	LL	Y	0.797777834	0.065203313	Ordinary chondrite
+Chelyabinsk (With FC)	LL5	LL	Y	0.547353568	0.044024913	Ordinary chondrite
+Chelyabinsk (Without FC)	LL	LL	Y	0.500369483	0.038457587	Ordinary chondrite
 Orgueil	CI	CI	N	0.838012959	0.087832973	Carbonaceous chondrite
 Alais	CI	CI	N	0.834937084	0.062916358	Carbonaceous chondrite
 Alais	CI	CI	N	1.100286533	0.076408787	Carbonaceous chondrite

@@ -25,7 +25,7 @@ plt.style.use('seaborn-colorblind')
 
 RUN_NEW_SIMULATIONS = False
 NUM_THREADS = 40
-GATHER = True
+GATHER = False
 # root_path = ""
 # root_path = "C:/Users/Scott/OneDrive/Desktop/vaporize_theia/"
 root_path = "/scratch/shull4/vaporize_theia/"
@@ -302,6 +302,10 @@ for run in runs:
 
     format_compositions_for_latex(f"bulk_ejecta_{run_name}", ejecta_compositions_df_subset)
     format_compositions_for_latex(f"bulk_theia_{run_name}", theia_compositions_df_subset)
+
+    # export ejecta and theia as csv files
+    ejecta_compositions_df_subset.to_csv(f"bulk_ejecta_{run_name}.csv")
+    theia_compositions_df_subset.to_csv(f"bulk_theia_{run_name}.csv")
 
 # get the min and max values for each oxide
 min_max_ejecta_compositions = {'with recondensation': {oxide: [1e99, -1e99] for oxide in oxides},

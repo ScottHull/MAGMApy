@@ -117,7 +117,8 @@ for index, model in enumerate(sort_lunar_models(lunar_bulk_compositions.keys()))
         oxide: lunar_bulk_compositions.loc[oxide, model] for oxide in lunar_bulk_compositions.index
     }
     composition = ConvertComposition().oxide_wt_to_cation_wt(composition)
-    ax.scatter(composition["Al"] / composition['Si'], composition["Mg"] / composition['Si'], s=300, color=colors[index], label=model)
+    ax.scatter(composition["Al"] / composition['Si'], composition["Mg"] / composition['Si'], s=300,
+               color=colors[index], edgecolor='k', label=model)
 plt.rcParams.update({'font.size': 16})
 ax.set_xlabel("Al/Si (mass ratio)", fontsize=16)
 ax.set_ylabel("Mg/Si (mass ratio)", fontsize=16)
