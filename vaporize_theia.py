@@ -801,7 +801,7 @@ for index, s in enumerate(ejecta_compositions.keys()):
     mg_si = theia_element_masses['Mg'] / theia_element_masses['Si']
     al_si = theia_element_masses['Al'] / theia_element_masses['Si']
     # scatter the Mg/Si vs Al/Si
-    ax.scatter(al_si, mg_si, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker)
+    ax.scatter(al_si, mg_si, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker, edgecolor='k')
 for m, model in zip(markers, ["Canonical (No Recondensation)", "Canonical (Recondensed)", "Half-Earths (No Recondensation)",
                               "Half-Earths (Recondensed)"]):
     ax.scatter([], [], color='k', s=100, marker=m, label=model)
