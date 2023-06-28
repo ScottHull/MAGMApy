@@ -775,7 +775,7 @@ ax.annotate(
     "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.005, bse_mg_si + 0.005), fontsize=14
 )
 # plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
-for index, s in enumerate(theia_compositions.keys()):
+for index, s in enumerate(ejecta_compositions.keys()):
     base_model = s.split("_")[1]
     label = None
     marker = None
@@ -816,37 +816,47 @@ plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)
 
 
 # ================================== Lunar Models MG/SI VS MG/AL ==================================
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(111)
-# add chondrites
-plot_chondrites(ax)
-found_base_models = []
-# generate a list of 4 different markers
-markers = ['o', 's', 'D', '^']
-bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
-bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
-bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
-ax.scatter(
-    bse_al_si, bse_mg_si, color="k", s=300, marker="*"
-)
-# annotate the BSE
-ax.annotate(
-    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.005, bse_mg_si + 0.005), fontsize=14
-)
-for index, model in enumerate(lunar_bulk_compositions.keys()):
-    composition = lunar_bulk_compositions.loc[model].to_dict()
-    # convert to weight percent
-    bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
-    # scatter the Mg/Si vs Al/Si
-    ax.scatter(
-        composition['Al'] / composition['Si'], composition['Mg'] / composition['Si'], color=colors[index], s=100,
-        marker="o", label=model
-    )
-ax.set_xlabel("Al/Si (mass ratio)", fontsize=20)
-ax.set_ylabel("Mg/Si (mass ratio)", fontsize=20)
-ax.tick_params(axis='both', which='major', labelsize=20)
-ax.grid()
-ax.legend()
-plt.tight_layout()
-plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)
-plt.savefig("lunar_bulk_models_mg_si_vs_al_si.png", dpi=300)
+def sort_lunar_models(models):
+    """
+    Takes a list of strings and sorts them based on the year at the end of the string.
+    :param models:
+    :return:
+    """
+    years = [int(model.replace("Fractional Model", "").replace("Equilibrium Model", "").split(" ")[-1]) for model in models]
+    return [model for _, model in sorted(zip(years, models))]
+
+# fig = plt.figure(figsize=(10, 10))
+# ax = fig.add_subplot(111)
+# colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
+# # add chondrites
+# plot_chondrites(ax)
+# found_base_models = []
+# # generate a list of 4 different markers
+# markers = ['o', 's', 'D', '^']
+# bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
+# bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
+# bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
+# ax.scatter(
+#     bse_al_si, bse_mg_si, color="k", s=300, marker="*"
+# )
+# # annotate the BSE
+# ax.annotate(
+#     "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.005, bse_mg_si + 0.005), fontsize=14
+# )
+# for index, model in enumerate(lunar_bulk_compositions.keys()):
+#     composition = lunar_bulk_compositions.loc[model].to_dict()
+#     # convert to weight percent
+#     bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
+#     # scatter the Mg/Si vs Al/Si
+#     ax.scatter(
+#         composition['Al'] / composition['Si'], composition['Mg'] / composition['Si'], color=colors[index], s=100,
+#         marker="o", label=model
+#     )
+# ax.set_xlabel("Al/Si (mass ratio)", fontsize=20)
+# ax.set_ylabel("Mg/Si (mass ratio)", fontsize=20)
+# ax.tick_params(axis='both', which='major', labelsize=20)
+# ax.grid()
+# ax.legend()
+# plt.tight_layout()
+# plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)
+# plt.savefig("lunar_bulk_models_mg_si_vs_al_si.png", dpi=300)

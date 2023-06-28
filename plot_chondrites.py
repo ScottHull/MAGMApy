@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 from src.composition import ConvertComposition
@@ -66,6 +67,15 @@ def get_ellipse_params(points, ax, scale=1.5, **kwargs):
 
         return width * SCALE, height * SCALE, angle
 
+def sort_lunar_models(models):
+    """
+    Takes a list of strings and sorts them based on the year at the end of the string.
+    :param models:
+    :return:
+    """
+    years = [int(model.replace("Fractional Model", "").replace("Equilibrium Model", "").strip().split(" ")[-1]) for model in models]
+    return [model for _, model in sorted(zip(years, models))]
+
 
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
@@ -100,14 +110,14 @@ plt.show()
 
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
+colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 plot_chondrites(ax)
-for model in lunar_bulk_compositions.keys():
+for index, model in enumerate(sort_lunar_models(lunar_bulk_compositions.keys())):
     composition = {
         oxide: lunar_bulk_compositions.loc[oxide, model] for oxide in lunar_bulk_compositions.index
     }
     composition = ConvertComposition().oxide_wt_to_cation_wt(composition)
-    print(composition)
-    ax.scatter(composition["Al"] / composition['Si'], composition["Mg"] / composition['Si'], s=300, label=model)
+    ax.scatter(composition["Al"] / composition['Si'], composition["Mg"] / composition['Si'], s=300, color=colors[index], label=model)
 plt.rcParams.update({'font.size': 16})
 ax.set_xlabel("Al/Si (mass ratio)", fontsize=16)
 ax.set_ylabel("Mg/Si (mass ratio)", fontsize=16)
