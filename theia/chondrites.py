@@ -84,7 +84,7 @@ def plot_chondrites(ax, path="data/Chondrite MgSi vs AlSi.txt", scatter_groups=F
 
     return ax
 
-def get_enstatite_bulk_theia_core_si_pct(bst_composition: dict, enstatite_mg_si=0.875, core_fraction=0.33,
+def get_enstatite_bulk_theia_core_si_pct(bst_composition: dict, enstatite_mg_si=0.758, core_fraction=0.33,
                                          planet_mass=100):
     """
     Assuming bulk Theia is reflective of enstatite chondrites, calculate the bulk Theia Si content and the percentage

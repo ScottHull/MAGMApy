@@ -859,7 +859,7 @@ for index, s in enumerate(ejecta_compositions.keys()):
     if base_model not in found_base_models:
         label = base_model
         found_base_models.append(base_model)
-        ax.scatter([], [], color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker="s", label=label)
+        axs[0].scatter([], [], color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker="s", label=label)
     if "not_recondensed" in s and "Canonical" in s:
         marker = markers[0]
     elif not "not_recondensed" in s and "Canonical" in s:
@@ -882,8 +882,8 @@ for m, model in zip(markers, ["Canonical (No Recondensation)", "Canonical (Recon
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=20)
     ax.grid()
-axs[0].set_xlabel("Al/Si (mass ratio)", fontsize=20)
-axs[1].set_xlabel("Mg/Si (mass ratio)", fontsize=20)
+axs[0].set_xlabel("Mg/Si (mass ratio)", fontsize=20)
+axs[1].set_xlabel("Al/Si (mass ratio)", fontsize=20)
 axs[0].set_ylabel("Si Core Mass Fraction (%)", fontsize=20)
 axs[1].legend()
 plt.tight_layout()
