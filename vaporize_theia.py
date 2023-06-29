@@ -837,7 +837,7 @@ def sort_lunar_models(models):
 fig, axs = plt.subplots(1, 2, figsize=(20, 10), sharey='all')
 axs = axs.flatten()
 # add chondrites
-plot_chondrites(ax)
+# plot_chondrites(ax)
 found_base_models = []
 # generate a list of 4 different markers
 markers = ['o', 's', 'D', '^']
