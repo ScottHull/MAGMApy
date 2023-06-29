@@ -2,7 +2,7 @@ import copy
 
 from monte_carlo.monte_carlo import run_monte_carlo_vapor_loss
 from theia.theia import get_theia_composition, recondense_vapor
-from theia.chondrites import plot_chondrites
+from theia.chondrites import plot_chondrites, get_enstatite_bulk_theia_core_si_pct
 from monte_carlo.monte_carlo import theia_mixing, run_full_MAGMApy
 from src.plots import collect_data, collect_metadata
 from src.composition import normalize, get_molecular_mass, ConvertComposition
@@ -829,38 +829,62 @@ def sort_lunar_models(models):
     years = [int(model.replace("Fractional Model", "").replace("Equilibrium Model", "").split(" ")[-1]) for model in models]
     return [model for _, model in sorted(zip(years, models))]
 
-# fig = plt.figure(figsize=(10, 10))
-# ax = fig.add_subplot(111)
-# colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
-# # add chondrites
-# plot_chondrites(ax)
-# found_base_models = []
-# # generate a list of 4 different markers
-# markers = ['o', 's', 'D', '^']
-# bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
-# bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
-# bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
-# ax.scatter(
-#     bse_al_si, bse_mg_si, color="k", s=300, marker="*"
-# )
-# # annotate the BSE
-# ax.annotate(
-#     "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.005, bse_mg_si + 0.005), fontsize=14
-# )
-# for index, model in enumerate(lunar_bulk_compositions.keys()):
-#     composition = lunar_bulk_compositions.loc[model].to_dict()
-#     # convert to weight percent
-#     bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
-#     # scatter the Mg/Si vs Al/Si
-#     ax.scatter(
-#         composition['Al'] / composition['Si'], composition['Mg'] / composition['Si'], color=colors[index], s=100,
-#         marker="o", label=model
-#     )
-# ax.set_xlabel("Al/Si (mass ratio)", fontsize=20)
-# ax.set_ylabel("Mg/Si (mass ratio)", fontsize=20)
-# ax.tick_params(axis='both', which='major', labelsize=20)
-# ax.grid()
-# ax.legend()
-# plt.tight_layout()
-# plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)
-# plt.savefig("lunar_bulk_models_mg_si_vs_al_si.png", dpi=300)
+
+
+
+
+# ==================================== PLOT MG/SI AND AL/SI FOR BULK THEIA ASSUMING ENSTATITE START ==================
+fig, axs = plt.subplots(1, 2, figsize=(20, 10), sharey='all')
+axs = axs.flatten()
+# add chondrites
+plot_chondrites(ax)
+found_base_models = []
+# generate a list of 4 different markers
+markers = ['o', 's', 'D', '^']
+bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
+bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
+bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
+ax.scatter(
+    bse_al_si, bse_mg_si, color="k", s=300, marker="*"
+)
+# annotate the BSE
+ax.annotate(
+    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.005, bse_mg_si + 0.005), fontsize=14
+)
+# plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
+for index, s in enumerate(ejecta_compositions.keys()):
+    base_model = s.split("_")[1]
+    label = None
+    marker = None
+    if base_model not in found_base_models:
+        label = base_model
+        found_base_models.append(base_model)
+        ax.scatter([], [], color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker="s", label=label)
+    if "not_recondensed" in s and "Canonical" in s:
+        marker = markers[0]
+    elif not "not_recondensed" in s and "Canonical" in s:
+        marker = markers[1]
+    elif "not_recondensed" in s and "Half-Earths" in s:
+        marker = markers[2]
+    elif not "not_recondensed" in s and "Half-Earths" in s:
+        marker = markers[3]
+    # read in the theia composition file
+    theia_composition = eval(open(f"{root_path}{s}/theia_composition.csv", 'r').read())
+    # get the enstatite-based Theia Mg/Si and Mg/Al ratios as a function of Si core wt%
+    pct_si_in_core, mg_si_bulk_theia, al_si_bulk_theia = get_enstatite_bulk_theia_core_si_pct(theia_composition['theia_weight_pct'])
+    # scatter the Mg/Si vs Al/Si
+    axs[0].scatter(mg_si_bulk_theia, pct_si_in_core, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker, edgecolor='k')
+    axs[1].scatter(al_si_bulk_theia, pct_si_in_core, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker, edgecolor='k')
+for m, model in zip(markers, ["Canonical (No Recondensation)", "Canonical (Recondensed)", "Half-Earths (No Recondensation)",
+                              "Half-Earths (Recondensed)"]):
+    axs[1].scatter([], [], color='k', s=100, marker=m, label=model)
+
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.grid()
+axs[0].set_xlabel("Al/Si (mass ratio)", fontsize=20)
+axs[1].set_xlabel("Mg/Si (mass ratio)", fontsize=20)
+axs[0].set_ylabel("Si Core Mass Fraction (%)", fontsize=20)
+axs[1].legend()
+plt.tight_layout()
+plt.savefig("theia_mg_si_vs_al_si.png", dpi=300)

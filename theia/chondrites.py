@@ -5,6 +5,8 @@ from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
 import matplotlib.pyplot as plt
 
+from src.composition import ConvertComposition, normalize
+
 def get_ellipse_params(points, ax, scale=1.5, **kwargs):
     '''
     Calculate the parameters needed to graph an ellipse around a cluster of points in 2D.
@@ -81,3 +83,33 @@ def plot_chondrites(ax, path="data/Chondrite MgSi vs AlSi.txt", scatter_groups=F
                     horizontalalignment='center', verticalalignment='center', fontsize=14)
 
     return ax
+
+def get_enstatite_bulk_theia_core_si_pct(bst_composition: dict, enstatite_mg_si=0.875, core_fraction=0.33,
+                                         planet_mass=100):
+    """
+    Assuming bulk Theia is reflective of enstatite chondrites, calculate the bulk Theia Si content and the percentage
+    of the core that is Si.
+    :param bst_composition:
+    :param enstatite_mg_si:
+    :param core_fraction:
+    :return:
+    """
+    # convert the BST oxide wt% to element weight
+    bst_elements = ConvertComposition().oxide_wt_to_cation_wt(bst_composition)
+    # convert to wt%
+    bst_wt = normalize(bst_elements)
+    # since the BST is just the mantle, get the mass of each element in the mantle (assume 100g planet)
+    bst_masses = {
+        element: (wt / 100) * (planet_mass * (1 - core_fraction)) for element, wt in bst_wt.items()
+    }
+    # assume bulk Theia Mg/Si is Mg_mantle / (Si_mantle + Si_core)
+    # if we enforce the enstatite chondrite requirement, then the formula for mass Si in core is
+    # (Mg/Si)_enstatite = Mg_mantle / (Si_mantle + Si_core)
+    # rearranging for Si_core gives
+    # Si_core = Mg_mantle * [(Mg/Si)_enstatite]^-1 - Si_mantle
+    mass_si_in_core = bst_masses['Mg'] * (1 / enstatite_mg_si) - bst_masses["Si"]
+    # get the percent of the core that is Si
+    pct_si_in_core = mass_si_in_core / (mass_si_in_core + bst_masses['Si']) * 100
+    mg_si_bulk_theia = bst_masses['Mg'] / (mass_si_in_core + bst_masses['Si'])
+    al_si_bulk_theia = bst_masses['Al'] / (mass_si_in_core + bst_masses['Si'])
+    return pct_si_in_core, mg_si_bulk_theia, al_si_bulk_theia
