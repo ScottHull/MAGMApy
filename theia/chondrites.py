@@ -108,8 +108,9 @@ def get_enstatite_bulk_theia_core_si_pct(bst_composition: dict, enstatite_mg_si=
     # rearranging for Si_core gives
     # Si_core = Mg_mantle * [(Mg/Si)_enstatite]^-1 - Si_mantle
     mass_si_in_core = bst_masses['Mg'] * (1 / enstatite_mg_si) - bst_masses["Si"]
+    mass_fe_in_core = planet_mass - sum(bst_masses.values()) - mass_si_in_core
     # get the percent of the core that is Si
-    pct_si_in_core = mass_si_in_core / (mass_si_in_core + bst_masses['Si']) * 100
+    pct_si_in_core = mass_si_in_core / (mass_si_in_core + mass_fe_in_core) * 100
     mg_si_bulk_theia = bst_masses['Mg'] / (mass_si_in_core + bst_masses['Si'])
     al_si_bulk_theia = bst_masses['Al'] / (mass_si_in_core + bst_masses['Si'])
     return pct_si_in_core, mg_si_bulk_theia, al_si_bulk_theia
