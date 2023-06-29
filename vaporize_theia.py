@@ -859,7 +859,7 @@ for index, s in enumerate(ejecta_compositions.keys()):
     if base_model not in found_base_models:
         label = base_model
         found_base_models.append(base_model)
-        axs[0].scatter([], [], color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker="s", label=label)
+        axs[1].scatter([], [], color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker="s", label=label)
     if "not_recondensed" in s and "Canonical" in s:
         marker = markers[0]
     elif not "not_recondensed" in s and "Canonical" in s:
