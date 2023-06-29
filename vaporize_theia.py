@@ -871,7 +871,10 @@ for index, s in enumerate(ejecta_compositions.keys()):
     # read in the theia composition file
     theia_composition = eval(open(f"{root_path}{s}/theia_composition.csv", 'r').read())
     # get the enstatite-based Theia Mg/Si and Mg/Al ratios as a function of Si core wt%
-    pct_si_in_core, mg_si_bulk_theia, al_si_bulk_theia = get_enstatite_bulk_theia_core_si_pct(theia_composition['theia_weight_pct'])
+    shade = None
+    if index == 0:
+        shade = axs[1]
+    pct_si_in_core, mg_si_bulk_theia, al_si_bulk_theia = get_enstatite_bulk_theia_core_si_pct(theia_composition['theia_weight_pct'], ax=shade)
     # scatter the Mg/Si vs Al/Si
     axs[0].scatter(mg_si_bulk_theia, pct_si_in_core, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker, edgecolor='k')
     axs[1].scatter(al_si_bulk_theia, pct_si_in_core, color=colors[list(lunar_bulk_compositions).index(base_model)], s=100, marker=marker, edgecolor='k')

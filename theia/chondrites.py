@@ -84,7 +84,7 @@ def plot_chondrites(ax, path="data/Chondrite MgSi vs AlSi.txt", scatter_groups=F
 
     return ax
 
-def get_enstatite_bulk_theia_core_si_pct(bst_composition: dict, axs, enstatite_mg_si=0.758, core_fraction=0.33,
+def get_enstatite_bulk_theia_core_si_pct(bst_composition: dict, ax, enstatite_mg_si=0.758, core_fraction=0.33,
                                          planet_mass=100, path="data/Chondrite MgSi vs AlSi.txt"):
     """
     Assuming bulk Theia is reflective of enstatite chondrites, calculate the bulk Theia Si content and the percentage
@@ -104,8 +104,9 @@ def get_enstatite_bulk_theia_core_si_pct(bst_composition: dict, axs, enstatite_m
     min_al_si = enstatite["Al/Si"].min()
     max_al_si = enstatite["Al/Si"].max()
 
-    # shade the region on the plot between the min and max Al/Si
-    axs[1].axvspan(min_al_si, max_al_si, alpha=0.3, color='grey')
+    if ax is not None:
+        # shade the region on the plot between the min and max Al/Si
+        ax.axvspan(min_al_si, max_al_si, alpha=0.3, color='grey')
 
     # convert the BST oxide wt% to element weight
     bst_elements = ConvertComposition().oxide_wt_to_cation_wt(bst_composition)
