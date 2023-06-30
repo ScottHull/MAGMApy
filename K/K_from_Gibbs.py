@@ -8,8 +8,8 @@ products = ["Si_g", "O_g"]
 reactants = ["SiO2_l"]
 standard_state_temp = 298.15
 temperatures = np.arange(100, 4000 + 100, 100)
-# base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
-base_path = r"C:\Users\Scott\PycharmProjects\MAGMApy\K"
+base_path = "/Users/scotthull/Documents - Scott’s MacBook Pro/PhD Research/MAGMApy/K"
+# base_path = r"C:\Users\Scott\PycharmProjects\MAGMApy\K"
 
 def magma_code_SiO2_l(temperature):
     return 22.13 - (94311.0 / temperature)
