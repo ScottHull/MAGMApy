@@ -423,40 +423,39 @@ for index, run in enumerate(runs):
                 magma_species2.append(j)
     magma_species = magma_species2
     # plot arrows at the bottom of the plot to indicate the range of volatility
-    # plot arrows at the bottom of the plot to indicate the range of volatility
     ax.arrow(
-        -0.5, 10 ** -.09, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        -0.5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        2.5, 10 ** -.09, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Refractory", xy=(2 / 2, 10 ** -4.3), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        "Refractory", xy=(2 / 2, 10 ** -0.8), xycoords="data", horizontalalignment="center", verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        2.5, 10 ** -.09, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        2.5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        5.5, 10 ** -.09, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -0.9, -3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Transitional", xy=((5 - 2 / 2), 10 ** -4.3), xycoords="data", horizontalalignment="center",
+        "Transitional", xy=((5 - 2 / 2), 10 ** -0.8), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
-        5.5, 10 ** -.09, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        5.5, 10 ** -0.9, 3, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     ax.arrow(
-        8, 10 ** -.09, -2.5, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+        8, 10 ** -0.9, -2.5, 0, head_width=0.02, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
     )
     # annotate in the center above the arrows
     ax.annotate(
         "Moderately Volatile", xy=((8.5 - 3 / 2)
-                                   , 10 ** -4.3), xycoords="data", horizontalalignment="center",
+                                   , 10 ** -0.8), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
