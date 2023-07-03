@@ -36,7 +36,7 @@ runs = [
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 74.0,  # %
-        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     },
     {
         "run_name": "Half-Earths Model",
@@ -45,7 +45,7 @@ runs = [
         "disk_theia_mass_fraction": 51.97,  # %
         "disk_mass": 1.70,  # lunar masses
         "vapor_loss_fraction": 16.0,  # %
-        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 

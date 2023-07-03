@@ -701,7 +701,7 @@ C *** SODIUM CHEMISTRY
 C  2Na(g) + O(g) = Na2O(liq)
 	EA = - 15.56 + 40286.0/T
 C 	JANAF 2nd ed. & supplements
-C 	correlation coefficient for linear fit = 
+C 	correlation coefficient for linear fit =
 	ENA2OL = 10.0**EA
 	
 C  Na(g) + O(g) = NaO(g)

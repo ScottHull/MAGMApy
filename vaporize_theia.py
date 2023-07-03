@@ -888,6 +888,6 @@ for ax in axs:
 axs[0].set_xlabel("Mg/Si (mass ratio)", fontsize=20)
 axs[1].set_xlabel("Al/Si (mass ratio)", fontsize=20)
 axs[0].set_ylabel("Si Core Mass Fraction (%)", fontsize=20)
-axs[1].legend()
+axs[1].legend(fontsize=14)
 plt.tight_layout()
 plt.savefig("enstatite_theia_si_in_core.png", dpi=300)
