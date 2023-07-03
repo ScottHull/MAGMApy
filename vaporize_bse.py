@@ -765,7 +765,7 @@ ax.set_yticklabels([])
 ax.set_yticks([])
 # ax.set_ylim(len(isotope_runs) / 2 , 0.5 + 2)
 
-ax.set_title(r"$\rm ^{41/39}K$", fontsize=20)
+# ax.set_title(r"$\rm ^{41/39}K$", fontsize=20)
 ax.legend(loc='lower left', fontsize=18)
 plt.tight_layout()
 # fig.subplots_adjust(right=0.84)
