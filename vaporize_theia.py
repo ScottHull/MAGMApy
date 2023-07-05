@@ -398,7 +398,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
     ax.annotate(
-        annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        annotate_models[index], xy=(0.05, 0.85), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontsize=16
     )
 
@@ -484,7 +484,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
     ax.annotate(
-        annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        annotate_models[index], xy=(0.05, 0.85), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontsize=16
     )
 
@@ -656,7 +656,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
     ax.annotate(
-        annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        annotate_models[index], xy=(0.05, 0.85), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontsize=16
     )
 # axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
@@ -732,7 +732,7 @@ for ax in axs:
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Refractory", xy=(2 / 2, 10 ** -4.4), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        "Refractory", xy=(2 / 2, 10 ** -4.3), xycoords="data", horizontalalignment="center", verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
     ax.arrow(
@@ -745,7 +745,7 @@ for ax in axs:
     )
     # annotate in the center above the arrows
     ax.annotate(
-        "Transitional", xy=((5 - 2 / 2), 10 ** -4.4), xycoords="data", horizontalalignment="center",
+        "Transitional", xy=((5 - 2 / 2), 10 ** -4.3), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
@@ -760,7 +760,7 @@ for ax in axs:
     # annotate in the center above the arrows
     ax.annotate(
         "Moderately Volatile", xy=((8.5 - 3 / 2)
-                                   , 10 ** -4.4), xycoords="data", horizontalalignment="center",
+                                   , 10 ** -4.3), xycoords="data", horizontalalignment="center",
         verticalalignment="center",
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
@@ -777,7 +777,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
     ax.annotate(
-        tmp_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left",
+        tmp_models[index], xy=(0.05, 0.85), xycoords="axes fraction", horizontalalignment="left",
         verticalalignment="top",
         fontsize=16
     )
