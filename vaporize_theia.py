@@ -673,7 +673,7 @@ plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
-fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 for index, s in enumerate(ejecta_compositions.keys()):
@@ -770,7 +770,7 @@ for ax in axs:
     ax.grid()
     ax.set_yscale('log')
     ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
-axs[0].set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
+    axs.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 plt.tight_layout()
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
