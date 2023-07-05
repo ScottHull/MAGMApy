@@ -765,12 +765,22 @@ for ax in axs:
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
 
-for ax in axs:
+tmp_models = ['Canonical', "Half-Earths"]
+for index, ax in enumerate(axs):
     ax.tick_params(axis='both', which='major', labelsize=20)
     ax.grid()
     ax.set_yscale('log')
     ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
     ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+    ax.annotate(
+        tmp_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left",
+        verticalalignment="top",
+        fontsize=16
+    )
 plt.tight_layout()
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
