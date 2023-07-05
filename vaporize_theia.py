@@ -344,8 +344,8 @@ for oxide in bse_composition.keys():
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
-axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=16)
-axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=16)
+# axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=16)
+# axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=16)
 for index, ax in enumerate(axs):
     ax.grid()
     label = None
