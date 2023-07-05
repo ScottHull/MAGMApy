@@ -375,7 +375,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
 plt.tight_layout()
-plt.savefig("melt_vapor_species_mass_fraction.png", format='png', dpi=300)
+plt.savefig("bse_melt_vapor_species_mass_fraction.png", format='png', dpi=300)
 plt.show()
 
 # ========================= MELT SPIDER PLOT VS. BULK MOON =========================
@@ -833,6 +833,7 @@ for index, run in enumerate(runs):
     loss_fraction = {element: mass_distribution.loc['escaping vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
     # sort cations by 50% condensation temperature
     cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    loss_fraction = {cation: loss_fraction[cation] for cation in cations}
     # convert loss fraction to a LaTex table
     table = pd.DataFrame(loss_fraction, index=['loss fraction']).to_latex()
     # save the table to a file
@@ -931,6 +932,7 @@ for index, run in enumerate(runs):
     vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
     # sort cations by 50% condensation temperature
     cations = list(reversed(sorted(list(vapor_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    vapor_fraction = {cation: vapor_fraction[cation] for cation in cations}
     # convert loss fraction to a LaTex table
     table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction']).to_latex()
     # save the table to a file

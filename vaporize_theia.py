@@ -55,6 +55,13 @@ lunar_bulk_compositions = pd.read_csv("data/lunar_bulk_compositions.csv", index_
 favored_composition = [lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides]
 mass_moon = 7.34767309e22  # kg, mass of the moon
 
+annotate_models = [
+    "Canonical (No Recondensation)",
+    "Canonical (With Recondensation)",
+    "Half-Earths (No Recondensation)",
+    "Half-Earths (With Recondensation)"
+]
+
 # ============================== Define Runs ==============================
 
 runs = [
@@ -390,6 +397,10 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
+    ax.annotate(
+        annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontsize=16
+    )
 
 fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
 # replace the x-axis labels with the formatted oxide names
@@ -409,8 +420,8 @@ plt.show()
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
-axs[0].set_title("Theia Bulk Composition (Without Recondensation)", fontsize=16)
-axs[1].set_title("Theia Bulk Composition (With Recondensation)", fontsize=16)
+# axs[0].set_title("Theia Bulk Composition (Without Recondensation)", fontsize=16)
+# axs[1].set_title("Theia Bulk Composition (With Recondensation)", fontsize=16)
 fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for index, ax in enumerate(axs):
@@ -471,6 +482,10 @@ for index, ax in enumerate(axs):
     ax.annotate(
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
+    )
+    ax.annotate(
+        annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontsize=16
     )
 
 # replace the x-axis labels with the formatted oxide names
@@ -640,8 +655,12 @@ for index, ax in enumerate(axs):
         letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
-axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
-axs[1].set_title("Mass Loss Fraction (With Recondensation)", fontsize=16)
+    ax.annotate(
+        annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontsize=16
+    )
+# axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
+# axs[1].set_title("Mass Loss Fraction (With Recondensation)", fontsize=16)
 for index, ax in enumerate(axs):
     if index % 2 == 0:
         ax.set_ylabel("Mass Loss Fraction (%)", fontsize=20)
@@ -656,49 +675,50 @@ plt.show()
 # ================================= Vapor Mass Fraction of From Each Model =================================
 fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
-texts = []
+pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 for index, s in enumerate(ejecta_compositions.keys()):
-    base_model = s.split("_")[1]
-    to_index = 0
-    label = None
-    if "Half-Earths" in s:
-        to_index = 1
-    if to_index == 0:
-        label = base_model
-    cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
-    cations = list(reversed(
-        sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-    # read in the ejecta composition file
-    mass_distribution = pd.read_csv(f"{root_path}/{s}" + "/mass_distribution.csv", index_col='component')
-    # get the loss fraction of each element
-    vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (
-                mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0
-                      for element in cations}
-    # sort cations by 50% condensation temperature
-    cations = list(reversed(sorted(list(vapor_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
-    # convert loss fraction to a LaTex table
-    table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction']).to_latex()
-    # save the table to a file
-    if f"{run_name}_vapor_mass_fraction.tex" in os.listdir(f"{root_path}/{s}"):
-        os.remove(f"{root_path}/{s}/{run_name}_vapor_mass_fraction.tex")
-    with open(f"{root_path}/{s}/{run_name}_vapor_mass_fraction.tex", 'w') as f:
-        f.write(table)
-    # remove O from the list of cations
-    cations.remove('O')
-    # get a unique color for each oxide
-    axs[to_index].plot(
-        cations, [vapor_fraction[cation] for cation in cations],
-        linewidth=4,
-        color=colors[list(lunar_bulk_compositions).index(base_model)],
-        label=label
-    )
-    # scatter the loss fraction on top of the line
-    axs[to_index].scatter(
-        cations, [vapor_fraction[cation] for cation in cations],
-        color=colors[list(lunar_bulk_compositions).index(base_model)],
-        s=100,
-        zorder=10
-    )
+    if not "_not_recondensed" in s:
+        base_model = s.split("_")[1]
+        to_index = 0
+        label = None
+        if "Half-Earths" in s:
+            to_index = 1
+        if to_index == 0:
+            label = base_model
+        cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
+        cations = list(reversed(
+            sorted(cations, key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+        # read in the ejecta composition file
+        mass_distribution = pd.read_csv(f"{root_path}/{s}" + "/mass_distribution.csv", index_col='component')
+        # get the loss fraction of each element
+        vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (
+                    mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0
+                          for element in cations}
+        # sort cations by 50% condensation temperature
+        cations = list(reversed(sorted(list(vapor_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+        # convert loss fraction to a LaTex table
+        table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction']).to_latex()
+        # save the table to a file
+        if f"{run_name}_vapor_mass_fraction.tex" in os.listdir(f"{root_path}/{s}"):
+            os.remove(f"{root_path}/{s}/{run_name}_vapor_mass_fraction.tex")
+        with open(f"{root_path}/{s}/{run_name}_vapor_mass_fraction.tex", 'w') as f:
+            f.write(table)
+        # remove O from the list of cations
+        cations.remove('O')
+        # get a unique color for each oxide
+        axs[to_index].plot(
+            cations, [vapor_fraction[cation] for cation in cations],
+            linewidth=2,
+            color=colors[list(lunar_bulk_compositions).index(base_model)],
+            label=label
+        )
+    # # scatter the loss fraction on top of the line
+    # axs[to_index].scatter(
+    #     cations, [vapor_fraction[cation] for cation in cations],
+    #     color=colors[list(lunar_bulk_compositions).index(base_model)],
+    #     s=100,
+    #     zorder=10
+    # )
 
 for ax in axs:
     # plot arrows at the bottom of the plot to indicate the range of volatility
