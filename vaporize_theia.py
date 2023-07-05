@@ -770,7 +770,7 @@ for ax in axs:
     ax.grid()
     ax.set_yscale('log')
     ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
-    axs.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
+    ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 plt.tight_layout()
 fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
