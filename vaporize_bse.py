@@ -641,19 +641,23 @@ for run_index, run in enumerate(runs):
         heavy_z=41, light_z=39, vapor_escape_fraction=run['vapor_loss_fraction'],
         system_element_mass=mass_distribution['K']['bulk system mass'],
         melt_element_mass=mass_distribution['K']['melt mass'],
-        vapor_element_mass=mass_distribution['K']['bulk vapor mass'], earth_isotope_composition=delta_K_BSE,
+        vapor_element_mass=mass_distribution['K']['bulk vapor mass'],
+        earth_isotope_composition=delta_K_BSE,
         theia_ejecta_fraction=0,
         total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
         total_vapor_mass=sum(
             [mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
     )
+
     # k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
     k_data = k_isotopes.fractionate(
         reservoir_delta=delta_K_BSE
     )
+    k_isotopes.earth_isotope_composition = delta_K_BSE - delta_K_BSE_std_error
     k_lower_data = k_isotopes.fractionate(
         reservoir_delta=delta_K_BSE - delta_K_BSE_std_error
     )
+    k_isotopes.earth_isotope_composition = delta_K_BSE + delta_K_BSE_std_error
     k_upper_data = k_isotopes.fractionate(
         reservoir_delta=delta_K_BSE + delta_K_BSE_std_error
     )  # assumes ejecta is a mix of Earth and Theia
@@ -675,9 +679,11 @@ for run_index, run in enumerate(runs):
     k_data_no_phys = k_isotopes_no_phys.fractionate(
         reservoir_delta=delta_K_BSE
     )
+    k_isotopes_no_phys.earth_isotope_composition = delta_K_BSE - delta_K_BSE_std_error
     k_lower_data_no_phys = k_isotopes_no_phys.fractionate(
         reservoir_delta=delta_K_BSE - delta_K_BSE_std_error
     )
+    k_isotopes_no_phys.earth_isotope_composition = delta_K_BSE + delta_K_BSE_std_error
     k_upper_data_no_phys = k_isotopes_no_phys.fractionate(
         reservoir_delta=delta_K_BSE + delta_K_BSE_std_error
     )  # assumes ejecta is a mix of Earth and Theia

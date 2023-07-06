@@ -6,7 +6,7 @@ import matplotlib.transforms as transforms
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from src.composition import ConvertComposition
+from src.composition import ConvertComposition, normalize
 from theia.chondrites import plot_chondrites
 
 
@@ -17,6 +17,19 @@ df = df[df['Include?'] == "Y"]
 types = df["General Type"].unique()
 
 lunar_bulk_compositions = pd.read_csv("data/lunar_bulk_compositions.csv", index_col="Oxide")
+
+bse_composition = normalize({  # Visscher and Fegley (2013)
+    "SiO2": 45.40,
+    'MgO': 36.76,
+    'Al2O3': 4.48,
+    'TiO2': 0.21,
+    'Fe2O3': 0.00000,
+    'FeO': 8.10,
+    'CaO': 3.65,
+    'Na2O': 0.349,
+    'K2O': 0.031,
+    'ZnO': 6.7e-3,
+})
 
 
 def get_ellipse_params(points, ax, scale=1.5, **kwargs):
@@ -110,6 +123,12 @@ plt.show()
 
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
+bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
+bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
+bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
+bulk_earth_mg = 15.4
+bulk_earth_al = 1.59
+bulk_earth_si = 16.1
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 plot_chondrites(ax)
 for index, model in enumerate(sort_lunar_models(lunar_bulk_compositions.keys())):
@@ -126,6 +145,13 @@ ax.set_ylabel("Mg/Si (mass ratio)", fontsize=16)
 # ax.set_ylim(0, 1.4)
 ax.legend(loc='lower right', fontsize=16)
 ax.grid()
+ax.scatter(
+    bse_al_si, bse_mg_si, color="k", s=300, marker="*"
+)
+# annotate the BSE and bulk Earth
+ax.annotate(
+    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.002, bse_mg_si + 0.002), fontsize=14
+)
 plt.tight_layout()
 plt.savefig("lunar_models_mg_si_vs_al_si.png", dpi=300)
 plt.show()

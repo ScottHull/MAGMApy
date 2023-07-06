@@ -874,12 +874,15 @@ markers = ['o', 's', 'D', '^']
 bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
 bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
 bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
+bulk_earth_mg = 15.4
+bulk_earth_al = 1.59
+bulk_earth_si = 16.1
 ax.scatter(
     bse_al_si, bse_mg_si, color="k", s=300, marker="*"
 )
-# annotate the BSE
+# annotate the BSE and bulk Earth
 ax.annotate(
-    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.005, bse_mg_si + 0.005), fontsize=14
+    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.002, bse_mg_si + 0.002), fontsize=14
 )
 # plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
 for index, s in enumerate(ejecta_compositions.keys()):
