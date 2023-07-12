@@ -648,8 +648,8 @@ for i, s in enumerate(ejecta_compositions.keys()):
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
         )
 
-    if not "not_recondensed" in s:
-        loss_frac_dict[s] = loss_fraction_recondensed
+    # if not "not_recondensed" in s:
+    loss_frac_dict[s] = loss_fraction_recondensed
     vmf_dict[s] = loss_fraction_not_recondensed
 
 formatted_loss_frac_dict = {'models': [s.split("_")[1] for s in loss_frac_dict.keys()]}
