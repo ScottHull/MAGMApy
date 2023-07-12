@@ -649,7 +649,7 @@ for i, s in enumerate(ejecta_compositions.keys()):
         )
 
     loss_frac_dict[s] = loss_fraction_recondensed
-    vmf_dict[s] = ejecta_data['vmf']
+    vmf_dict[s] = loss_fraction_not_recondensed
 
 pd.DataFrame(loss_frac_dict).to_csv("loss_fraction.csv")
 pd.DataFrame(vmf_dict).to_csv("vmf.csv")
