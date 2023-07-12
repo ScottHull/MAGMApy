@@ -648,8 +648,9 @@ for i, s in enumerate(ejecta_compositions.keys()):
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
         )
 
-    loss_frac_dict[s] = loss_fraction_recondensed
-    vmf_dict[s] = loss_fraction_not_recondensed
+    if "not_recondensed" in s:
+        loss_frac_dict[s] = loss_fraction_recondensed
+        vmf_dict[s] = loss_fraction_not_recondensed
 
 pd.DataFrame(loss_frac_dict).to_csv("loss_fraction.csv")
 pd.DataFrame(vmf_dict).to_csv("vmf.csv")
