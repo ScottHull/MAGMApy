@@ -130,9 +130,9 @@ for run in runs:
 
 def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_name,
                                  escaping_vapor_mass_at_vmf, retained_vapor_mass_at_vmf):
-    if os.path.exists(f"{run_name}_mass_distribution.csv"):
-        os.remove(f"{run_name}_mass_distribution.csv")
-    with open(f"{run_name}_mass_distribution.csv", "w") as f:
+    if os.path.exists(f"{run_name}/mass_distribution.csv"):
+        os.remove(f"{run_name}/mass_distribution.csv")
+    with open(f"{run_name}/mass_distribution.csv", "w") as f:
         header = "component," + ",".join([str(i) for i in melt_mass_at_vmf.keys()]) + "\n"
         f.write(header)
         f.write("melt mass," + ",".join([str(i) for i in melt_mass_at_vmf.values()]) + "\n")
@@ -143,7 +143,7 @@ def write_mass_distribution_file(melt_mass_at_vmf, bulk_vapor_mass_at_vmf, run_n
         f.write("retained vapor mass," + ",".join([str(i) for i in retained_vapor_mass_at_vmf.values()]) + "\n")
         f.write("recondensed melt mass," + ",".join([str(i) for i in (np.array(list(melt_mass_at_vmf.values())) + np.array(
             list(retained_vapor_mass_at_vmf.values()))).tolist()]) + "\n")
-    print(f"wrote file {run_name}_mass_distribution.csv")
+    print(f"wrote file {run_name}/mass_distribution.csv")
     f.close()
 
 
@@ -636,7 +636,7 @@ ax.grid(alpha=0.5)
 ebar_index = 1
 for run_index, run in enumerate(runs):
     run_name = run['run_name']
-    mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+    mass_distribution = pd.read_csv(f"{run_name}/mass_distribution.csv", index_col='component')
     k_isotopes = FullSequenceRayleighDistillation_SingleReservior(
         heavy_z=41, light_z=39, vapor_escape_fraction=run['vapor_loss_fraction'],
         system_element_mass=mass_distribution['K']['bulk system mass'],
@@ -672,7 +672,7 @@ for run_index, run in enumerate(runs):
         total_melt_mass=sum([mass_distribution[i]['melt mass'] for i in mass_distribution.keys() if len(i) < 3]),
         total_vapor_mass=sum(
             [mass_distribution[i]['bulk vapor mass'] for i in mass_distribution.keys() if len(i) < 3]),
-        alpha_phys=1
+        alpha_phys=1  # turn off physical kinetic fractionation
     )
 
     # k_isotopes_starting_earth_isotope_composition = k_isotopes.run_3_stage_fractionation()  # assumes ejecta is fully Earth-like
@@ -772,7 +772,7 @@ ax.set_yticks([])
 # ax.set_ylim(len(isotope_runs) / 2 , 0.5 + 2)
 
 # ax.set_title(r"$\rm ^{41/39}K$", fontsize=20)
-ax.legend(loc='lower left', fontsize=18)
+ax.legend(fontsize=18)
 plt.tight_layout()
 # fig.subplots_adjust(right=0.84)
 
@@ -834,7 +834,7 @@ for index, run in enumerate(runs):
     run_name = run['run_name']
     vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
-    mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+    mass_distribution = pd.read_csv(f"{run_name}/mass_distribution.csv", index_col='component')
     # get the loss fraction of each element
     loss_fraction = {element: mass_distribution.loc['escaping vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
     # sort cations by 50% condensation temperature
@@ -933,7 +933,7 @@ for index, run in enumerate(runs):
     run_name = run['run_name']
     vapor_loss_fraction = run['vapor_loss_fraction']
     # read in the ejecta composition file
-    mass_distribution = pd.read_csv(f"{run_name}_mass_distribution.csv", index_col='component')
+    mass_distribution = pd.read_csv(f"{run_name}/mass_distribution.csv", index_col='component')
     # get the loss fraction of each element
     vapor_fraction = {element: mass_distribution.loc['bulk vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
     # sort cations by 50% condensation temperature

@@ -605,6 +605,8 @@ plt.show()
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
+loss_frac_dict = {}
+vmf_dict = {}
 for i, s in enumerate(ejecta_compositions.keys()):
     ejecta_data = eval(open(f"{root_path}/{s}" + "/ejecta_composition.csv", 'r').read())
     base_model = s.split("_")[1]
@@ -645,6 +647,12 @@ for i, s in enumerate(ejecta_compositions.keys()):
             [loss_fraction_recondensed[cation] for cation in cations if cation != "O"],
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
         )
+
+    loss_frac_dict[s] = loss_fraction_recondensed
+    vmf_dict[s] = ejecta_data['vmf']
+
+pd.DataFrame(loss_frac_dict).to_csv("loss_fraction.csv")
+pd.DataFrame(vmf_dict).to_csv("vmf.csv")
 
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
