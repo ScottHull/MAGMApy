@@ -723,6 +723,14 @@ for i, j in zip(
     [df_loss_fraction_not_recondensed, df_vmf_not_recondensed, df_loss_fraction_recondensed, df_vmf_recondensed],
     ['loss_fraction_not_recondensed', 'vmf_not_recondensed', 'loss_fraction_recondensed', 'vmf_recondensed']
     ):
+    # loop through each cell with a number and round it to 2 decimal places
+    # if the number if smaller than 0.01, set it to scientific notation
+    for col in i.columns:
+        for index, row in i.iterrows():
+            if row[col] < 0.01:
+                i.loc[index, col] = f"{row[col]:.2E}"
+            else:
+                i.loc[index, col] = f"{row[col]:.2f}"
     table = i.to_latex()
     if f"{j}.tex" in os.listdir(os.getcwd()):
         os.remove(f"{j}.tex")
