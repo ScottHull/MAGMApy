@@ -692,36 +692,37 @@ for run in runs:
     if "_not_recondensed" in s:
         prefix = "not_recondensed"
     for i, s in enumerate(ejecta_compositions.keys()):
-        target_loss_fraction_df = df_loss_fraction_recondensed
-        target_vmf_df = df_vmf_recondensed
-        if "not_recondensed" in s:
-            target_loss_fraction_df = df_loss_fraction_not_recondensed
-            target_vmf_df = df_vmf_not_recondensed
-        ejecta_data = eval(open(f"{root_path}/{s}" + "/ejecta_composition.csv", 'r').read())
-        base_model = s.split("_")[1]
-        total_mass = {cation: ejecta_data[f'{prefix}__original_melt_element_masses'][cation] +
-                              ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
-                              ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
-        total_vapor_mass = {cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
-                                    ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in
-                            cations}
-        vmfs = {
-            cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation in cations
-        }
-        loss_fraction_recondensed = {
-            cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
-            in cations}
-        loss_fraction_not_recondensed = {
-            cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation
-            in cations
-        }
-
-        for c in cations:
-            tdf2 = loss_fraction_recondensed
+        if run_name in s:
+            target_loss_fraction_df = df_loss_fraction_recondensed
+            target_vmf_df = df_vmf_recondensed
             if "not_recondensed" in s:
-                tdf2 = loss_fraction_not_recondensed
-            target_loss_fraction_df.loc[base_model, c + f"_{run_prefix}"] = tdf2[c]
-            target_vmf_df.loc[base_model, c + f"_{run_prefix}"] = vmfs[c]
+                target_loss_fraction_df = df_loss_fraction_not_recondensed
+                target_vmf_df = df_vmf_not_recondensed
+            ejecta_data = eval(open(f"{root_path}/{s}" + "/ejecta_composition.csv", 'r').read())
+            base_model = s.split("_")[1]
+            total_mass = {cation: ejecta_data[f'{prefix}__original_melt_element_masses'][cation] +
+                                  ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
+                                  ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
+            total_vapor_mass = {cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
+                                        ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in
+                                cations}
+            vmfs = {
+                cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation in cations
+            }
+            loss_fraction_recondensed = {
+                cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
+                in cations}
+            loss_fraction_not_recondensed = {
+                cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation
+                in cations
+            }
+
+            for c in cations:
+                tdf2 = loss_fraction_recondensed
+                if "not_recondensed" in s:
+                    tdf2 = loss_fraction_not_recondensed
+                target_loss_fraction_df.loc[base_model, c + f"_{run_prefix}"] = tdf2[c]
+                target_vmf_df.loc[base_model, c + f"_{run_prefix}"] = vmfs[c]
 
 for i, j in zip(
     [df_loss_fraction_not_recondensed, df_vmf_not_recondensed, df_loss_fraction_recondensed, df_vmf_recondensed],
