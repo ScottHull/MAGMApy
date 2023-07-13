@@ -675,12 +675,56 @@ plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
 
 # =========================== EXPORT MASS LOSS FRACTION AND VMF SIDE-BY-SIDE FOR CANONICAL/HALF-EARTHS MODEL =========
-
+cols = [i + f"_canonical" for i in cations] + [i + f"_half_earths" for i in cations]
+df_loss_fraction_not_recondensed = pd.DataFrame(columns=cols)
+df_vmf_not_recondensed = pd.DataFrame(columns=cols)
+df_loss_fraction_recondensed = pd.DataFrame(columns=cols)
+df_vmf_recondensed = pd.DataFrame(columns=cols)
+for model in list(lunar_bulk_compositions.keys()):
+    for i in [df_loss_fraction_not_recondensed, df_vmf_not_recondensed, df_loss_fraction_recondensed, df_vmf_recondensed]:
+        i.loc[model] = [0 for i in len(cols)]
 for run in runs:
     run_name = run['run_name']
-    cols = list(cations) + list(cations)
+    prefix = "canonical"
+    if "Half Earths" in run_name:
+        prefix = "half_earths"
+    for i, s in enumerate(ejecta_compositions.keys()):
+        target_loss_fraction_df = df_loss_fraction_recondensed
+        target_vmf_df = df_vmf_recondensed
+        if "not_recondensed" in s:
+            target_loss_fraction_df = df_loss_fraction_not_recondensed
+            target_vmf_df = df_vmf_not_recondensed
+        ejecta_data = eval(open(f"{root_path}/{s}" + "/ejecta_composition.csv", 'r').read())
+        base_model = s.split("_")[1]
+        total_mass = {cation: ejecta_data[f'{prefix}__original_melt_element_masses'][cation] +
+                              ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
+                              ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in cations}
+        total_vapor_mass = {cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] +
+                                    ejecta_data[f'{prefix}__retained_vapor_element_masses'][cation] for cation in
+                            cations}
+        vmfs = {
+            cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation in cations
+        }
+        loss_fraction_recondensed = {
+            cation: ejecta_data[f'{prefix}__lost_vapor_element_masses'][cation] / total_mass[cation] * 100 for cation
+            in cations}
+        loss_fraction_not_recondensed = {
+            cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation
+            in cations}
 
+        for c in cations:
+            target_loss_fraction_df.loc[base_model, c + f"_{prefix}"] = loss_fraction_recondensed[c]
+            target_vmf_df.loc[base_model, c + f"_{prefix}"] = vmfs[c]
 
+for i, j in zip(
+    [df_loss_fraction_not_recondensed, df_vmf_not_recondensed, df_loss_fraction_recondensed, df_vmf_recondensed],
+    ['loss_fraction_not_recondensed', 'vmf_not_recondensed', 'loss_fraction_recondensed', 'vmf_recondensed']
+    ):
+    table = i.to_latex()
+    if f"{j}.tex" in os.listdir(os.getcwd()):
+        os.remove(f"{j}.tex")
+    with open(f"{j}.tex", 'w') as f:
+        f.write(table)
 
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
