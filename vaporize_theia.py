@@ -648,23 +648,6 @@ for i, s in enumerate(ejecta_compositions.keys()):
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
         )
 
-    # if not "not_recondensed" in s:
-    loss_frac_dict[s] = loss_fraction_recondensed
-    vmf_dict[s] = loss_fraction_not_recondensed
-
-formatted_loss_frac_dict = {'models': [s.split("_")[1] for s in loss_frac_dict.keys()]}
-formatted_vmf_dict = {'models': [s.split("_")[1] for s in loss_frac_dict.keys()]}
-for i, s in enumerate(ejecta_compositions.keys()):
-    for c in cations:
-        if c not in formatted_loss_frac_dict.keys():
-            formatted_loss_frac_dict[c] = []
-            formatted_vmf_dict[c] = []
-        formatted_loss_frac_dict[c].append(loss_frac_dict[s][c])
-        formatted_vmf_dict[c].append(vmf_dict[s][c])
-
-pd.DataFrame(formatted_loss_frac_dict, index=['model']).to_csv("loss_fraction.csv")
-pd.DataFrame(formatted_vmf_dict, index=['model']).to_csv("vmf.csv")
-
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
     ax.tick_params(axis='both', which='major', labelsize=16)
@@ -690,6 +673,15 @@ fig.legend(loc=7)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
+
+# =========================== EXPORT MASS LOSS FRACTION AND VMF SIDE-BY-SIDE FOR CANONICAL/HALF-EARTHS MODEL =========
+
+for run in runs:
+    run_name = run['run_name']
+    cols = list(cations) + list(cations)
+
+
+
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
 fig, axs = plt.subplots(2, 1, figsize=(16, 9), sharex='all', sharey='all')
