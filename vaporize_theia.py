@@ -685,9 +685,12 @@ for model in list(lunar_bulk_compositions.keys()):
         i.loc[model] = [0 for i in range(len(cols))]
 for run in runs:
     run_name = run['run_name']
-    prefix = "canonical"
+    run_prefix = "canonical"
     if "Half Earths" in run_name:
-        prefix = "half_earths"
+        run_prefix = "half_earths"
+    prefix = "recondensed"
+    if "_not_recondensed" in s:
+        prefix = "not_recondensed"
     for i, s in enumerate(ejecta_compositions.keys()):
         target_loss_fraction_df = df_loss_fraction_recondensed
         target_vmf_df = df_vmf_recondensed
@@ -713,8 +716,8 @@ for run in runs:
             in cations}
 
         for c in cations:
-            target_loss_fraction_df.loc[base_model, c + f"_{prefix}"] = loss_fraction_recondensed[c]
-            target_vmf_df.loc[base_model, c + f"_{prefix}"] = vmfs[c]
+            target_loss_fraction_df.loc[base_model, c + f"_{run_prefix}"] = loss_fraction_recondensed[c]
+            target_vmf_df.loc[base_model, c + f"_{run_prefix}"] = vmfs[c]
 
 for i, j in zip(
     [df_loss_fraction_not_recondensed, df_vmf_not_recondensed, df_loss_fraction_recondensed, df_vmf_recondensed],
