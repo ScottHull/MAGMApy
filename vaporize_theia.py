@@ -682,16 +682,16 @@ df_loss_fraction_recondensed = pd.DataFrame(columns=cols)
 df_vmf_recondensed = pd.DataFrame(columns=cols)
 for model in list(lunar_bulk_compositions.keys()):
     for i in [df_loss_fraction_not_recondensed, df_vmf_not_recondensed, df_loss_fraction_recondensed, df_vmf_recondensed]:
-        i.loc[model] = [0 for i in range(len(cols))]
+        i.loc[model] = [None for i in range(len(cols))]
 for run in runs:
     run_name = run['run_name']
     run_prefix = "canonical"
     if "Half-Earths" in run_name:
         run_prefix = "half_earths"
-    prefix = "recondensed"
-    if "_not_recondensed" in s:
-        prefix = "not_recondensed"
     for i, s in enumerate(ejecta_compositions.keys()):
+        prefix = "recondensed"
+        if "not_recondensed" in s:
+            prefix = "not_recondensed"
         if run_name in s:
             target_loss_fraction_df = df_loss_fraction_recondensed
             target_vmf_df = df_vmf_recondensed
