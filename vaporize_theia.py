@@ -713,10 +713,14 @@ for run in runs:
             in cations}
         loss_fraction_not_recondensed = {
             cation: total_vapor_mass[cation] / total_mass[cation] * 100 for cation
-            in cations}
+            in cations
+        }
 
         for c in cations:
-            target_loss_fraction_df.loc[base_model, c + f"_{run_prefix}"] = loss_fraction_recondensed[c]
+            tdf2 = loss_fraction_recondensed
+            if "not_recondensed" in s:
+                tdf2 = loss_fraction_not_recondensed
+            target_loss_fraction_df.loc[base_model, c + f"_{run_prefix}"] = tdf2[c]
             target_vmf_df.loc[base_model, c + f"_{run_prefix}"] = vmfs[c]
 
 for i, j in zip(
