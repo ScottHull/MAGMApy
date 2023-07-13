@@ -686,7 +686,7 @@ for model in list(lunar_bulk_compositions.keys()):
 for run in runs:
     run_name = run['run_name']
     run_prefix = "canonical"
-    if "Half Earths" in run_name:
+    if "Half-Earths" in run_name:
         run_prefix = "half_earths"
     prefix = "recondensed"
     if "_not_recondensed" in s:
