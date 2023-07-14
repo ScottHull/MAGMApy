@@ -925,6 +925,96 @@ ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
 # plt.savefig("bse_vaporize_mass_loss_fraction.png", dpi=300)
 # plt.show()
 
+# ======================================= PLOT THE PARTIAL PRESSURES OF EACH VAPOR SPECIES ==========================
+fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
+axs = axs.flatten()
+for index, run in enumerate(runs):
+    run_name = run['run_name']
+    activities = collect_data(path=f"{run_name}/activities", x_header='mass fraction vaporized')
+    partial_pressures = collect_data(path=f"{run_name}/partial_pressures", x_header='mass fraction vaporized')
+    activity_species = list(activities[list(activities.keys())[0]].keys())
+    partial_pressure_species = list(partial_pressures[list(partial_pressures.keys())[0]].keys())
+    activity_colors = plt.cm.jet(np.linspace(0, 1, len(activity_species)))
+    partial_pressure_colors = plt.cm.jet(np.linspace(0, 1, len(partial_pressure_species)))
+    for index2, species in enumerate(activity_species):
+        axs[index].plot(
+            np.array(list(activities.keys())) * 100,
+            [activities[v][species] for v in activities.keys()],
+            linewidth=1.5,
+            color=activity_colors[index2],
+            label=species
+        )
+    for index2, species in enumerate(partial_pressure_species):
+        if "_l" not in species:
+            axs[index + 2].plot(
+                np.array(list(partial_pressures.keys())) * 100,
+                [partial_pressures[v][species] for v in partial_pressures.keys()],
+                linewidth=1.5,
+                color=partial_pressure_colors[index2],
+                label=species.split("_")[0]
+            )
+    axs[index].axvline(x=run["vmf"], color="black", linestyle="--", linewidth=2.0, alpha=1)
+    axs[index + 2].axvline(x=run["vmf"], color="black", linestyle="--", linewidth=2.0, alpha=1)
+
+axs[0].set_ylabel("Activity", fontsize=20)
+axs[2].set_ylabel("Partial Pressure (bar)", fontsize=20)
+letters = list(string.ascii_lowercase)
+annotate_models = ['Canonical', 'Half-Earths', 'Canonical', 'Half-Earths']
+for index, ax in enumerate(axs):
+    ax.grid()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(left=10 ** -1)
+    ax.set_ylim(bottom=10 ** -4, top=10 ** 0)
+    labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
+        xvals=[uniform(1e-2, 10 ** 1) for i in ax.get_lines()], fontsize=12)
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.90, 0.98), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+    ax.annotate(
+        annotate_models[index], xy=(0.80, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontsize=18
+    )
+    # increase font size
+    ax.tick_params(axis='both', which='major', labelsize=16)
+for ax in axs[2:]:
+    ax.set_xlabel("VMF (%)", fontsize=20)
+plt.tight_layout()
+plt.savefig("bse_vaporize_partial_pressures.png", dpi=300)
+plt.show()
+
+# ======================================= PLOT TOTAL FRACTIONAL PRESSURE OF ALL VAPOR SPECIES ==========================
+fig = plt.figure(figsize=(8, 8))
+ax = fig.add_subplot(111)
+# get the color cycle
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+for index, run in enumerate(runs):
+    run_name = run['run_name']
+    partial_pressures = collect_data(path=f"{run_name}/partial_pressures", x_header='mass fraction vaporized')
+    ax.plot(
+        np.array(list(partial_pressures.keys())) * 100,
+        [sum(partial_pressures[v].values()) for v in partial_pressures.keys()],
+        linewidth=2,
+        color=color_cycle[index],
+        label=run_name
+    )
+    ax.axvline(
+        x=run["vmf"], color=color_cycle[index], linestyle="--", linewidth=3.0, alpha=1
+    )
+ax.set_xlim(left=10 ** -1)
+ax.set_xlabel("VMF (%)", fontsize=18)
+ax.set_ylabel("Total Pressure (bar)", fontsize=18)
+ax.set_xscale('log')
+# increase font size
+ax.tick_params(axis='both', which='major', labelsize=16)
+ax.grid()
+ax.legend(fontsize=18)
+plt.tight_layout()
+plt.savefig("bse_vaporize_total_partial_pressures.png", dpi=300)
+plt.show()
+
 # ================== Plot the bulk vapor fraction of each element ==================
 ax = axs[0]
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -1017,8 +1107,9 @@ for index, run in enumerate(runs):
 ax.tick_params(axis='both', which='major', labelsize=20)
 ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 ax.grid()
+ax.set_xscale('log')
 ax.set_yscale('log')
-ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
+ax.set_ylim(bottom=10 ** -6, top=10 ** 2.1)
 ax.legend(fontsize=18)
 plt.tight_layout()
 plt.savefig("bse_vaporize_element_vapor_mass_fraction.png", dpi=300)
