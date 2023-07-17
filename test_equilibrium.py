@@ -15,7 +15,7 @@ This script shows how to run MAGMApy given a temperature path path.
 """
 
 max_temperature = 4200  # K
-min_temperature = 1000  # K
+min_temperature = 1800  # K
 temperature_increment = 200  # K
 
 # BSE composition, Visccher & Fegley 2013
