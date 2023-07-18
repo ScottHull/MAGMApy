@@ -69,10 +69,10 @@ for temperature in reversed(
     print("[~] At iteration: {} (Weight Fraction Vaporized: {} %) (temperature: {} K)".format(count,
                                                                                               t.weight_fraction_vaporized * 100.0,
                                                                                               temperature))
-    if count % 5 == 0 or count == 1:
-        reports.create_composition_report(iteration=count)
-        reports.create_liquid_report(iteration=count)
-        reports.create_gas_report(iteration=count)
+    # if count % 5 == 0 or count == 1:
+    reports.create_composition_report(iteration=count)
+    reports.create_liquid_report(iteration=count)
+    reports.create_gas_report(iteration=count)
     count += 1
 
 
@@ -100,8 +100,17 @@ ax.set_ylabel("Partial Pressure")
 ax.set_title("Vapor Composition")
 # ax.set_ylim(-3, 0)
 data = collect_data(path="reports/partial_pressures", x_header='temperature (K)')
-for i in data[list(data.keys())[0]]:
+# get a unique color for each species
+colors = plt.cm.jet(np.linspace(0, 1, len(data[list(data.keys())[0]])))
+for index, i in enumerate(data[list(data.keys())[0]]):
     if "_l" not in i:
+        linewidth = 1.0
+        label = i.split("_")[0]
+        color = colors[index]
+        if "K" in i:
+            linewidth = 2.0
+            label = fr'$\bf{label}$'
+            color = 'red'
         x_data = [j for j in data.keys()]
         y_data = []
         tmp = [data[j][i] for j in data.keys()]
@@ -114,12 +123,22 @@ for i in data[list(data.keys())[0]]:
         ax.plot(
             x_data,
             y_data,
-            linewidth=1.0,
-            label=i.split("_")[0]
+            linewidth=linewidth,
+            color=color,
+            label=label
         )
         # ax.annotate(i, get_annotation_location(species=i, x_data=x_data, y_data=y_data, target_x=1850))
+# plot the total pressure
+ax.plot(
+    data.keys(),
+    [sum([j for key, j in i.items() if "_l" not in key]) for i in data.values()],
+    linewidth=1.0,
+    color='k',
+    label="Total"
+)
+
 labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
-                              xvals=[uniform(3500, max_temperature) for i in ax.get_lines()], fontsize=8)
+                              xvals=[uniform(3000, max_temperature) for i in ax.get_lines()], fontsize=8)
 ax.set_xlim(min_temperature, max_temperature)
 ax.set_ylim(10 ** -6, 100)
 ax.grid()
