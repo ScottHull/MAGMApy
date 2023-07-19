@@ -1,7 +1,7 @@
 from src.composition import Composition
 from src.liquid_chemistry import LiquidActivity
 from src.gas_chemistry import GasPressure
-from src.thermosystem import ThermoSystem
+from src.thermosystem import EquilibriumThermoSystem
 from src.report import Report
 from src.plots import collect_data, make_figure
 
@@ -52,7 +52,7 @@ l = LiquidActivity(
     gas_system=g
 )
 
-t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
+t = EquilibriumThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
 reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t)
 

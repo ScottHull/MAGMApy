@@ -16,7 +16,7 @@ class ThermoSystem:
         self.melt_mass = 0.0  # mass of the melt
         self.most_volatile_species = None  # most volatile species, which is fractionally depleted first
 
-    def __renormalize_abundances(self):
+    def renormalize_abundances(self):
         """
         Recalculates cation and oxide fractions following vaporization.
         Note that in the original MAGMA code, FSI relates to oxide fraction of Si and CONSI is the
@@ -135,7 +135,7 @@ class ThermoSystem:
         self.weight_vaporized = self.liquid_system.initial_melt_mass - wt_vaporized
 
         # renormalize abundances
-        self.__renormalize_abundances()
+        self.renormalize_abundances()
 
         return self.weight_fraction_vaporized
 
@@ -156,7 +156,7 @@ class ThermoSystem:
     #         wt_vaporized += self.composition.liquid_abundances[i] * oxide_mw * (1.0 / oxide_stoich[i])
     #
     #     # renormalize abundances
-    #     self.__renormalize_abundances()
+    #     self.renormalize_abundances()
     #
     #     return self.weight_fraction_vaporized
 
@@ -221,6 +221,6 @@ class EquilibriumThermoSystem(ThermoSystem):
         self.gas_system.vapor_mass_fraction = self.weight_fraction_vaporized
 
         # renormalize abundances
-        self.__renormalize_abundances()
+        self.renormalize_abundances()
 
         return self.weight_fraction_vaporized
