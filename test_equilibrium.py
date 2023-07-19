@@ -17,6 +17,7 @@ This script shows how to run MAGMApy given a temperature path path.
 max_temperature = 4200  # K
 min_temperature = 1800  # K
 temperature_increment = 200  # K
+title = "MAG18"
 
 # BSE composition, Visccher & Fegley 2013
 composition = {
@@ -97,7 +98,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlabel("Temperature (K)")
 ax.set_ylabel("Partial Pressure")
-ax.set_title("Vapor Composition")
+ax.set_title(f"Vapor Composition - {title}")
 # ax.set_ylim(-3, 0)
 data = collect_data(path="reports/partial_pressures", x_header='temperature (K)')
 # get a unique color for each species
