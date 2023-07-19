@@ -164,7 +164,7 @@ class ThermoSystem:
 
 class EquilibriumThermoSystem(ThermoSystem):
 
-    def __calculate_size_step_thermal(self, fraction=0.05):
+    def __calculate_size_step(self, fraction=0.05):
         """
         Computes the size step for fractional volatilization.
         The most volatile element in the melt will be reduced by 5% (Schafer & Fegley 2009).  This is done for both the
@@ -188,6 +188,7 @@ class EquilibriumThermoSystem(ThermoSystem):
                 r = self.gas_system.total_mole_fraction[i] / self.composition.liquid_abundances[i]
                 if r > ATMAX:
                     ATMAX = r
+                    self.most_volatile_species = i
         FACT1 = fraction / ATMAX  # most volatile element will be reduced by the given percentage
 
         # adjust liquid composition
@@ -199,7 +200,7 @@ class EquilibriumThermoSystem(ThermoSystem):
                 self.composition.cation_fraction[i] = 0.0
 
     def vaporize(self):
-        self.__calculate_size_step_thermal()  # calculate volatility for fractional volatilization
+        self.__calculate_size_step()  # calculate volatility for fractional volatilization
         # calculate fraction of vaporized materials
         total_liquid_cations = sum(
             self.composition.liquid_abundances.values())  # sum of fractional cation abundances, PLAMANT
