@@ -143,7 +143,7 @@ ax.set_xlabel("Al/Si (mass ratio)", fontsize=16)
 ax.set_ylabel("Mg/Si (mass ratio)", fontsize=16)
 # ax.set_xlim(0, 0.2)
 # ax.set_ylim(0, 1.4)
-ax.legend(loc='lower right', fontsize=16)
+ax.legend(loc='lower right', fontsize=14)
 ax.grid()
 ax.scatter(
     bse_al_si, bse_mg_si, color="k", s=300, marker="*"

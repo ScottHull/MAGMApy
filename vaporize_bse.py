@@ -693,18 +693,19 @@ for run_index, run in enumerate(runs):
         label = "Observed"
     ax.axvline(
         delta_K_Lunar_BSE,
-        color='grey',
-        linestyle='--',
+        color='red',
+        # linestyle='--',
+        linewidth=3.0,
         alpha=1,
         label=label,
     )
-    ax.axvspan(
-        delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error,
-        delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error,
-        alpha=0.2,
-        color='grey',
-        # label="Observed",
-    )
+    # ax.axvspan(
+    #     delta_K_Lunar_BSE - delta_K_Lunar_BSE_std_error,
+    #     delta_K_Lunar_BSE + delta_K_Lunar_BSE_std_error,
+    #     alpha=0.2,
+    #     color='grey',
+    #     # label="Observed",
+    # )
 
     isotope_runs = [
         # [delta_K_Lunar_BSE, delta_K_Lunar_BSE_std_error, delta_K_Lunar_BSE_std_error, "Observed"],
@@ -726,7 +727,7 @@ for run_index, run in enumerate(runs):
             dataset[0], ebar_index,
             xerr=[[dataset[1]], [dataset[2]]],
             fmt=markers[run_index],
-            markersize=10,
+            markersize=15,
             elinewidth=2,
             capsize=5,
             capthick=3,
@@ -1015,6 +1016,107 @@ plt.tight_layout()
 plt.savefig("bse_vaporize_total_partial_pressures.png", dpi=300)
 plt.show()
 
+
+# ================== Plot the mass fraction of each element lost relative to initial ==================
+fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
+ax = axs[1]
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+texts = []
+for index, run in enumerate(runs):
+    run_name = run['run_name']
+    vapor_loss_fraction = run['vapor_loss_fraction']
+    # read in the ejecta composition file
+    mass_distribution = pd.read_csv(f"{run_name}/mass_distribution.csv", index_col='component')
+    # get the loss fraction of each element
+    loss_fraction = {element: mass_distribution.loc['escaping vapor mass', element] / (mass_distribution.loc['melt mass', element] + mass_distribution.loc['bulk vapor mass', element]) * 100.0 for element in elements}
+    # sort cations by 50% condensation temperature
+    cations = list(reversed(sorted(list(loss_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
+    loss_fraction = {cation: loss_fraction[cation] for cation in cations}
+    # convert loss fraction to a LaTex table
+    table = pd.DataFrame(loss_fraction, index=['loss fraction']).to_latex()
+    # save the table to a file
+    with open(f"{run_name}_loss_fraction.tex", 'w') as f:
+        f.write(table)
+    # remove O from the list of cations
+    cations.remove('O')
+    # plot arrows at the bottom of the plot to indicate the range of volatility
+    ax.arrow(
+        -0.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        2.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Refractory", xy=(2 / 2, 10 ** -4.3), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        2.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        5.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Transitional", xy=((5 - 2 / 2), 10 ** -4.3), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        5.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    ax.arrow(
+        8, 10 ** -4.5, -2.5, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10, length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Moderately Volatile", xy=((8.5 - 3 / 2)
+                                   , 10 ** -4.3), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    # get a unique color for each oxide
+    ax.plot(
+        cations, [loss_fraction[cation] for cation in cations],
+        linewidth=4,
+        color=color_cycle[index],
+        label=run['run_name']
+    )
+    # scatter the loss fraction on top of the line
+    ax.scatter(
+        cations, [loss_fraction[cation] for cation in cations],
+        color=color_cycle[index],
+        s=100,
+        zorder=10
+    )
+    # annotate the loss fraction on top of the scatter
+    for i in range(0, len(cations)):
+        label = f"{loss_fraction[cations[i]]:.2f}%"
+        # if the loss fraction is less than 1%, then use scientific notation with 1 decimal place
+        if loss_fraction[cations[i]] < 0.01:
+            label = f"{loss_fraction[cations[i]]:.1e}%"
+        x = i
+        y = loss_fraction[cations[i]]
+        # add noise to the x and y coordinates to avoid overlapping text
+        # x += np.random.normal(-0.1 * x, 0.1 * x)
+        # y += np.random.normal(-0.2 * y, 0.2 * y)
+        # ax.annotate(
+        #     label, xy=(x, y), xycoords="data",
+        #     horizontalalignment="center", verticalalignment="bottom", fontsize=12, fontweight="bold",
+        #     color=color_cycle[index], backgroundcolor="w"
+        # )
+
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.set_ylabel("Hydrodynamic Loss Fraction (%)", fontsize=20)
+ax.grid()
+ax.set_yscale('log')
+ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
+# ax.legend(fontsize=18)
+# plt.tight_layout()
+# plt.savefig("bse_vaporize_mass_loss_fraction.png", dpi=300)
+# plt.show()
+
 # ================== Plot the bulk vapor fraction of each element ==================
 ax = axs[0]
 color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -1107,9 +1209,8 @@ for index, run in enumerate(runs):
 ax.tick_params(axis='both', which='major', labelsize=20)
 ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 ax.grid()
-ax.set_xscale('log')
 ax.set_yscale('log')
-ax.set_ylim(bottom=10 ** -6, top=10 ** 2.1)
+ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
 ax.legend(fontsize=18)
 plt.tight_layout()
 plt.savefig("bse_vaporize_element_vapor_mass_fraction.png", dpi=300)

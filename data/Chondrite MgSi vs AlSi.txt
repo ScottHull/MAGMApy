@@ -1,12 +1,20 @@
 Chondrite	Type	General Type	Include?	Mg/Si	Al/Si	Notes
-Tagish Lake	C2		N	0.537651298	0.050999787	Carbonaceous chondrite
-NWA5958	C2	CM	N	0.478100402	0.049485743	Carbonaceous chondrite
 Orgueil	CI1	CI	Y	0.8953271	0.0794393	Carbonaceous chondrite
+Orgueil	CI	CI	N	0.838012959	0.087832973	Carbonaceous chondrite
+Alais	CI	CI	N	0.834937084	0.062916358	Carbonaceous chondrite
+Alais	CI	CI	N	1.100286533	0.076408787	Carbonaceous chondrite
+Ivuna	CI	CI	N	0.788431062	0.118066561	Carbonaceous chondrite
 Maralinga	CK4	CK	N	0.802344931	0.084357333	Carbonaceous chondrite
+NWA5958	C2	CM	N	0.478100402	0.049485743	Carbonaceous chondrite
 Banten	CM2	CM	N	0.546961409	0.052157064	Carbonaceous chondrite
 Murray	CM2	CM	N	0.47753638	0.057815703	Carbonaceous chondrite
 Murchison MTF 2005	CM2	CM	N	0.346451836	0.033295635	Carbonaceous chondrite
 Murchison Fragment	CM2	CM	N	0.528481243	0.056551469	Carbonaceous chondrite
+Mighei	CM	CM	Y	0.767509025	0.077978339	Carbonaceous chondrite
+Murray	CM	CM	N	0.718965517	0.142241379	Carbonaceous chondrite
+Nogoya	CM	CM	Y	0.845756458	0.084870849	Carbonaceous chondrite
+MAC88107	CM	CM	N	0.678006329	0.246044304	Carbonaceous chondrite
+ALH83107	CM	CM	Y	0.827543424	0.091811414	Carbonaceous chondrite
 Orans	CO3	CO	Y	0.9023286	0.0912031	Carbonaceous chondrite
 Felix	CO3	CO	Y	0.9128015	0.0865801	Carbonaceous chondrite
 Lance	CO3	CO	Y	0.9188498	0.0875399	Carbonaceous chondrite
@@ -19,30 +27,26 @@ Leoville	CV3	CV	Y	0.955627	0.1176849	Carbonaceous chondrite
 Coolidge	CV3	CV	Y	0.9539642	0.1067775	Carbonaceous chondrite
 Efremovka	CV3	CV	Y	0.9134199	0.1020408	Carbonaceous chondrite
 LON91400	EL6	E	Y	0.72481289	0.049335804	Enstatite chondrite
-Eagle	EL6	E	Y	0.730503276	0.055001006	Enstatite chondrite
+Eagle	EL6	E	N	0.730503276	0.055001006	Enstatite chondrite
 Atlanta	EL6	E	Y	0.642549175	0.054432539	Enstatite chondrite
 Khaipur	EL6	E	Y	0.661795958	0.039490143	Enstatite chondrite
-Fayateville	H4	H	Y	0.863262269	0.066804518	Ordinary chondrite
-Pultusk	H5	H	Y	0.864320138	0.068006924	Ordinary chondrite
-Forest City	H5	H	Y	0.813142491	0.062803637	Ordinary chondrite
-Richardton Fragment	H5	H	Y	0.839531954	0.065115032	Ordinary chondrite
-NWA869	L3-6	L	Y	0.740408205	0.064481524	Ordinary chondrite
-Saratov	L4	L	Y	0.579784744	0.041634852	Ordinary chondrite
-Air	L6	L	Y	0.760307575	0.057692229	Ordinary chondrite
-Kunashak Slice	L6	L	Y	0.527349322	0.042272137	Ordinary chondrite
-Kunashak Fragment	L6	L	Y	0.515791132	0.041152883	Ordinary chondrite
-Kyle	L6	L	Y	0.663226016	0.051949097	Ordinary chondrite
-Peace River Fragment	L6	L	Y	0.682015905	0.056418435	Ordinary chondrite
-Larkman	LL	LL	Y	0.615461604	0.054112768	Ordinary chondrite
-Larkman	LL	LL	Y	0.797777834	0.065203313	Ordinary chondrite
-Chelyabinsk (With FC)	LL5	LL	Y	0.547353568	0.044024913	Ordinary chondrite
-Chelyabinsk (Without FC)	LL	LL	Y	0.500369483	0.038457587	Ordinary chondrite
-Orgueil	CI	CI	N	0.838012959	0.087832973	Carbonaceous chondrite
-Alais	CI	CI	N	0.834937084	0.062916358	Carbonaceous chondrite
-Alais	CI	CI	N	1.100286533	0.076408787	Carbonaceous chondrite
-Ivuna	CI	CI	N	0.788431062	0.118066561	Carbonaceous chondrite
-Mighei	CM	CM	Y	0.767509025	0.077978339	Carbonaceous chondrite
-Murray	CM	CM	N	0.718965517	0.142241379	Carbonaceous chondrite
-Nogoya	CM	CM	Y	0.845756458	0.084870849	Carbonaceous chondrite
-MAC88107	CM	CM	N	0.678006329	0.246044304	Carbonaceous chondrite
-ALH83107	CM	CM	Y	0.827543424	0.091811414	Carbonaceous chondrite
+EL Alexander	EL	E	Y	0.758064516	0.031451613	Ordinary Chondrite
+EH Alexander	EH	E	Y	0.634730539	0.048502994	Ordinary Chondrite
+Fayateville	H4	H + L	Y	0.863262269	0.066804518	Ordinary chondrite
+Pultusk	H5	H + L	Y	0.864320138	0.068006924	Ordinary chondrite
+Forest City	H5	H + L	Y	0.813142491	0.062803637	Ordinary chondrite
+Richardton Fragment	H5	H + L	Y	0.839531954	0.065115032	Ordinary chondrite
+H Alexander	H	H + L	Y	0.828402367	0.066863905	Ordinary Chondrite
+NWA869	L3-6	H + L	N	0.740408205	0.064481524	Ordinary chondrite
+Saratov	L4	H + L	N	0.579784744	0.041634852	Ordinary chondrite
+Air	L6	H + L	N	0.760307575	0.057692229	Ordinary chondrite
+Kunashak Slice	L6	H + L	N	0.527349322	0.042272137	Ordinary chondrite
+Kunashak Fragment	L6	H + L	N	0.515791132	0.041152883	Ordinary chondrite
+Kyle	L6	H + L	N	0.663226016	0.051949097	Ordinary chondrite
+Peace River Fragment	L6	H + L	N	0.682015905	0.056418435	Ordinary chondrite
+L Alexander 2019	L	H + L	Y	0.805405405	0.065945946	Ordinary Chondrite
+Larkman	LL	LL	N	0.615461604	0.054112768	Ordinary chondrite
+Larkman	LL	LL	N	0.797777834	0.065203313	Ordinary chondrite
+Chelyabinsk (With FC)	LL5	LL	N	0.547353568	0.044024913	Ordinary chondrite
+Chelyabinsk (Without FC)	LL	LL	N	0.500369483	0.038457587	Ordinary chondrite
+Tagish Lake	C2		N	0.537651298	0.050999787	Carbonaceous chondrite
