@@ -325,8 +325,8 @@ for ax in axs:
     #     left=min(next(iter(data.values()))["melt_oxide_mass_fraction"].keys()) * 100,
     #     right=max(next(iter(data.values()))["melt_oxide_mass_fraction"].keys()) * 100
     # )
-    ax.set_xlim(left=1e-1, right=1e2)
-    ax.set_ylim(bottom=1e-2, top=1e2)
+    ax.set_xlim(left=1e-1, right=90)
+    ax.set_ylim(bottom=1e-2, top=90)
 # in the upper row, plot the liquid composition for each run
 to_plot = 0
 for run in data.keys():
@@ -364,7 +364,7 @@ for run in data.keys():
     for ax in [axs[magma_plot_index], axs[vapor_plot_index]]:
         # labellines.labelLines(ax.get_lines(), zorder=2.5, align=True, fontsize=12)
         labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
-                              xvals=[uniform(1e-2, 2) for i in ax.get_lines()], fontsize=12)
+                              xvals=[uniform(10 ** -0.9, 50) for i in ax.get_lines()], fontsize=12)
     to_plot += 2
 # label the subplots
 letters = list(string.ascii_lowercase)
