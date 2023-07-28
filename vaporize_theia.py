@@ -602,7 +602,7 @@ plt.show()
 #     # plt.show()
 
 # ================================= Loss Fraction of From Each Model =================================
-fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
 axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 loss_frac_dict = {}
@@ -648,6 +648,51 @@ for i, s in enumerate(ejecta_compositions.keys()):
             color=colors[list(lunar_bulk_compositions).index(base_model)], linewidth=2.0, label=label
         )
 
+for ax in axs:
+    # plot arrows at the bottom of the plot to indicate the range of volatility
+    ax.arrow(
+        -0.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
+    )
+    ax.arrow(
+        2.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Refractory", xy=(2 / 2, 10 ** -4.3), xycoords="data", horizontalalignment="center", verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        2.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
+    )
+    ax.arrow(
+        5.5, 10 ** -4.5, -3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Transitional", xy=((5 - 2 / 2), 10 ** -4.3), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+    ax.arrow(
+        5.5, 10 ** -4.5, 3, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
+    )
+    ax.arrow(
+        8, 10 ** -4.5, -2.5, 0, width=10 ** -5.8, head_width=10 ** -5, head_length=0.1, fc='k', ec='k', zorder=10,
+        length_includes_head=True
+    )
+    # annotate in the center above the arrows
+    ax.annotate(
+        "Moderately Volatile", xy=((8.5 - 3 / 2)
+                                   , 10 ** -4.3), xycoords="data", horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=14, fontweight="bold", backgroundcolor="w"
+    )
+
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
     ax.tick_params(axis='both', which='major', labelsize=16)
@@ -669,7 +714,9 @@ for index, ax in enumerate(axs):
 plt.tight_layout()
 # axs[1].legend(loc='lower right', fontsize=14)
 # add legend to the right of the figure
-fig.legend(loc=7)
+legend = fig.legend(loc=7, fontsize=16)
+for line in legend.get_lines():
+    line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_element_loss_fractions.png", dpi=300)
 plt.show()
