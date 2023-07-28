@@ -744,20 +744,17 @@ for i, j in zip(
 
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
-fig, axs = plt.subplots(2, 2, figsize=(12, 12), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 2, figsize=(20, 15), sharex='all', sharey='all')
 axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 for index, s in enumerate(ejecta_compositions.keys()):
     to_index = 0
+    label = None
     if "Half-Earths" in s:
         to_index += 2
     if not "_not_recondensed" in s:
         to_index += 1
     base_model = s.split("_")[1]
-    to_index = 0
-    label = None
-    if "Half-Earths" in s:
-        to_index = 1
     if to_index == 0:
         label = base_model
     cations = list(ejecta_data[f'recondensed__lost_vapor_element_masses'].keys())
