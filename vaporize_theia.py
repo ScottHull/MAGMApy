@@ -342,7 +342,7 @@ for oxide in bse_composition.keys():
                     min_max_theia_compositions['with recondensation'][oxide][1] = theia_compositions[model][oxide]
 
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
-fig, axs = plt.subplots(2, 2, figsize=(25, 10), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
 axs = axs.flatten()
 # axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=16)
 # axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=16)
@@ -420,7 +420,7 @@ plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
 plt.show()
 
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
-fig, axs = plt.subplots(2, 2, figsize=(25, 10), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
 axs = axs.flatten()
 # axs[0].set_title("Theia Bulk Composition (Without Recondensation)", fontsize=16)
 # axs[1].set_title("Theia Bulk Composition (With Recondensation)", fontsize=16)
