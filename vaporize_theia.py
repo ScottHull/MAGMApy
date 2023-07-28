@@ -744,7 +744,7 @@ for i, j in zip(
 
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
-fig, axs = plt.subplots(2, 2, figsize=(22, 15), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
 axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 for index, s in enumerate(ejecta_compositions.keys()):
@@ -856,7 +856,10 @@ for index, ax in enumerate(axs):
 for ax in [axs[0], axs[2]]:
     ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 plt.tight_layout()
-fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=16)
+# loop through the lines in the legend and increase their thickness
+for line in legend.get_lines():
+    line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_vaporize_element_vapor_mass_fraction.png", dpi=300)
 plt.show()
