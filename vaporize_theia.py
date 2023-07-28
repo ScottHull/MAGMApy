@@ -703,7 +703,7 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
     ax.annotate(
-        annotate_models[index], xy=(0.05, 0.85), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontsize=16
     )
 # axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
