@@ -849,14 +849,14 @@ for index, ax in enumerate(axs):
         fontweight="bold", fontsize=20
     )
     ax.annotate(
-        tmp_models[index], xy=(0.05, 0.85), xycoords="axes fraction", horizontalalignment="left",
+        tmp_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left",
         verticalalignment="top",
         fontsize=16
     )
 for ax in [axs[0], axs[2]]:
     ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 plt.tight_layout()
-fig.legend(loc=7)
+fig.legend(loc=7, fontsize=16)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_vaporize_element_vapor_mass_fraction.png", dpi=300)
 plt.show()
