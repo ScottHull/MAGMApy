@@ -411,7 +411,9 @@ for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=16)
 
 plt.tight_layout()
-fig.legend(loc=7)
+legend = fig.legend(loc=7, fontsize=16)
+for line in legend.get_lines():
+    line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
@@ -497,7 +499,9 @@ for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=16)
 
 plt.tight_layout()
-fig.legend(loc=7)
+legend = fig.legend(loc=7, fontsize=16)
+for line in legend.get_lines():
+    line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 plt.show()
