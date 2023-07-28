@@ -744,7 +744,7 @@ for i, j in zip(
 
 
 # ================================= Vapor Mass Fraction of From Each Model =================================
-fig, axs = plt.subplots(2, 2, figsize=(20, 15), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 2, figsize=(22, 15), sharex='all', sharey='all')
 axs = axs.flatten()
 pct_50_cond_temps = pd.read_csv("data/50_pct_condensation_temperatures.csv", index_col="Element")
 for index, s in enumerate(ejecta_compositions.keys()):
