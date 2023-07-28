@@ -840,7 +840,8 @@ for ax in axs:
         fontsize=14, fontweight="bold", backgroundcolor="w"
     )
 
-tmp_models = ['Canonical', "Half-Earths"]
+tmp_models = ["Canonical (No Recondensation)", "Canonical (Recondensed)", "Half-Earths (No Recondensation)",
+                              "Half-Earths (Recondensed)"]
 for index, ax in enumerate(axs):
     ax.tick_params(axis='both', which='major', labelsize=20)
     ax.grid()
