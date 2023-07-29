@@ -230,9 +230,9 @@ for index, model in enumerate(lunar_bulk_compositions.keys()):
     )
     if index + 1 == len(lunar_bulk_compositions.keys()):
         ax.set_xticklabels([format_species_string(oxide) for oxide in lunar_bulk_compositions[model].keys()], rotation=45)
-ax.tick_params(axis='both', which='major', labelsize=16)
-ax.set_title("Lunar Bulk Composition", fontsize=16)
-ax.set_ylabel("Lunar Bulk Composition / BSE Composition", fontsize=16)
+ax.tick_params(axis='both', which='major', labelsize=18)
+ax.set_title("Lunar Bulk Composition", fontsize=18)
+ax.set_ylabel("Lunar Bulk Composition / BSE Composition", fontsize=18)
 ax.grid()
 ax.legend(fontsize=12)
 plt.tight_layout()
@@ -344,8 +344,8 @@ for oxide in bse_composition.keys():
 # ========================== PLOT THE RANGE OF EJECTA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
 axs = axs.flatten()
-# axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=16)
-# axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=16)
+# axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=18)
+# axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=18)
 for index, ax in enumerate(axs):
     ax.grid()
     label = None
@@ -399,19 +399,21 @@ for index, ax in enumerate(axs):
     )
     ax.annotate(
         annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
-        fontsize=16
+        fontsize=18
     )
 
-fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
+# fig.supylabel("Bulk Composition / BSE Composition", fontsize=18)
+for ax in [axs[0], axs[2]]:
+    ax.set_ylabel("Bulk Composition / BSE Composition", fontsize=18)
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
     ax.set_xticklabels([format_species_string(oxide) for oxide in oxides], rotation=45)
 # set the axis font size to be 16 for each subplot
 for ax in axs:
-    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='both', which='major', labelsize=18)
 
 plt.tight_layout()
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 for line in legend.get_lines():
     line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
@@ -422,9 +424,11 @@ plt.show()
 # ========================== PLOT THE RANGE OF THEIA COMPOSITIONS ==========================
 fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
 axs = axs.flatten()
-# axs[0].set_title("Theia Bulk Composition (Without Recondensation)", fontsize=16)
-# axs[1].set_title("Theia Bulk Composition (With Recondensation)", fontsize=16)
-fig.supylabel("Bulk Composition / BSE Composition", fontsize=16)
+# axs[0].set_title("Theia Bulk Composition (Without Recondensation)", fontsize=18)
+# axs[1].set_title("Theia Bulk Composition (With Recondensation)", fontsize=18)
+for ax in [axs[0], axs[2]]:
+    ax.set_ylabel("Bulk Composition / BSE Composition", fontsize=18)
+# fig.supylabel("Bulk Composition / BSE Composition", fontsize=18)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
 for index, ax in enumerate(axs):
     ax.grid()
@@ -435,8 +439,8 @@ for index, ax in enumerate(axs):
     # shade region red underneath y=0
     ax.fill_between(oxides, [0 for oxide in oxides], [-1e99 for oxide in oxides], alpha=0.2, color='red')
     ax.set_ylim(bottom=-1.0, top=4.2)
+    ax.tick_params(axis='both', which='major', labelsize=18)
 for ax in axs[:-2]:
-    ax.tick_params(axis='both', which='major', labelsize=16)
     for tick in ax.get_xticklabels():
         tick.set_rotation(45)
 for i, s in enumerate(theia_compositions.keys()):
@@ -487,7 +491,7 @@ for index, ax in enumerate(axs):
     )
     ax.annotate(
         annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
-        fontsize=16
+        fontsize=18
     )
 
 # replace the x-axis labels with the formatted oxide names
@@ -496,10 +500,10 @@ for ax in axs[-2:]:
 
 # set the axis font size to be 16 for each subplot
 for ax in axs:
-    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='both', which='major', labelsize=18)
 
 plt.tight_layout()
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 for line in legend.get_lines():
     line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
@@ -549,7 +553,7 @@ plt.show()
 #     # label=model.split("_")[1]
 # )
 #
-# axs[1].legend(loc='upper right', fontsize=16)
+# axs[1].legend(loc='upper right', fontsize=18)
 # plt.tight_layout()
 # plt.savefig("theia_mixing_ejecta_compositions_distinct.png", dpi=300)
 # plt.show()
@@ -699,7 +703,7 @@ for ax in axs:
 
 letters = list(string.ascii_lowercase)
 for index, ax in enumerate(axs):
-    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='both', which='major', labelsize=18)
     ax.grid()
     ax.set_yscale('log')
     ax.annotate(
@@ -708,17 +712,18 @@ for index, ax in enumerate(axs):
     )
     ax.annotate(
         annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
-        fontsize=16
+        fontsize=18
     )
-# axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=16)
-# axs[1].set_title("Mass Loss Fraction (With Recondensation)", fontsize=16)
+# axs[0].set_title("Mass Loss Fraction (Without Recondensation)", fontsize=18)
+# axs[1].set_title("Mass Loss Fraction (With Recondensation)", fontsize=18)
 for index, ax in enumerate(axs):
     if index % 2 == 0:
         ax.set_ylabel("Mass Loss Fraction (%)", fontsize=20)
+    ax.tick_params(axis='both', which='major', labelsize=18)
 plt.tight_layout()
 # axs[1].legend(loc='lower right', fontsize=14)
 # add legend to the right of the figure
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 for line in legend.get_lines():
     line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
@@ -820,7 +825,14 @@ for index, s in enumerate(ejecta_compositions.keys()):
     # sort cations by 50% condensation temperature
     cations = list(reversed(sorted(list(vapor_fraction.keys()), key=lambda x: pct_50_cond_temps["50% Temperature"][x])))
     # convert loss fraction to a LaTex table
-    table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction']).to_latex()
+    table = pd.DataFrame(vapor_fraction, index=['vapor mass fraction'])
+    for col in table.columns:
+        for index, row in table.iterrows():
+            if row[col] < 0.01:
+                table.loc[index, col] = f"{row[col]:.2E}"
+            else:
+                table.loc[index, col] = f"{row[col]:.2f}"
+    table.to_latex()
     # save the table to a file
     if f"{run_name}_vapor_mass_fraction.tex" in os.listdir(f"{root_path}/{s}"):
         os.remove(f"{root_path}/{s}/{run_name}_vapor_mass_fraction.tex")
@@ -902,12 +914,13 @@ for index, ax in enumerate(axs):
     ax.annotate(
         tmp_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left",
         verticalalignment="top",
-        fontsize=16
+        fontsize=18
     )
+    ax.tick_params(axis='both', which='major', labelsize=18)
 for ax in [axs[0], axs[2]]:
     ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 plt.tight_layout()
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 # loop through the lines in the legend and increase their thickness
 for line in legend.get_lines():
     line.set_linewidth(4.0)
