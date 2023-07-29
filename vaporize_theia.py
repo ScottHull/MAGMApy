@@ -222,6 +222,7 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
 colors = sns.color_palette('husl', n_colors=len(lunar_bulk_compositions.keys()))
+ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
 for index, model in enumerate(lunar_bulk_compositions.keys()):
     ax.plot(
         lunar_bulk_compositions.index.tolist(),
@@ -231,9 +232,8 @@ for index, model in enumerate(lunar_bulk_compositions.keys()):
     if index + 1 == len(lunar_bulk_compositions.keys()):
         ax.set_xticklabels([format_species_string(oxide) for oxide in lunar_bulk_compositions[model].keys()], rotation=45)
 # make a horizontal black line at 1
-ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
 ax.tick_params(axis='both', which='major', labelsize=16)
-ax.set_title("Lunar Bulk Composition", fontsize=16)
+ax.set_title("Literature Lunar Bulk Compositions", fontsize=16)
 ax.set_ylabel("Lunar Bulk Composition / BSE Composition", fontsize=16)
 ax.grid()
 ax.legend(fontsize=12)
