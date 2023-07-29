@@ -832,7 +832,7 @@ for index, s in enumerate(ejecta_compositions.keys()):
                 table.loc[index, col] = f"{row[col]:.2E}"
             else:
                 table.loc[index, col] = f"{row[col]:.2f}"
-    table.to_latex()
+    table = table.to_latex()
     # save the table to a file
     if f"{run_name}_vapor_mass_fraction.tex" in os.listdir(f"{root_path}/{s}"):
         os.remove(f"{root_path}/{s}/{run_name}_vapor_mass_fraction.tex")
