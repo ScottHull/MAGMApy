@@ -230,9 +230,11 @@ for index, model in enumerate(lunar_bulk_compositions.keys()):
     )
     if index + 1 == len(lunar_bulk_compositions.keys()):
         ax.set_xticklabels([format_species_string(oxide) for oxide in lunar_bulk_compositions[model].keys()], rotation=45)
-ax.tick_params(axis='both', which='major', labelsize=18)
-ax.set_title("Lunar Bulk Composition", fontsize=18)
-ax.set_ylabel("Lunar Bulk Composition / BSE Composition", fontsize=18)
+# make a horizontal black line at 1
+ax.axhline(y=1, color="black", linewidth=4, alpha=1, label="BSE")
+ax.tick_params(axis='both', which='major', labelsize=16)
+ax.set_title("Lunar Bulk Composition", fontsize=16)
+ax.set_ylabel("Lunar Bulk Composition / BSE Composition", fontsize=16)
 ax.grid()
 ax.legend(fontsize=12)
 plt.tight_layout()
