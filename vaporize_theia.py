@@ -413,7 +413,7 @@ for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=18)
 
 plt.tight_layout()
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 for line in legend.get_lines():
     line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
@@ -503,7 +503,7 @@ for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=18)
 
 plt.tight_layout()
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 for line in legend.get_lines():
     line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
@@ -723,7 +723,7 @@ for index, ax in enumerate(axs):
 plt.tight_layout()
 # axs[1].legend(loc='lower right', fontsize=14)
 # add legend to the right of the figure
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 for line in legend.get_lines():
     line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.76)
@@ -920,7 +920,7 @@ for index, ax in enumerate(axs):
 for ax in [axs[0], axs[2]]:
     ax.set_ylabel("Vapor Mass Fraction (%)", fontsize=20)
 plt.tight_layout()
-legend = fig.legend(loc=7, fontsize=16)
+legend = fig.legend(loc=7, fontsize=18)
 # loop through the lines in the legend and increase their thickness
 for line in legend.get_lines():
     line.set_linewidth(4.0)
