@@ -211,7 +211,7 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
     # get the compositions as a numpy array
     compositions_array = compositions.to_numpy()
     # convert all values to scientific notation with 2 decimal places
-    compositions_array = np.array([[f"{value:.2E}" if value < 10 ** -2 else f"{value:.2f}" for value in row] for row in compositions_array])
+    compositions_array = np.array([[str(f"{value:.2E}") if value < 10 ** -2 else str(f"{value:.2f}") for value in row] for row in compositions_array])
     # for values > 1e-2, convert to 2 decimal places number
     # compositions_array = np.array([[float(value) if float(value) > 1e-2 else value for value in row] for row in
     #                                compositions_array])
