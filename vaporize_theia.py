@@ -218,7 +218,7 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
     # get the compositions as a list of lists
     compositions_list = compositions_array.tolist()
     # create the table
-    table = tabulate(compositions_list, headers=oxide_names_latex, showindex=model_names, tablefmt="latex_raw")
+    table = tabulate(compositions_list, headers=oxide_names_latex, showindex=model_names, tablefmt="latex_raw", floatfmt='.2E')
     # write the table to a file
     with open(f"{name}_compositions.tex", "w") as f:
         f.write(table)
