@@ -202,11 +202,12 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
     oxide_names = list(compositions.columns)
     # get the oxide names, but with the LaTeX formatting
     oxide_names_latex = [f"${oxide}$" for oxide in oxide_names]
-    for index, row in compositions.iterrows():
-        if row[col] < 0.01:
-            compositions.loc[index, col] = f"{row[col]:.2E}"
-        else:
-            compositions.loc[index, col] = f"{row[col]:.2f}"
+    for col in compositions.columns:
+        for index, row in compositions.iterrows():
+            if row[col] < 0.01:
+                compositions.loc[index, col] = f"{row[col]:.2E}"
+            else:
+                compositions.loc[index, col] = f"{row[col]:.2f}"
     # # get the compositions as a numpy array
     # compositions_array = compositions.to_numpy()
     # # convert all values to scientific notation with 2 decimal places
