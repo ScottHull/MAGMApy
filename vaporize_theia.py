@@ -202,15 +202,20 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
     oxide_names = list(compositions.columns)
     # get the oxide names, but with the LaTeX formatting
     oxide_names_latex = [f"${oxide}$" for oxide in oxide_names]
-    # get the compositions as a numpy array
-    compositions_array = compositions.to_numpy()
-    # convert all values to scientific notation with 2 decimal places
-    compositions_array = np.array([["{:.2e}".format(value) for value in row] for row in compositions_array])
-    # for values > 1e-2, convert to 2 decimal places number
-    compositions_array = np.array([[float(value) if float(value) > 1e-2 else value for value in row] for row in
-                                   compositions_array])
+    for index, row in compositions.iterrows():
+        if row[col] < 0.01:
+            compositions.loc[index, col] = f"{row[col]:.2E}"
+        else:
+            compositions.loc[index, col] = f"{row[col]:.2f}"
+    # # get the compositions as a numpy array
+    # compositions_array = compositions.to_numpy()
+    # # convert all values to scientific notation with 2 decimal places
+    # compositions_array = np.array([["{:.2e}".format(value) for value in row] for row in compositions_array])
+    # # for values > 1e-2, convert to 2 decimal places number
+    # compositions_array = np.array([[float(value) if float(value) > 1e-2 else value for value in row] for row in
+    #                                compositions_array])
     # get the compositions as a list of lists
-    compositions_list = compositions_array.tolist()
+    compositions_list = compositions.tolist()
     # create the table
     table = tabulate(compositions_list, headers=oxide_names_latex, showindex=model_names, tablefmt="latex_raw")
     # write the table to a file
