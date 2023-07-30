@@ -227,7 +227,7 @@ def format_compositions_for_latex(name: str, compositions: pd.DataFrame):
                 compositions.loc[index, col] = f"{row[col]:.2E}"
             else:
                 compositions.loc[index, col] = f"{row[col]:.2f}"
-    table = i.to_latex()
+    table = compositions.to_latex()
     with open(f"{name}_compositions.tex", "w") as f:
         f.write(table)
 
