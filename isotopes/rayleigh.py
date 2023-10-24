@@ -169,3 +169,60 @@ class FullSequenceRayleighDistillation_SingleReservior(FullSequenceRayleighDisti
         """
         return self.run_3_stage_fractionation(delta_initial=reservoir_delta)
 
+
+
+class SaturatedRayleighFractionation:
+
+    def __init__(self):
+        pass
+
+    def rayleigh_fractionate_residual(self, delta_initial, alpha, f, S):
+        """
+        Returns the isotope difference between the initial reservoir and the residual reservoir in delta notation.
+        :param delta_initial:
+        :param alpha:
+        :param f:
+        :return:
+        """
+        return (1 - S) * (delta_initial + ((1000 + delta_initial) * (f ** (alpha - 1) - 1)))
+
+    def rayleigh_fractionate_extract(self, delta_initial, alpha, f, S):
+        """
+        Returns the isotope difference between the initial reservoir and the extract reservoir in delta notation.
+        :param delta_initial:
+        :param alpha:
+        :param f:
+        :return:
+        """
+        return (1 - S) * (delta_initial + ((1000 + delta_initial) * (alpha * f ** (alpha - 1) - 1)))
+
+    def rayleigh_mixing(self, x_1, delta_1, delta_2):
+        """
+        Returns the mixing of two reservoirs in delta notation.
+        :param delta_1:
+        :param delta_2:
+        :param x_1:
+        :return:
+        """
+        return (x_1 * delta_1) + ((1 - x_1) * delta_2)
+
+    # def fractionation(self):
+    #     self.melt_delta = self.rayleigh_fractionate_residual(self.delta_initial, self.alpha_chem, self.f)
+    #     self.vapor_delta = self.rayleigh_fractionate_extract(self.delta_initial, self.alpha_chem, self.f)
+    #     self.physically_fractionated_retained_vapor = self.rayleigh_fractionate_residual(
+    #         self.vapor_delta, self.alpha_phys, self.mass_in_vapor * (1 - self.hydrodynamic_escape_fraction)
+    #     )
+    #     self.physically_fractionated_escaping_vapor = self.rayleigh_fractionate_extract(
+    #         self.vapor_delta, self.alpha_phys, self.mass_in_vapor * (1 - self.hydrodynamic_escape_fraction)
+    #     )
+    #     self.recondensed_melt_delta = self.rayleigh_mixing(
+    #         self.f_melt_recondensed, self.melt_delta, self.physically_fractionated_retained_vapor
+    #     )
+    #     return {
+    #         'melt_delta': self.melt_delta,
+    #         'vapor_delta': self.vapor_delta,
+    #         'physically_fractionated_retained_vapor': self.physically_fractionated_retained_vapor,
+    #         'physically_fractionated_escaping_vapor': self.physically_fractionated_escaping_vapor,
+    #         'recondensed_melt_delta': self.recondensed_melt_delta,
+    #     }
+
