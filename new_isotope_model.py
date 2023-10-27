@@ -112,9 +112,10 @@ for run in runs:
             }
         else:
             run["fractional_vapor_composition"][key] = {
-                element: data[element] - run["melt_composition"][list(run["melt_composition"].keys())[index - 1]][element]
+                element: run["melt_composition"][list(run["melt_composition"].keys())[index - 1]][element] - data[element]
                 for element in elements
             }
+    print(run['fractional_vapor_composition'])
 
 
 # plot the partial pressures for each run in a 2 row 2 column plot
@@ -224,7 +225,7 @@ plt.savefig("p_i.png", format='png', dpi=200)
 plt.close()
 
 # calculate the isotope fractionation
-delta_vapor = None
+delta_bulk_vapor = None
 delta_melt = delta_K_Lunar_BSE
 total_melt_mass = None
 total_vapor_mass = 0
@@ -235,16 +236,38 @@ for run in runs:
         alpha_phys = (39 / 41) ** 0.5
         frac_vapor_mass = run['fractional_vapor_composition'][vmf]['K']
         melt_mass = melt_composition['K']
-        total_melt_mass = melt_mass
-        total_mass = melt_mass + frac_vapor_mass
-        # calculate the isotope fractionation due to the initial evaporation
-        melt_delta = rf.rayleigh_fractionate_residual(
-            delta_initial=delta_melt, alpha=alpha_chem, f=melt_mass / (melt_mass + frac_vapor_mass), S=S_i
-        )
-        melt_vapor = rf.rayleigh_fractionate_extract(
-            delta_initial=delta_melt, alpha=alpha_chem, f=melt_mass / (melt_mass + frac_vapor_mass), S=S_i
-        )
-        # if there is no vapor yet produced, then the vapor delta is the initial extract vapor
+        if melt_mass > 0:
+            total_melt_mass = melt_mass
+            total_vapor_mass += frac_vapor_mass
+            total_mass = melt_mass + total_vapor_mass
+            # calculate the isotope fractionation due to the initial evaporation
+            melt_delta = rf.rayleigh_fractionate_residual(
+                delta_initial=delta_melt, alpha=alpha_chem, f=melt_mass / (melt_mass + frac_vapor_mass), S=S_i
+            )
+            vapor_delta = rf.rayleigh_fractionate_extract(
+                delta_initial=delta_melt, alpha=alpha_chem, f=melt_mass / (melt_mass + frac_vapor_mass), S=S_i
+            )
+            # if there is no vapor yet produced, then the vapor delta is the initial extract vapor
+            if delta_bulk_vapor is None:
+                delta_bulk_vapor = vapor_delta
+            # otherwise, calculate the delta through a two-reservoir mass mixing calculation
+            else:
+                f_new_vapor = frac_vapor_mass / total_vapor_mass  # mass fraction of the new vapor compared to the total vapor
+                delta_vapor = rf.rayleigh_mixing(
+                    x_1=f_new_vapor, delta_1=vapor_delta, delta_2=delta_bulk_vapor
+                )
+            # output the results
+            print(
+                f"VMF: {vmf * 100:.2f}%\n"
+                f"Total Melt Mass: {total_melt_mass:.10f} kg\n"
+                f"Bulk Vapor Mass: {total_vapor_mass:.2f} kg\n"
+                f"Total System Mass: {total_mass:.2f} kg\n"
+                # f"Fractional Melt Mass Created: {frac_vapor_mass:.2f} ({frac_vapor_mass / total_vapor_mass * 100:.2f%})\n"
+                f"Fractional Melt Mass Created: {frac_vapor_mass:.2f}\n"
+                r"Current $\delta_{melt}$: " + f"{melt_delta:.2f} ‰\n"
+                r"Current $\delta_{vapor}$ (bulk): " + f"{delta_bulk_vapor:.2f} ‰\n"
+                r"Current $\delta_{vapor}$ (fractional): " + f"{vapor_delta:.2f} ‰\n"
+            )
 
 
 
