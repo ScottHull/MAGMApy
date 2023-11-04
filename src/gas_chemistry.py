@@ -128,6 +128,7 @@ class GasPressure:
 
     def __init__(self, composition, major_gas_species, minor_gas_species, fO2_buffer="QFM"):
         self.fractional_species_masses = {}
+        self.fractional_element_masses = {}
         self.vapor_element_mass_fractions = {}
         self.species_mass_fractions = {}
         self.f = None
@@ -196,16 +197,20 @@ class GasPressure:
         :return:
         """
         d = {}
-        species_moles = {
+        species_moles_at_time = {
             i: species_mass_at_time[i] / self.composition.get_molecule_mass(molecule=i) for i in
             species_mass_at_time.keys()
         }
-        for i in species_mass_at_time.keys():
+        for i in species_moles_at_time.keys():
             stoich = get_molecule_stoichiometry(molecule=i)
             for j in stoich.keys():
+                # get the molar mass of the species
                 if j not in d.keys():
                     d.update({j: 0})
-                d[j] += stoich[j] * species_mass_at_time[i]
+                element_moles = stoich[j] * species_moles_at_time[i]
+                d[j] += element_moles * self.composition.get_molecule_mass(molecule=j)
+        # assert that the sum of the element masses equals the sum of the species masses
+        assert np.isclose(sum(d.values()), sum(species_mass_at_time.values()))
         return d
 
     def get_vapor_mass(self, initial_liquid_mass, liquid_mass_at_time, previous_melt_mass):
@@ -231,9 +236,9 @@ class GasPressure:
         species_masses = {i: self.species_mass_fractions[i] / 100.0 * mass_produced_at_iteration
                           for i in self.species_mass_fractions.keys()}
         self.fractional_species_masses = species_masses
-        element_masses = {
-
-        }
+        self.fractional_element_masses = self.__get_fractional_element_vapor_mass(
+            species_mass_at_time=self.fractional_species_masses
+        )
         # get the mass of each element from the vapor produced at the given iteration
         self.element_total_mass = {i: self.element_mass_fraction[i] * self.vapor_mass
                                    for i in
