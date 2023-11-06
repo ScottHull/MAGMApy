@@ -17,7 +17,7 @@ This script shows how to run MAGMApy given a temperature path path.
 max_temperature = 4200  # K
 min_temperature = 1800  # K
 temperature_increment = 200  # K
-title = "MAG18"
+title = "MAGMA (Fegley Jr. et al. 2023)"
 
 # BSE composition, Visccher & Fegley 2013
 composition = {
@@ -97,7 +97,7 @@ def get_annotation_location(species, x_data, y_data, target_x):
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlabel("Temperature (K)")
-ax.set_ylabel("Partial Pressure")
+ax.set_ylabel("Partial Pressure (bar)")
 ax.set_title(f"Vapor Composition - {title}")
 # ax.set_ylim(-3, 0)
 data = collect_data(path="reports/partial_pressures", x_header='temperature (K)')
@@ -146,4 +146,5 @@ ax.grid()
 ax.set_yscale('log')
 ax.yaxis.tick_right()
 plt.tight_layout()
+plt.savefig(f"vapor_composition_{title}.png", dpi=300)
 plt.show()

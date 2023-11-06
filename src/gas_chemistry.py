@@ -136,6 +136,8 @@ class GasPressure:
         self.cation_moles = None
         self.total_pressure = None
         self.partial_pressures = None  # all species partial pressures
+        self.saturation_index = 0.998  # TODO: remove this
+        self.surface_partial_pressures = {}  # TODO: remove this
         self.composition = composition
         self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 4",
                                                     index_col="Product")
@@ -619,6 +621,9 @@ class GasPressure:
                 if j in self.minor_gas_species + ['e-']:
                     pp += self.partial_pressures_minor_species[j]
             self.partial_pressure_elements[i] += pp  # add the partial pressure to the element total
+        self.surface_partial_pressures = {
+            i: self.partial_pressure_elements[i] * self.saturation_index for i in self.partial_pressure_elements.keys()
+        }
         return self.partial_pressure_elements
 
     def calculate_pressures(self, temperature, liquid_system):

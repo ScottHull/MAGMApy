@@ -89,6 +89,10 @@ class Report:
             self.to_dir + "/total_vapor_species_mass",
             self.to_dir + "/total_vapor_element_mass_fraction",
             self.to_dir + "/total_vapor_species_mass_fraction",
+            self.to_dir + "/fractional_element_vapor_mass",
+            self.to_dir + "/fractional_species_vapor_mass",
+            self.to_dir + "/elemental_partial_pressures",
+            self.to_dir + "/surface_partial_pressures"
         ]
         self.__make_subdirs(paths=paths)
         self.__make_report(path=paths[0], iteration=iteration, data=self.gas_system.partial_pressures)
@@ -101,3 +105,7 @@ class Report:
         self.__make_report(path=paths[7], iteration=iteration, data=self.gas_system.species_total_mass)
         self.__make_report(path=paths[8], iteration=iteration, data=self.gas_system.element_total_mass_fraction)
         self.__make_report(path=paths[9], iteration=iteration, data=self.gas_system.species_total_mass_fraction)
+        self.__make_report(path=paths[10], iteration=iteration, data=self.gas_system.fractional_element_masses)
+        self.__make_report(path=paths[11], iteration=iteration, data=self.gas_system.fractional_species_masses)
+        self.__make_report(path=paths[12], iteration=iteration, data=self.gas_system.partial_pressure_elements)
+        self.__make_report(path=paths[13], iteration=iteration, data=self.gas_system.surface_partial_pressures)
