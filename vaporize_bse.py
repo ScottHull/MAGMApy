@@ -36,7 +36,7 @@ runs = [
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 74.0,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
         "run_name": "Half-Earths Model",
@@ -45,7 +45,7 @@ runs = [
         "disk_theia_mass_fraction": 51.97,  # %
         "disk_mass": 1.70,  # lunar masses
         "vapor_loss_fraction": 16.0,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 
@@ -926,7 +926,7 @@ ax.set_ylim(bottom=10 ** -5, top=10 ** 2.1)
 # plt.savefig("bse_vaporize_mass_loss_fraction.png", dpi=300)
 # plt.show()
 
-# ======================================= PLOT THE PARTIAL PRESSURES OF EACH VAPOR SPECIES ==========================
+# ======================================= PLOT THE ACTIVITY/PARTIAL PRESSURES OF EACH VAPOR SPECIES ==========================
 fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 for index, run in enumerate(runs):
@@ -983,8 +983,67 @@ for index, ax in enumerate(axs):
 for ax in axs[2:]:
     ax.set_xlabel("VMF (%)", fontsize=20)
 plt.tight_layout()
+plt.savefig("bse_vaporize_activity_partial_pressures.png", dpi=300)
+plt.show()
+
+
+# ======================================= PLOT THE PARTIAL PRESSURES OF EACH VAPOR SPECIES ==========================
+fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
+axs = axs.flatten()
+for index, run in enumerate(runs):
+    run_name = run['run_name']
+    activities = collect_data(path=f"{run_name}/activities", x_header='mass fraction vaporized')
+    partial_pressures = collect_data(path=f"{run_name}/partial_pressures", x_header='mass fraction vaporized')
+    partial_pressure_species = list(partial_pressures[list(partial_pressures.keys())[0]].keys())
+    partial_pressure_colors = plt.cm.jet(np.linspace(0, 1, len(partial_pressure_species)))
+    for index2, species in enumerate(partial_pressure_species):
+        if "_l" not in species:
+            axs[index].plot(
+                np.array(list(partial_pressures.keys())) * 100,
+                [partial_pressures[v][species] for v in partial_pressures.keys()],
+                linewidth=1.5,
+                color=partial_pressure_colors[index2],
+                label=format_species_string(species.split("_")[0])
+            )
+    axs[index].plot(
+        np.array(list(partial_pressures.keys())) * 100,
+        [sum(partial_pressures[v].values()) for v in partial_pressures.keys()],
+        linewidth=1,
+        color='k',
+        linestyle='dashdot',
+        label='Total Pressure'
+    )
+    axs[index].axvline(x=run["vmf"], color="black", linestyle="--", linewidth=2.0, alpha=1)
+
+axs[0].set_ylabel("Fractional Partial Pressure (bar)", fontsize=20)
+letters = list(string.ascii_lowercase)
+annotate_models = ['Canonical', 'Half-Earths']
+for index, ax in enumerate(axs):
+    # increase font size
+    ax.grid()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(10 ** -2, 80)
+    ax.set_ylim(bottom=10 ** -4, top=10**1)
+    # ax.set_ylim(bottom=10 ** -4, top=10 ** 0)
+    labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
+        xvals=[uniform(1e-3, 10 ** 0) for i in ax.get_lines()], fontsize=16)
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.75, 0.98), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+    ax.annotate(
+        annotate_models[index], xy=(0.75, 0.94), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontsize=20
+    )
+    # increase font size
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.set_xlabel("VMF (%)", fontsize=20)
+plt.tight_layout()
 plt.savefig("bse_vaporize_partial_pressures.png", dpi=300)
 plt.show()
+
 
 # ======================================= PLOT TOTAL FRACTIONAL PRESSURE OF ALL VAPOR SPECIES ==========================
 fig = plt.figure(figsize=(8, 8))
