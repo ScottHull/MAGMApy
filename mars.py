@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+
 import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -26,7 +28,8 @@ import labellines
 # use colorblind-friendly colors
 plt.style.use('seaborn-colorblind')
 # increase font size
-plt.rcParams.update({"font.size": 12})
+plt.rcParams.update({"font.size": 16})
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 runs = [
     {
@@ -34,7 +37,7 @@ runs = [
         "temperature": 2201.89,  # K
         "vmf": 0.7785655850744196,  # %
         "impactor%": 70.758 / 100,  # %
-        "vapor_loss_fraction": 100 / 100,  # %
+        "vapor_loss_fraction": 50 / 100,  # %
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
 ]
@@ -88,7 +91,7 @@ def get_composition_at_vmf(d: dict, vmf_val: float):
     return interpolated_composition
 
 
-def recondense_vapor(melt_absolute_cation_masses: dict, vapor_absolute_cation_mass: dict, vapor_loss_fraction: float):
+def recondense_vapor(melt_absolute_cation_masses: dict, vapor_absolute_cation_mass: dict, vapor_loss_fraction: float, bulk_composition: dict):
     """
     Recondenses retained vapor into the melt.
     :param vapor_absolute_mass:
@@ -96,7 +99,7 @@ def recondense_vapor(melt_absolute_cation_masses: dict, vapor_absolute_cation_ma
     :return:
     """
     lost_vapor_mass = {
-        k: v * (vapor_loss_fraction / 100) for k, v in vapor_absolute_cation_mass.items()
+        k: v * vapor_loss_fraction for k, v in vapor_absolute_cation_mass.items()
     }
     retained_vapor_mass = {
         k: v - lost_vapor_mass[k] for k, v in vapor_absolute_cation_mass.items()
@@ -110,7 +113,7 @@ def recondense_vapor(melt_absolute_cation_masses: dict, vapor_absolute_cation_ma
     )
     # divide by 100 to get mass fraction
     return {
-        "recondensed_melt_oxide_mass_fraction": {k: v / 100 for k, v in c.items()},
+        "recondensed_melt_oxide_mass_fraction": {k: v for k, v in c.items()},
         "lost_vapor_mass": lost_vapor_mass,
         "retained_vapor_mass": retained_vapor_mass,
         "recondensed_melt_mass": recondensed_melt_mass
@@ -147,9 +150,9 @@ def mix_target_impactor_composition(target_composition, impactor_composition, im
 
 
 # make a 1 column 3 row figure
-fig, axs = plt.subplots(3, 1, figsize=(8, 12), sharex='all', sharey='all', gridspec_kw=dict(hspace=0, wspace=0))
+fig, axs = plt.subplots(3, 1, figsize=(8, 12), sharex='all', sharey='all')
 
-for run in runs:
+for run_index, run in enumerate(runs):
     # assign dictionary values to variables
     run_name = run["run_name"]
     temperature = run["temperature"]
@@ -161,7 +164,7 @@ for run in runs:
         impactor_mass_fraction=impactor_disk_mass_fraction
     )
 
-    for comp_index, (comp_name, bulk_composition) in enumerate(zip(['Mars', "D-type", "Mixed"],
+    for comp_index, (comp_name, bulk_composition) in enumerate(zip(['BSM', "D-type", "Mixed"],
                                            [mars_composition, d_type_asteroid_composition, mixed_composition])):
 
         if new_simulation:
@@ -209,23 +212,58 @@ for run in runs:
         # get the residual melt data
         melt_oxide_as_func_vmf = collect_data(path=run_name + f" ({comp_name})/magma_oxide_mass_fraction",
                                                 x_header='mass fraction vaporized')
+        melt_cation_as_func_vmf = collect_data(path=run_name + f" ({comp_name})/magma_element_mass",
+                                                x_header='mass fraction vaporized')
+        vapor_cation_as_func_vmf = collect_data(path=run_name + f" ({comp_name})/total_vapor_element_mass",
+                                                x_header='mass fraction vaporized')
         melt_oxide_at_vmf = get_composition_at_vmf(d=melt_oxide_as_func_vmf, vmf_val=run['vmf'])
+        melt_elements_at_vmf = get_composition_at_vmf(d=melt_cation_as_func_vmf, vmf_val=run['vmf'])
+        vapor_elements_at_vmf = get_composition_at_vmf(d=vapor_cation_as_func_vmf, vmf_val=run['vmf'])
+        recondensed_melt_oxide_at_vmf = recondense_vapor(
+            melt_absolute_cation_masses=melt_elements_at_vmf,
+            vapor_absolute_cation_mass=vapor_elements_at_vmf,
+            vapor_loss_fraction=run['vapor_loss_fraction'],
+            bulk_composition=bulk_composition
+        )['recondensed_melt_oxide_mass_fraction']
 
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
-            [melt_oxide_at_vmf[i] / mars_composition[i] for i in oxides_ordered],
+            np.array([melt_oxide_at_vmf[i] * 100 / mars_composition[i] for i in oxides_ordered]),
             linewidth=2.0,
-            label=run_name,
+            color=colors[run_index],
+            label="Run " + run_name,
+        )
+        axs[comp_index].scatter(
+            [format_species_string(i) for i in oxides_ordered],
+            np.array([melt_oxide_at_vmf[i] * 100 / mars_composition[i] for i in oxides_ordered]),
+            color=colors[run_index],
+        )
+        axs[comp_index].plot(
+            [format_species_string(i) for i in oxides_ordered],
+            np.array([recondensed_melt_oxide_at_vmf[i] / mars_composition[i] for i in oxides_ordered]),
+            linewidth=2.0,
+            color=colors[run_index],
+            linestyle="--",
+        )
+        axs[comp_index].scatter(
+            [format_species_string(i) for i in oxides_ordered],
+            np.array([recondensed_melt_oxide_at_vmf[i] / mars_composition[i] for i in oxides_ordered]),
+            color=colors[run_index],
+            marker="^"
         )
 
-for comp_label, ax in zip(['Mars', "D-type\nAsteroid", "Mixed"], axs.flatten()):
+for comp_label, ax in zip(['BSM', "D-type Asteroid", "Mixed"], axs.flatten()):
     ax.text(
-        0.05, 0.9, f"{comp_label}", transform=ax.transAxes, fontweight='bold', size=20
+        0.05, 0.85, f"{comp_label}", transform=ax.transAxes, fontweight='bold', size=20
     )
+    ax.set_ylabel(f"Disk / BSM", fontsize=16)
 
 for ax in axs.flatten():
     ax.grid()
-    ax.set_ylabel("Disk Composition / Mars Composition", fontsize=16)
     ax.set_yscale("log")
+    # ax.set_ylim(10 ** -3, 10 ** 1)
+    ax.axhline(1, color='black', label="1:1 BSM")
 
+axs[0].legend(loc='upper right')
+plt.tight_layout()
 plt.show()
