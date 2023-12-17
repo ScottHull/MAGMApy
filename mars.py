@@ -33,11 +33,35 @@ colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 runs = [
     {
-        "run_name": "H",
+        "run_name": "G",
         "temperature": 2201.89,  # K
         "vmf": 0.7785655850744196,  # %
         "impactor%": 70.758 / 100,  # %
-        "vapor_loss_fraction": 50 / 100,  # %
+        "vapor_loss_fraction": 92 / 100,  # %
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+    },
+    {
+        "run_name": "H",
+        "temperature": 2271.61,  # K
+        "vmf": 0.44644432484432994,  # %
+        "impactor%": 65.81413641 / 100,  # %
+        "vapor_loss_fraction": 88 / 100,  # %
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+    },
+    {
+        "run_name": "K",
+        "temperature": 2213.514879,  # K
+        "vmf": 0.2747740008124389,  # %
+        "impactor%": 16.6080938 / 100,  # %
+        "vapor_loss_fraction": 88 / 100,  # %
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+    },
+    {
+        "run_name": "L",
+        "temperature": 2012.3179846705427,  # K
+        "vmf": 0.3130122528353621,  # %
+        "impactor%": 71.23136432 / 100,  # %
+        "vapor_loss_fraction": 88 / 100,  # %
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
 ]
@@ -192,7 +216,7 @@ for run_index, run in enumerate(runs):
                              thermosystem=t, to_dir=run_name + f" ({comp_name})")
 
             count = 1
-            while t.weight_fraction_vaporized < 0.9:
+            while t.weight_fraction_vaporized < 0.15:
                 l.calculate_activities(temperature=temperature)
                 g.calculate_pressures(temperature=temperature, liquid_system=l)
                 if l.counter == 1:
@@ -203,7 +227,7 @@ for run_index, run in enumerate(runs):
                 print(
                     "[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(
                         count, t.weight_fraction_vaporized * 100.0))
-                if count % 50 == 0 or count == 1:
+                if count % 50 == 0 or count < 10:
                     reports.create_composition_report(iteration=count)
                     reports.create_liquid_report(iteration=count)
                     reports.create_gas_report(iteration=count)
@@ -263,6 +287,7 @@ for ax in axs.flatten():
     ax.set_yscale("log")
     # ax.set_ylim(10 ** -3, 10 ** 1)
     ax.axhline(1, color='black', label="1:1 BSM")
+    ax.set_ylim(bottom=10 ** -3)
 
 axs[0].legend(loc='upper right')
 plt.tight_layout()
