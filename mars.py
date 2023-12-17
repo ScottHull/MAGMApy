@@ -53,7 +53,7 @@ runs = [
         "temperature": 2213.514879,  # K
         "vmf": 0.2747740008124389,  # %
         "impactor%": 16.6080938 / 100,  # %
-        "vapor_loss_fraction": 88 / 100,  # %
+        "vapor_loss_fraction": 89 / 100,  # %
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
@@ -252,43 +252,56 @@ for run_index, run in enumerate(runs):
 
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
-            np.array([melt_oxide_at_vmf[i] * 100 / mars_composition[i] for i in oxides_ordered]),
+            np.array([melt_oxide_at_vmf[i] * 100 / bulk_composition[i] for i in oxides_ordered]),
             linewidth=2.0,
             color=colors[run_index],
             label="Run " + run_name,
         )
         axs[comp_index].scatter(
             [format_species_string(i) for i in oxides_ordered],
-            np.array([melt_oxide_at_vmf[i] * 100 / mars_composition[i] for i in oxides_ordered]),
+            np.array([melt_oxide_at_vmf[i] * 100 / bulk_composition[i] for i in oxides_ordered]),
             color=colors[run_index],
+            s=80,
         )
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
-            np.array([recondensed_melt_oxide_at_vmf[i] / mars_composition[i] for i in oxides_ordered]),
+            np.array([recondensed_melt_oxide_at_vmf[i] / bulk_composition[i] for i in oxides_ordered]),
             linewidth=2.0,
             color=colors[run_index],
             linestyle="--",
         )
         axs[comp_index].scatter(
             [format_species_string(i) for i in oxides_ordered],
-            np.array([recondensed_melt_oxide_at_vmf[i] / mars_composition[i] for i in oxides_ordered]),
+            np.array([recondensed_melt_oxide_at_vmf[i] / bulk_composition[i] for i in oxides_ordered]),
             color=colors[run_index],
-            marker="^"
+            marker="D",
+            s=80,
         )
 
 for comp_label, ax in zip(['BSM', "D-type Asteroid", "Mixed"], axs.flatten()):
     ax.text(
         0.05, 0.85, f"{comp_label}", transform=ax.transAxes, fontweight='bold', size=20
     )
-    ax.set_ylabel(f"Disk / BSM", fontsize=16)
+    ax.set_ylabel(f"Disk / {comp_label}", fontsize=16)
 
 for ax in axs.flatten():
     ax.grid()
     ax.set_yscale("log")
     # ax.set_ylim(10 ** -3, 10 ** 1)
     ax.axhline(1, color='black', label="1:1 BSM")
-    ax.set_ylim(bottom=10 ** -3)
+    ax.set_ylim(top=10 ** 0.5, bottom=10 ** -2)
 
-axs[0].legend(loc='upper right')
+leg = axs[0].legend(loc='lower left')
+for lh in leg.legendHandles:
+    lh.set_linewidth(4.0)  # increase the linewidth of the legend
+
+# annotate a letter in the corner of each subplot
+letters = str(string.ascii_lowercase)
+for ax, letter in zip(axs.flatten(), letters):
+    ax.text(
+        0.90, 0.85, f"{letter}", transform=ax.transAxes, fontweight='bold', size=20
+    )
+
 plt.tight_layout()
-plt.show()
+# plt.show()
+plt.savefig("mars_disk_composition.png", format='png', dpi=200)
