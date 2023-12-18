@@ -216,7 +216,7 @@ for run_index, run in enumerate(runs):
                              thermosystem=t, to_dir=run_name + f" ({comp_name})")
 
             count = 1
-            while t.weight_fraction_vaporized < 0.15:
+            while t.weight_fraction_vaporized < 0.2:
                 l.calculate_activities(temperature=temperature)
                 g.calculate_pressures(temperature=temperature, liquid_system=l)
                 if l.counter == 1:
@@ -227,7 +227,7 @@ for run_index, run in enumerate(runs):
                 print(
                     "[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(
                         count, t.weight_fraction_vaporized * 100.0))
-                if count % 50 == 0 or count < 10:
+                if count % 50 == 0 or count <= 10:
                     reports.create_composition_report(iteration=count)
                     reports.create_liquid_report(iteration=count)
                     reports.create_gas_report(iteration=count)
@@ -261,7 +261,7 @@ for run_index, run in enumerate(runs):
             [format_species_string(i) for i in oxides_ordered],
             np.array([melt_oxide_at_vmf[i] * 100 / bulk_composition[i] for i in oxides_ordered]),
             color=colors[run_index],
-            s=80,
+            s=80
         )
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
@@ -275,7 +275,7 @@ for run_index, run in enumerate(runs):
             np.array([recondensed_melt_oxide_at_vmf[i] / bulk_composition[i] for i in oxides_ordered]),
             color=colors[run_index],
             marker="D",
-            s=80,
+            s=80
         )
 
 for comp_label, ax in zip(['BSM', "D-type Asteroid", "Mixed"], axs.flatten()):
@@ -287,21 +287,11 @@ for comp_label, ax in zip(['BSM', "D-type Asteroid", "Mixed"], axs.flatten()):
 for ax in axs.flatten():
     ax.grid()
     ax.set_yscale("log")
-    # ax.set_ylim(10 ** -3, 10 ** 1)
-    ax.axhline(1, color='black', label="1:1 BSM")
-    ax.set_ylim(top=10 ** 0.5, bottom=10 ** -2)
+    ax.set_ylim(10 ** -3, 10 ** 1)
+    ax.axhline(1, color='black', label="1:1")
 
-leg = axs[0].legend(loc='lower left')
-for lh in leg.legendHandles:
-    lh.set_linewidth(4.0)  # increase the linewidth of the legend
-
-# annotate a letter in the corner of each subplot
-letters = str(string.ascii_lowercase)
-for ax, letter in zip(axs.flatten(), letters):
-    ax.text(
-        0.90, 0.85, f"{letter}", transform=ax.transAxes, fontweight='bold', size=20
-    )
-
+legend = axs[0].legend(loc='lower left')
+for line in legend.get_lines():
+    line.set_linewidth(5.0)  # make lines thicker
 plt.tight_layout()
-# plt.show()
-plt.savefig("mars_disk_composition.png", format='png', dpi=200)
+plt.show()
