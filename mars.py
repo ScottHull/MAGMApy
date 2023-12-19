@@ -95,7 +95,7 @@ d_type_asteroid_composition = normalize({
 oxides_ordered = [
     "Al2O3", "TiO2", "CaO", "MgO", "FeO", "SiO2", "K2O", "Na2O", "ZnO"
 ]
-
+cations_ordered = ["Al", "Ti", "Ca", "Mg", "Fe", "Si", "K", "Na", "Zn"]
 
 def get_composition_at_vmf(d: dict, vmf_val: float):
     """
@@ -249,6 +249,18 @@ for run_index, run in enumerate(runs):
             vapor_loss_fraction=run['vapor_loss_fraction'],
             bulk_composition=bulk_composition
         )['recondensed_melt_oxide_mass_fraction']
+
+        with open(f"mars_{run_name}_compositions.csv", "w") as f:
+            f.write("component," + ",".join(i for i in oxides_ordered) + "\n")
+            f.write("melt (not recondensed)," + ",".join(str(melt_oxide_at_vmf[i] * 100) for i in oxides_ordered) + "\n")
+            f.write("melt (recondensed)," + ",".join(str(recondensed_melt_oxide_at_vmf[i] * 100) for i in oxides_ordered) + "\n")
+            f.write("component," + ",".join(i for i in cations_ordered))
+            f.write("melt (not recondensed)," + ",".join(str(melt_elements_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("melt (recondensed)," + ",".join(str(recondensed_melt_oxide_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("vapor," + ",".join(str(vapor_elements_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("lost vapor," + ",".join(str(recondensed_melt_oxide_at_vmf[i] - melt_elements_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("retained vapor," + ",".join(str(vapor_elements_at_vmf[i] - recondensed_melt_oxide_at_vmf[i]) for i in cations_ordered) + "\n")
+        f.close()
 
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
