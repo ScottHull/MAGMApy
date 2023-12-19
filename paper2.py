@@ -75,6 +75,7 @@ def get_composition_at_vmf(d: dict, vmf_val: float):
     :param vmf_val:
     :return:
     """
+    print(vmf_val)
     vmfs = list(d.keys())
     species = list(d[vmfs[0]].keys())
     interpolated_composition = {}
@@ -92,4 +93,5 @@ melt_at_target_vmf = get_composition_at_vmf(melt_oxide_mass_fraction, target_vmf
 melt_at_target_vmf = {i: float(j) * 100 for i, j in melt_at_target_vmf.items()}
 melt_at_vmf = get_composition_at_vmf(melt_oxide_mass_fraction, runs[0]['vmf'] / 100)
 melt_at_vmf = {i: float(j) * 100 for i, j in melt_at_vmf.items()}
+print(melt_at_target_vmf)
 print(melt_at_vmf)
