@@ -243,23 +243,35 @@ for run_index, run in enumerate(runs):
         melt_oxide_at_vmf = get_composition_at_vmf(d=melt_oxide_as_func_vmf, vmf_val=run['vmf'])
         melt_elements_at_vmf = get_composition_at_vmf(d=melt_cation_as_func_vmf, vmf_val=run['vmf'])
         vapor_elements_at_vmf = get_composition_at_vmf(d=vapor_cation_as_func_vmf, vmf_val=run['vmf'])
-        recondensed_melt_oxide_at_vmf = recondense_vapor(
+        lost_vapor_elements_at_vmf = {
+            element: val * run['vapor_loss_fraction'] for element, val in vapor_elements_at_vmf.items()
+        }
+        retained_vapor_elements_at_vmf = {
+            element: val - lost_vapor_elements_at_vmf[element] for element, val in vapor_elements_at_vmf.items()
+        }
+
+        rc = recondense_vapor(
             melt_absolute_cation_masses=melt_elements_at_vmf,
             vapor_absolute_cation_mass=vapor_elements_at_vmf,
             vapor_loss_fraction=run['vapor_loss_fraction'],
             bulk_composition=bulk_composition
-        )['recondensed_melt_oxide_mass_fraction']
+        )
 
-        with open(f"mars_{run_name}_compositions.csv", "w") as f:
+        recondensed_melt_oxide_at_vmf = rc['recondensed_melt_oxide_mass_fraction']
+        recondensed_melt_element_mass_at_vmf = rc['recondensed_melt_mass']
+
+        if os.path.exists(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv"):
+            os.remove(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv")
+        with open(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv", "w") as f:
             f.write("component," + ",".join(i for i in oxides_ordered) + "\n")
             f.write("melt (not recondensed)," + ",".join(str(melt_oxide_at_vmf[i] * 100) for i in oxides_ordered) + "\n")
-            f.write("melt (recondensed)," + ",".join(str(recondensed_melt_oxide_at_vmf[i] * 100) for i in oxides_ordered) + "\n")
-            f.write("component," + ",".join(i for i in cations_ordered))
+            f.write("melt (recondensed)," + ",".join(str(recondensed_melt_oxide_at_vmf[i]) for i in oxides_ordered) + "\n")
+            f.write("component," + ",".join(i for i in cations_ordered) + "\n")
             f.write("melt (not recondensed)," + ",".join(str(melt_elements_at_vmf[i]) for i in cations_ordered) + "\n")
-            f.write("melt (recondensed)," + ",".join(str(recondensed_melt_oxide_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("melt (recondensed)," + ",".join(str(recondensed_melt_element_mass_at_vmf[i]) for i in cations_ordered) + "\n")
             f.write("vapor," + ",".join(str(vapor_elements_at_vmf[i]) for i in cations_ordered) + "\n")
-            f.write("lost vapor," + ",".join(str(recondensed_melt_oxide_at_vmf[i] - melt_elements_at_vmf[i]) for i in cations_ordered) + "\n")
-            f.write("retained vapor," + ",".join(str(vapor_elements_at_vmf[i] - recondensed_melt_oxide_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("lost vapor," + ",".join(str(lost_vapor_elements_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("retained vapor," + ",".join(str(retained_vapor_elements_at_vmf[i]) for i in cations_ordered) + "\n")
         f.close()
 
         axs[comp_index].plot(
