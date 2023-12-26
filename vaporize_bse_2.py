@@ -180,8 +180,8 @@ fig, ax = plt.subplots(figsize=(10, 10))
 # for each oxide, shade between the min and max value of each oxide in all of the lunar bulk composition models
 ax.fill_between(
     [format_species_string(oxide) for oxide in oxides_ordered],
-    np.array([min(lunar_bulk_compositions.loc[oxide]) / bse_composition[oxide] for oxide in lunar_bulk_compositions.index]),
-    np.array([max(lunar_bulk_compositions.loc[oxide]) / bse_composition[oxide]  for oxide in lunar_bulk_compositions.index]),
+    np.array([min(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in lunar_bulk_compositions.index]),
+    np.array([max(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in lunar_bulk_compositions.index]),
     color='lightgrey',
     alpha=0.8,
 )
@@ -189,7 +189,7 @@ ax.axhline(1, color='k', linestyle='--', linewidth=2)
 for run in runs:
     ax.plot(
         [format_species_string(oxide) for oxide in oxides_ordered],
-        [run['ejecta_mass_fraction'][oxide] / bse_composition[oxide] for oxide in oxides_ordered],
+        [run['ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered],
         label=run['run_name'],
         marker='o',
         # linestyle='--',
@@ -197,7 +197,8 @@ for run in runs:
         markersize=10,
     )
 
-ax.set_ylabel("Disk / BSE (Oxide wt. %)")
+ax.set_ylabel("Disk / BSM (Oxide wt. %)")
+ax.set_yscale('log')
 ax.grid()
 ax.legend()
 # increase font size
