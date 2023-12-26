@@ -431,20 +431,24 @@ class ConvertComposition:
         assert np.isclose(sum(element_mass.values()), total_oxide_mass)
         return element_mass
 
-    def oxide_wt_pct_to_cation_wt_pct(self, composition: dict):
+    def oxide_wt_pct_to_cation_wt_pct(self, composition: dict, include_oxygen=False):
         """
         Given an oxide weight percent composition, returns the cation weight percent composition.
         :param composition:
+        :param include_oxygen:
         :return:
         """
         cation_wt_pct = {}
         for oxide in composition:
             oxide_moles = composition[oxide] / self.get_molecule_mass(molecule=oxide)
             stoich = get_molecule_stoichiometry(molecule=oxide)
-            cation = [key for key in stoich.keys() if key != "O"][0]
-            cation_atomic_wt = self.get_atomic_mass(element=cation)
-            cation_moles = oxide_moles * stoich[cation]
-            cation_wt_pct.update({cation: cation_moles * cation_atomic_wt})
+            for element in stoich.keys():
+                if element != "O" or (element == "O" and include_oxygen):
+                    cation_atomic_wt = self.get_atomic_mass(element=element)
+                    cation_moles = oxide_moles * stoich[element]
+                    if element not in cation_wt_pct:
+                        cation_wt_pct[element] = 0
+                    cation_wt_pct[element] += cation_moles * cation_atomic_wt
         return normalize(composition=cation_wt_pct)
 
 

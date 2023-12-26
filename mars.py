@@ -260,6 +260,8 @@ for run_index, run in enumerate(runs):
         recondensed_melt_oxide_at_vmf = rc['recondensed_melt_oxide_mass_fraction']
         recondensed_melt_element_mass_at_vmf = rc['recondensed_melt_mass']
 
+        print(f"Run {run_name} ({comp_name})", melt_elements_at_vmf['K'] / (melt_elements_at_vmf['K'] + vapor_elements_at_vmf['K']))
+
         if os.path.exists(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv"):
             os.remove(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv")
         with open(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv", "w") as f:
