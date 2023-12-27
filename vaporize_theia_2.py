@@ -227,7 +227,10 @@ for run in runs:
                     break
 
                 if error < 10 ** -5:
+                    print("Found solution!")
                     FOUND_SOLUTION = True
+                else:
+                    print(f"No solution found, trying again... ({solution_count})")
 
         bulk_ejecta_oxide_outfile = f"{run['run_name']}/ejecta_bulk_oxide_compositions.csv"
         bulk_ejecta_elements_outfile = f"{run['run_name']}/ejecta_bulk_element_compositions.csv"
