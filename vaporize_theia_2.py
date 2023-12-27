@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 runs = [
     {
-        "run_name": "Canonical Model 2",
+        "run_name": "Canonical Model 2 (Theia Mixing)",
         "temperature": 2079.86,  # K
         "vmf": 3.65,  # %
         "0% VMF mass frac": 87.41,  # %
@@ -36,7 +36,7 @@ runs = [
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 0.74,  # %
-        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 
@@ -91,28 +91,17 @@ residuals = {oxide: 0.0 for oxide in bse_composition.keys()}
 for run in runs:
     for lunar_bulk_model in lunar_bulk_compositions.columns:
         for recondense in ['no_recondensation', 'full_recondensation']:
-            run['run_name'] = f"{run['run_name']}_{lunar_bulk_model}_{recondense}"
-            bulk_ejecta_oxide_outfile = f"{run['run_name']}/ejecta_bulk_oxide_compositions.csv"
-            bulk_ejecta_elements_outfile = f"{run['run_name']}/ejecta_bulk_element_compositions.csv"
-            bulk_theia_oxide_outfile = f"{run['run_name']}/theia_bulk_oxide_compositions.csv"
-            bulk_theia_elements_outfile = f"{run['run_name']}/theia_bulk_element_compositions.csv"
-            for i in [bulk_ejecta_oxide_outfile, bulk_theia_oxide_outfile]:
-                # write the header
-                with open(i, "w") as f:
-                    f.write(f"Run Name,Recondensation Model,{','.join([oxide for oxide in oxides_ordered])}\n")
-            for i in [bulk_ejecta_elements_outfile, bulk_theia_elements_outfile]:
-                # write the header
-                with open(i, "w") as f:
-                    f.write(f"Run Name,Recondensation Model,{','.join([element for element in elements_ordered])}\n")
             bulk_ejecta_composition = copy.copy(bse_composition)
             ejecta_mass_fraction = {oxide: 0.0 for oxide in oxides_ordered}
             bulk_theia_composition = {oxide: 0.0 for oxide in oxides_ordered}
             bulk_theia_elemental_composition = {element: 0.0 for element in elements_ordered}
             print(f"Running {run['run_name']} with {lunar_bulk_model} lunar bulk composition")
             solution_count = 1
-            while error > 10 ** -5 and run['new_simulation']:
-                bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] - residuals[oxide] for oxide in
-                                           residuals.keys()}
+            FOUND_SOLUTION = False
+            while (error > 10 ** -5 and run['new_simulation']) or FOUND_SOLUTION:
+                if not FOUND_SOLUTION:
+                    bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] - residuals[oxide] for oxide in
+                                               residuals.keys()}
                 if run['new_simulation']:
                     # ======================================= RUN MAGMApy IMULATION ====================================
                     c = Composition(
@@ -133,11 +122,13 @@ for run in runs:
 
                     t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
-                    reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
+                    if FOUND_SOLUTION:
+                        reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
 
+                    print(f"Starting MAGMApy loop")
                     count = 1
-                    while t.weight_fraction_vaporized < 0.2:
-                        print("Running MAGMApy iteration", count)
+                    while t.weight_fraction_vaporized < 0.25:
+                        # print("Running MAGMApy iteration", count)
                         l.calculate_activities(temperature=run['temperature'])
                         g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
                         if l.counter == 1:
@@ -145,90 +136,122 @@ for run in runs:
                             g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
                         t.vaporize()
                         l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
-                        if count % 50 == 0 or count == 1:
+                        if (count % 50 == 0 or count == 1) and FOUND_SOLUTION:
                             reports.create_composition_report(iteration=count)
                             reports.create_liquid_report(iteration=count)
                             reports.create_gas_report(iteration=count)
                         count += 1
+                    print("MAGMApy simulation complete")
 
-                        # ============================== ASSESS MODEL ERROR =================================
+                    # ============================== ASSESS MODEL ERROR =================================
 
-                        # calculate the mass distribution between the desired populations (in kg)
-                        total_ejecta_mass = run['disk_mass'] * MASS_MOON  # define total ejecta mass, kg
-                        total_100_pct_vaporized_mass = total_ejecta_mass * run[
-                            '100% VMF mass frac'] / 100  # define total 100% vaporized mass
-                        intermediate_pct_vmf_mass = total_ejecta_mass * (100 - run['0% VMF mass frac'] - run[
-                            '100% VMF mass frac']) / 100  # define intermediate pct VMF mass
-                        intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run[
-                            'vmf'] / 100  # define intermediate pct VMF mass vapor
-                        intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (
-                                100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
-                        total_bse_sourced_mass = total_ejecta_mass * (1 - run['disk_theia_mass_fraction'] / 100)
-                        total_theia_sourced_mass = total_ejecta_mass * run['disk_theia_mass_fraction'] / 100
+                    # calculate the mass distribution between the desired populations (in kg)
+                    total_ejecta_mass = run['disk_mass'] * MASS_MOON  # define total ejecta mass, kg
+                    total_100_pct_vaporized_mass = total_ejecta_mass * run[
+                        '100% VMF mass frac'] / 100  # define total 100% vaporized mass
+                    intermediate_pct_vmf_mass = total_ejecta_mass * (100 - run['0% VMF mass frac'] - run[
+                        '100% VMF mass frac']) / 100  # define intermediate pct VMF mass
+                    intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run[
+                        'vmf'] / 100  # define intermediate pct VMF mass vapor
+                    intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (
+                            100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
+                    total_bse_sourced_mass = total_ejecta_mass * (1 - run['disk_theia_mass_fraction'] / 100)
+                    total_theia_sourced_mass = total_ejecta_mass * run['disk_theia_mass_fraction'] / 100
 
-                        # read in the data
-                        melt_oxide_mass_fraction = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
-                                                                x_header='mass fraction vaporized')
-                        magma_element_mass = collect_data(path=f"{run['run_name']}/magma_element_mass",
-                                                          x_header='mass fraction vaporized')
-                        vapor_element_mass = collect_data(path=f"{run['run_name']}/total_vapor_element_mass",
-                                                          x_header='mass fraction vaporized')
+                    # read in the data
+                    melt_oxide_mass_fraction = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
+                                                            x_header='mass fraction vaporized')
+                    magma_element_mass = collect_data(path=f"{run['run_name']}/magma_element_mass",
+                                                      x_header='mass fraction vaporized')
+                    vapor_element_mass = collect_data(path=f"{run['run_name']}/total_vapor_element_mass",
+                                                      x_header='mass fraction vaporized')
 
-                        # get the composition at the VMF
-                        melt_oxide_mass_fraction_at_vmf = get_composition_at_vmf(
-                            melt_oxide_mass_fraction,
-                            run['vmf'] / 100
-                        )
-                        magma_element_mass_at_vmf = get_composition_at_vmf(
-                            magma_element_mass,
-                            run['vmf'] / 100
-                        )
-                        vapor_element_mass_at_vmf = get_composition_at_vmf(
-                            vapor_element_mass,
-                            run['vmf'] / 100
-                        )
-                        lost_vapor_element_mass_at_vmf = {element: val * run['vapor_loss_fraction'] / 100 for element, val in vapor_element_mass_at_vmf.items()}
-                        retained_vapor_element_mass_at_vmf = {element: val - lost_vapor_element_mass_at_vmf[element] for element, val in vapor_element_mass_at_vmf.items()}
-                        fully_recondensed_magma_element_mass_at_vmf = {element: val + retained_vapor_element_mass_at_vmf[element] for element, val in magma_element_mass_at_vmf.items()}
+                    # get the composition at the VMF
+                    melt_oxide_mass_fraction_at_vmf = get_composition_at_vmf(
+                        melt_oxide_mass_fraction,
+                        run['vmf'] / 100
+                    )
+                    magma_element_mass_at_vmf = get_composition_at_vmf(
+                        magma_element_mass,
+                        run['vmf'] / 100
+                    )
+                    vapor_element_mass_at_vmf = get_composition_at_vmf(
+                        vapor_element_mass,
+                        run['vmf'] / 100
+                    )
+                    lost_vapor_element_mass_at_vmf = {element: val * run['vapor_loss_fraction'] / 100 for element, val in vapor_element_mass_at_vmf.items()}
+                    retained_vapor_element_mass_at_vmf = {element: val - lost_vapor_element_mass_at_vmf[element] for element, val in vapor_element_mass_at_vmf.items()}
+                    fully_recondensed_magma_element_mass_at_vmf = {element: val + retained_vapor_element_mass_at_vmf[element] for element, val in magma_element_mass_at_vmf.items()}
 
-                        vapor_element_mass_fraction_at_vmf = normalize(vapor_element_mass_at_vmf)
-                        magma_element_mass_fraction_at_vmf = normalize(magma_element_mass_at_vmf)
+                    vapor_element_mass_fraction_at_vmf = normalize(vapor_element_mass_at_vmf)
+                    magma_element_mass_fraction_at_vmf = normalize(magma_element_mass_at_vmf)
 
-                        # first, calculate the total ejecta mass for each element
-                        ejecta_mass = {element: total_ejecta_mass * val / 100 for element, val in
-                                       bse_element_mass_fraction.items()}
-                        # first, calculate the mass of the 100% vaporized ejecta for each element
-                        vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in
-                                          bse_element_mass_fraction.items()}
-                        # remove the vaporized mass from the ejecta mass
-                        ejecta_mass = {element: ejecta_mass[element] - vaporized_mass[element] for element in
-                                       ejecta_mass.keys()}
-                        # next, calculate remove the mass of the intermediate VMF vapor from the ejecta mass
-                        intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100
-                                                                        for
-                                                                        element, val in
-                                                                        vapor_element_mass_fraction_at_vmf.items()}
-                        ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element]
-                                       for
-                                       element in ejecta_mass.keys()}
-                        
-                        if recondense == 'full_recondensation':
-                            ejecta_mass = {element: val + fully_recondensed_magma_element_mass_at_vmf[element] for element, val in ejecta_mass.items()}
+                    # first, calculate the total ejecta mass for each element
+                    ejecta_mass = {element: total_ejecta_mass * val / 100 for element, val in
+                                   bse_element_mass_fraction.items()}
+                    # first, calculate the mass of the 100% vaporized ejecta for each element
+                    vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in
+                                      bse_element_mass_fraction.items()}
+                    # remove the vaporized mass from the ejecta mass
+                    ejecta_mass = {element: ejecta_mass[element] - vaporized_mass[element] for element in
+                                   ejecta_mass.keys()}
+                    # next, calculate remove the mass of the intermediate VMF vapor from the ejecta mass
+                    intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100
+                                                                    for
+                                                                    element, val in
+                                                                    vapor_element_mass_fraction_at_vmf.items()}
+                    ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element]
+                                   for
+                                   element in ejecta_mass.keys()}
 
-                        # convert the ejecta mass back to oxide mass fraction
-                        ejecta_mass_fraction = normalize(
-                            ConvertComposition().cations_mass_to_oxides_weight_percent(ejecta_mass,
-                                                                                       oxides=bse_composition.keys()))
-                        
-                        
+                    if recondense == 'full_recondensation':
+                        ejecta_mass = {element: val + fully_recondensed_magma_element_mass_at_vmf[element] for element, val in ejecta_mass.items()}
 
-                        # calculate error residuals
-                        residuals = {oxide: abs(ejecta_mass_fraction - lunar_bulk_compositions[lunar_bulk_model].loc[oxide])
-                                     for oxide in bse_composition.keys()}
-                        error = sum(residuals.values())
-                        solution_count += 1
+                    # convert the ejecta mass back to oxide mass fraction
+                    ejecta_mass_fraction = normalize(
+                        ConvertComposition().cations_mass_to_oxides_weight_percent(ejecta_mass,
+                                                                                   oxides=bse_composition.keys()))
+
+                    bse_oxide_contribution = {oxide: bse_composition[oxide] / 100 * total_bse_sourced_mass for oxide in oxides_ordered}
+                    theia_oxide_contribution = {oxide: (ejecta_mass_fraction[oxide] / 100 * total_ejecta_mass) - bse_oxide_contribution[oxide] for oxide in oxides_ordered}
+                    bse_element_contribution = {element: ejecta_mass[element] / 100 * total_bse_sourced_mass for element in elements_ordered}
+                    theia_element_contribution = {element: ejecta_mass[element] / 100 * total_theia_sourced_mass for element in elements_ordered}
+
+                    # calculate error residuals
+                    residuals = {oxide: abs(ejecta_mass_fraction[oxide] - lunar_bulk_compositions[lunar_bulk_model].loc[oxide])
+                                 for oxide in oxides_ordered}
+                    error = sum(residuals.values())
+                    solution_count += 1
+
+                if FOUND_SOLUTION:
+                    break
+
+                if error < 10 ** -5:
+                    FOUND_SOLUTION = True
+
+        bulk_ejecta_oxide_outfile = f"{run['run_name']}/ejecta_bulk_oxide_compositions.csv"
+        bulk_ejecta_elements_outfile = f"{run['run_name']}/ejecta_bulk_element_compositions.csv"
+        bulk_theia_oxide_outfile = f"{run['run_name']}/theia_bulk_oxide_compositions.csv"
+        bulk_theia_elements_outfile = f"{run['run_name']}/theia_bulk_element_compositions.csv"
+        for i in [bulk_ejecta_oxide_outfile, bulk_theia_oxide_outfile]:
+            # write the header
+            with open(i, "w") as f:
+                f.write(f"Run Name,Lunar Model,Recondensation Model,{','.join([oxide for oxide in oxides_ordered])}\n")
+        for i in [bulk_ejecta_elements_outfile, bulk_theia_elements_outfile]:
+            # write the header
+            with open(i, "w") as f:
+                f.write(f"Run Name,Lunar Model,Recondensation Model,{','.join([element for element in elements_ordered])}\n")
+
         print(f"Solution found! {solution_count} iterations")
-        for i in zip([bulk_ejecta_oxide_outfile, bulk_theia_oxide_outfile, bulk_ejecta_elements_outfile, bulk_theia_elements_outfile],
-                     [ejecta_mass_fraction, bulk_ejecta_composition]):
-            with open(i[0], "a") as f:
-                f.write(f"{run['run_name']},{lunar_bulk_model},{','.join([str(i) for i in i[1].values()])}\n")
+        with open(bulk_ejecta_oxide_outfile, "a") as f:
+            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(ejecta_mass_fraction[oxide]) for oxide in oxides_ordered])}\n")
+        f.close()
+        with open(bulk_ejecta_elements_outfile, "a") as f:
+            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(ejecta_mass[element]) for element in elements_ordered])}\n")
+        f.close()
+        with open(bulk_theia_oxide_outfile, "a") as f:
+            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(theia_oxide_contribution[oxide]) for oxide in oxides_ordered])}\n")
+        f.close()
+        with open(bulk_theia_elements_outfile, "a") as f:
+            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(theia_element_contribution[element]) for element in elements_ordered])}\n")
+        f.close()
