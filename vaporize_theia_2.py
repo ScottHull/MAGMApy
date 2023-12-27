@@ -85,123 +85,130 @@ def get_composition_at_vmf(d: dict, vmf_val: float):
     return interpolated_composition
 
 
+def recondense_elements(magma_element_mass: dict, retained_vapor_element_mass):
+    pass
+
+
 error = 1e99
 residuals = {oxide: 0.0 for oxide in bse_composition.keys()}
 
 for run in runs:
     for lunar_bulk_model in lunar_bulk_compositions.columns:
-        with open(f"{run['run_name']}/ejecta_bulk_compositions.csv", "a") as f:
-            f.write(f"run_name,lunar_bulk_model,{','.join([str(i) for i in bse_composition.keys()])}\n")
-        bulk_ejecta_composition = copy.copy(bse_composition)
-        ejecta_mass_fraction = {oxide: 0.0 for oxide in bse_composition.keys()}
-        print(f"Running {run['run_name']} with {lunar_bulk_model} lunar bulk composition")
-        solution_count = 1
-        while error > 10 ** -5 and run['new_simulation']:
-            bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] - residuals[oxide] for oxide in
-                                       residuals.keys()}
-            if run['new_simulation']:
-                # ======================================= RUN MAGMApy IMULATION ====================================
-                c = Composition(
-                    composition=bse_composition
-                )
+        for reconense in ['no_recondensation', 'full_recondensation']:
+            run['run_name'] = f"{run['run_name']}_{lunar_bulk_model}_{reconense}"
+            bulk_oxide_outfile = f"{run['run_name']}/ejecta_bulk_oxide_compositions.csv"
+            with open(bulk_oxide_outfile, "a") as f:
+                f.write(f"run_name,lunar_bulk_model,{','.join([str(i) for i in bse_composition.keys()])}\n")
+            bulk_ejecta_composition = copy.copy(bse_composition)
+            ejecta_mass_fraction = {oxide: 0.0 for oxide in bse_composition.keys()}
+            print(f"Running {run['run_name']} with {lunar_bulk_model} lunar bulk composition")
+            solution_count = 1
+            while error > 10 ** -5 and run['new_simulation']:
+                bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] - residuals[oxide] for oxide in
+                                           residuals.keys()}
+                if run['new_simulation']:
+                    # ======================================= RUN MAGMApy IMULATION ====================================
+                    c = Composition(
+                        composition=bse_composition
+                    )
 
-                g = GasPressure(
-                    composition=c,
-                    major_gas_species=["SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K", "Zn"],
-                    minor_gas_species="__all__",
-                )
+                    g = GasPressure(
+                        composition=c,
+                        major_gas_species=["SiO", "O2", "MgO", "Fe", "Ca", "Al", "Ti", "Na", "K", "Zn"],
+                        minor_gas_species="__all__",
+                    )
 
-                l = LiquidActivity(
-                    composition=c,
-                    complex_species="__all__",
-                    gas_system=g
-                )
+                    l = LiquidActivity(
+                        composition=c,
+                        complex_species="__all__",
+                        gas_system=g
+                    )
 
-                t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
+                    t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
-                reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
+                    reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
 
-                count = 1
-                while t.weight_fraction_vaporized < 0.2:
-                    print("Running MAGMApy iteration", count)
-                    l.calculate_activities(temperature=run['temperature'])
-                    g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
-                    if l.counter == 1:
+                    count = 1
+                    while t.weight_fraction_vaporized < 0.2:
+                        print("Running MAGMApy iteration", count)
                         l.calculate_activities(temperature=run['temperature'])
                         g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
-                    t.vaporize()
-                    l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
-                    if count % 50 == 0 or count == 1:
-                        reports.create_composition_report(iteration=count)
-                        reports.create_liquid_report(iteration=count)
-                        reports.create_gas_report(iteration=count)
-                    count += 1
+                        if l.counter == 1:
+                            l.calculate_activities(temperature=run['temperature'])
+                            g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
+                        t.vaporize()
+                        l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
+                        if count % 50 == 0 or count == 1:
+                            reports.create_composition_report(iteration=count)
+                            reports.create_liquid_report(iteration=count)
+                            reports.create_gas_report(iteration=count)
+                        count += 1
 
-                    # ============================== ASSESS MODEL ERROR =================================
+                        # ============================== ASSESS MODEL ERROR =================================
 
-                    # calculate the mass distribution between the desired populations (in kg)
-                    total_ejecta_mass = run['disk_mass'] * MASS_MOON  # define total ejecta mass, kg
-                    total_100_pct_vaporized_mass = total_ejecta_mass * run[
-                        '100% VMF mass frac'] / 100  # define total 100% vaporized mass
-                    intermediate_pct_vmf_mass = total_ejecta_mass * (100 - run['0% VMF mass frac'] - run[
-                        '100% VMF mass frac']) / 100  # define intermediate pct VMF mass
-                    intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run[
-                        'vmf'] / 100  # define intermediate pct VMF mass vapor
-                    intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (
-                            100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
+                        # calculate the mass distribution between the desired populations (in kg)
+                        total_ejecta_mass = run['disk_mass'] * MASS_MOON  # define total ejecta mass, kg
+                        total_100_pct_vaporized_mass = total_ejecta_mass * run[
+                            '100% VMF mass frac'] / 100  # define total 100% vaporized mass
+                        intermediate_pct_vmf_mass = total_ejecta_mass * (100 - run['0% VMF mass frac'] - run[
+                            '100% VMF mass frac']) / 100  # define intermediate pct VMF mass
+                        intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run[
+                            'vmf'] / 100  # define intermediate pct VMF mass vapor
+                        intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (
+                                100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
 
-                    # read in the data
-                    melt_oxide_mass_fraction = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
-                                                            x_header='mass fraction vaporized')
-                    magma_element_mass = collect_data(path=f"{run['run_name']}/magma_element_mass",
-                                                      x_header='mass fraction vaporized')
-                    vapor_element_mass = collect_data(path=f"{run['run_name']}/total_vapor_element_mass",
-                                                      x_header='mass fraction vaporized')
+                        # read in the data
+                        melt_oxide_mass_fraction = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
+                                                                x_header='mass fraction vaporized')
+                        magma_element_mass = collect_data(path=f"{run['run_name']}/magma_element_mass",
+                                                          x_header='mass fraction vaporized')
+                        vapor_element_mass = collect_data(path=f"{run['run_name']}/total_vapor_element_mass",
+                                                          x_header='mass fraction vaporized')
 
-                    # get the composition at the VMF
-                    melt_oxide_mass_fraction_at_vmf = get_composition_at_vmf(
-                        melt_oxide_mass_fraction,
-                        run['vmf'] / 100
-                    )
-                    magma_element_mass_at_vmf = get_composition_at_vmf(
-                        magma_element_mass,
-                        run['vmf'] / 100
-                    )
-                    vapor_element_mass_at_vmf = get_composition_at_vmf(
-                        vapor_element_mass,
-                        run['vmf'] / 100
-                    )
-                    vapor_element_mass_fraction_at_vmf = normalize(vapor_element_mass_at_vmf)
-                    magma_element_mass_fraction_at_vmf = normalize(magma_element_mass_at_vmf)
+                        # get the composition at the VMF
+                        melt_oxide_mass_fraction_at_vmf = get_composition_at_vmf(
+                            melt_oxide_mass_fraction,
+                            run['vmf'] / 100
+                        )
+                        magma_element_mass_at_vmf = get_composition_at_vmf(
+                            magma_element_mass,
+                            run['vmf'] / 100
+                        )
+                        vapor_element_mass_at_vmf = get_composition_at_vmf(
+                            vapor_element_mass,
+                            run['vmf'] / 100
+                        )
+                        vapor_element_mass_fraction_at_vmf = normalize(vapor_element_mass_at_vmf)
+                        magma_element_mass_fraction_at_vmf = normalize(magma_element_mass_at_vmf)
 
-                    # first, calculate the total ejecta mass for each element
-                    ejecta_mass = {element: total_ejecta_mass * val / 100 for element, val in
-                                   bse_element_mass_fraction.items()}
-                    # first, calculate the mass of the 100% vaporized ejecta for each element
-                    vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in
-                                      bse_element_mass_fraction.items()}
-                    # remove the vaporized mass from the ejecta mass
-                    ejecta_mass = {element: ejecta_mass[element] - vaporized_mass[element] for element in
-                                   ejecta_mass.keys()}
-                    # next, calculate remove the mass of the intermediate VMF vapor from the ejecta mass
-                    intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100
-                                                                    for
-                                                                    element, val in
-                                                                    vapor_element_mass_fraction_at_vmf.items()}
-                    ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element]
-                                   for
-                                   element in ejecta_mass.keys()}
+                        # first, calculate the total ejecta mass for each element
+                        ejecta_mass = {element: total_ejecta_mass * val / 100 for element, val in
+                                       bse_element_mass_fraction.items()}
+                        # first, calculate the mass of the 100% vaporized ejecta for each element
+                        vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in
+                                          bse_element_mass_fraction.items()}
+                        # remove the vaporized mass from the ejecta mass
+                        ejecta_mass = {element: ejecta_mass[element] - vaporized_mass[element] for element in
+                                       ejecta_mass.keys()}
+                        # next, calculate remove the mass of the intermediate VMF vapor from the ejecta mass
+                        intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100
+                                                                        for
+                                                                        element, val in
+                                                                        vapor_element_mass_fraction_at_vmf.items()}
+                        ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element]
+                                       for
+                                       element in ejecta_mass.keys()}
 
-                    # convert the ejecta mass back to oxide mass fraction
-                    ejecta_mass_fraction = normalize(
-                        ConvertComposition().cations_mass_to_oxides_weight_percent(ejecta_mass,
-                                                                                   oxides=bse_composition.keys()))
+                        # convert the ejecta mass back to oxide mass fraction
+                        ejecta_mass_fraction = normalize(
+                            ConvertComposition().cations_mass_to_oxides_weight_percent(ejecta_mass,
+                                                                                       oxides=bse_composition.keys()))
 
-                    # calculate error residuals
-                    residuals = {oxide: abs(ejecta_mass_fraction - lunar_bulk_compositions[lunar_bulk_model].loc[oxide])
-                                 for oxide in bse_composition.keys()}
-                    error = sum(residuals.values())
-                    solution_count += 1
+                        # calculate error residuals
+                        residuals = {oxide: abs(ejecta_mass_fraction - lunar_bulk_compositions[lunar_bulk_model].loc[oxide])
+                                     for oxide in bse_composition.keys()}
+                        error = sum(residuals.values())
+                        solution_count += 1
         print(f"Solution found! {solution_count} iterations")
-        with open(f"{}/ejecta_bulk_compositions.csv", "a") as f:
+        with open(bulk_oxide_outfile, "a") as f:
             f.write(f"{run['run_name']},{lunar_bulk_model},{','.join([str(i) for i in ejecta_mass_fraction.values()])}\n")
