@@ -136,8 +136,6 @@ class GasPressure:
         self.cation_moles = None
         self.total_pressure = None
         self.partial_pressures = None  # all species partial pressures
-        self.saturation_index = 0.998  # TODO: remove this
-        self.surface_partial_pressures = {}  # TODO: remove this
         self.composition = composition
         self.minor_gas_species_data = pd.read_excel("data/MAGMA_Thermodynamic_Data.xlsx", sheet_name="Table 4",
                                                     index_col="Product")
@@ -190,30 +188,30 @@ class GasPressure:
                                       self.cation_mass.keys()}
         return self.element_mass_fraction
 
-    def __get_fractional_element_vapor_mass(self, species_mass_at_time: dict):
-        """
-        Get the fractional mass of elements in the fractional vapor created at the given iteration.
-        Take the molecular species masses and get the constituent element masses.
-        e.g. 100 g of SiO2 -> 1.66 mol SiO2 = 1.66 mol Si, 3.32 mol O -> 46.62 g Si, 106.56 g O
-        :param species_mass_at_time:
-        :return:
-        """
-        d = {}
-        species_moles_at_time = {
-            i: species_mass_at_time[i] / self.composition.get_molecule_mass(molecule=i) for i in
-            species_mass_at_time.keys()
-        }
-        for i in species_moles_at_time.keys():
-            stoich = get_molecule_stoichiometry(molecule=i)
-            for j in stoich.keys():
-                # get the molar mass of the species
-                if j not in d.keys():
-                    d.update({j: 0})
-                element_moles = stoich[j] * species_moles_at_time[i]
-                d[j] += element_moles * self.composition.get_molecule_mass(molecule=j)
-        # assert that the sum of the element masses equals the sum of the species masses
-        assert np.isclose(sum(d.values()), sum(species_mass_at_time.values()))
-        return d
+    # def __get_fractional_element_vapor_mass(self, species_mass_at_time: dict):
+    #     """
+    #     Get the fractional mass of elements in the fractional vapor created at the given iteration.
+    #     Take the molecular species masses and get the constituent element masses.
+    #     e.g. 100 g of SiO2 -> 1.66 mol SiO2 = 1.66 mol Si, 3.32 mol O -> 46.62 g Si, 106.56 g O
+    #     :param species_mass_at_time:
+    #     :return:
+    #     """
+    #     d = {}
+    #     species_moles_at_time = {
+    #         i: species_mass_at_time[i] / self.composition.get_molecule_mass(molecule=i) for i in
+    #         species_mass_at_time.keys()
+    #     }
+    #     for i in species_moles_at_time.keys():
+    #         stoich = get_molecule_stoichiometry(molecule=i)
+    #         for j in stoich.keys():
+    #             # get the molar mass of the species
+    #             if j not in d.keys():
+    #                 d.update({j: 0})
+    #             element_moles = stoich[j] * species_moles_at_time[i]
+    #             d[j] += element_moles * self.composition.get_molecule_mass(molecule=j)
+    #     # assert that the sum of the element masses equals the sum of the species masses
+    #     assert np.isclose(sum(d.values()), sum(species_mass_at_time.values()))
+    #     return d
 
     def get_vapor_mass(self, initial_liquid_mass, liquid_mass_at_time, previous_melt_mass):
         """
@@ -237,10 +235,10 @@ class GasPressure:
         # get the mass of each species from the vapor produced at the given iteration
         species_masses = {i: self.species_mass_fractions[i] / 100.0 * mass_produced_at_iteration
                           for i in self.species_mass_fractions.keys()}
-        self.fractional_species_masses = species_masses
-        self.fractional_element_masses = self.__get_fractional_element_vapor_mass(
-            species_mass_at_time=self.fractional_species_masses
-        )
+        # self.fractional_species_masses = species_masses
+        # self.fractional_element_masses = self.__get_fractional_element_vapor_mass(
+        #     species_mass_at_time=self.fractional_species_masses
+        # )
         # get the mass of each element from the vapor produced at the given iteration
         self.element_total_mass = {i: self.element_mass_fraction[i] * self.vapor_mass
                                    for i in
@@ -621,9 +619,6 @@ class GasPressure:
                 if j in self.minor_gas_species + ['e-']:
                     pp += self.partial_pressures_minor_species[j]
             self.partial_pressure_elements[i] += pp  # add the partial pressure to the element total
-        self.surface_partial_pressures = {
-            i: self.partial_pressure_elements[i] * self.saturation_index for i in self.partial_pressure_elements.keys()
-        }
         return self.partial_pressure_elements
 
     def calculate_pressures(self, temperature, liquid_system):
