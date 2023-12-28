@@ -85,11 +85,24 @@ def get_composition_at_vmf(d: dict, vmf_val: float):
     return interpolated_composition
 
 
+bulk_ejecta_oxide_outfile = f"ejecta_bulk_oxide_compositions.csv"
+bulk_ejecta_elements_outfile = f"ejecta_bulk_element_compositions.csv"
+bulk_theia_oxide_outfile = f"theia_bulk_oxide_compositions.csv"
+bulk_theia_elements_outfile = f"theia_bulk_element_compositions.csv"
+for i in [bulk_ejecta_oxide_outfile, bulk_theia_oxide_outfile]:
+    # write the header
+    with open(i, "w") as f:
+        f.write(f"Run Name,Lunar Model,Recondensation Model,{','.join([oxide for oxide in oxides_ordered])}\n")
+for i in [bulk_ejecta_elements_outfile, bulk_theia_elements_outfile]:
+    # write the header
+    with open(i, "w") as f:
+        f.write(f"Run Name,Lunar Model,Recondensation Model,{','.join([element for element in elements_ordered])}\n")
+
 for run in runs:
     for lunar_bulk_model in lunar_bulk_compositions.columns:
         print(f"Target bulk composition: {lunar_bulk_model}")
         for recondense in ['no_recondensation', 'full_recondensation']:
-            run['run_name'] = f"{run['run_name']}_{lunar_bulk_model}_{recondense}"
+            run_name = f"{run['run_name']}_{lunar_bulk_model}_{recondense}"
             error = 1e99
             residuals = {oxide: 0.0 for oxide in oxides_ordered}
             bulk_ejecta_composition = copy.copy(lunar_bulk_compositions[lunar_bulk_model].to_dict())
@@ -98,8 +111,8 @@ for run in runs:
             bulk_theia_elemental_composition = {element: 0.0 for element in elements_ordered}
             print(f"Running {run['run_name']} with {lunar_bulk_model} lunar bulk composition")
             solution_count = 1
-            while (error > 10 ** -5 and run['new_simulation']):
-                bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] + residuals[oxide] if (bulk_ejecta_composition[oxide] - residuals[oxide] > 0) else bulk_ejecta_composition[oxide] for oxide in oxides_ordered}
+            while (error > 0.15 and run['new_simulation']):
+                bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] + residuals[oxide] if (bulk_ejecta_composition[oxide] + residuals[oxide] > 0) else bulk_ejecta_composition[oxide] for oxide in oxides_ordered}
                 bulk_ejecta_composition['Fe2O3'] = 0.0
                 bulk_ejecta_composition = normalize({oxide: bulk_ejecta_composition[oxide] for oxide in bse_composition.keys()})
                 if run['new_simulation']:
@@ -123,7 +136,7 @@ for run in runs:
 
                     t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
-                    reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
+                    reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run_name)
 
                     print(f"Starting MAGMApy loop")
                     count = 1
@@ -159,11 +172,11 @@ for run in runs:
                     total_theia_sourced_mass = total_ejecta_mass * run['disk_theia_mass_fraction'] / 100
 
                     # read in the data
-                    melt_oxide_mass_fraction = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
+                    melt_oxide_mass_fraction = collect_data(path=f"{run_name}/magma_oxide_mass_fraction",
                                                             x_header='mass fraction vaporized')
-                    magma_element_mass = collect_data(path=f"{run['run_name']}/magma_element_mass",
+                    magma_element_mass = collect_data(path=f"{run_name}/magma_element_mass",
                                                       x_header='mass fraction vaporized')
-                    vapor_element_mass = collect_data(path=f"{run['run_name']}/total_vapor_element_mass",
+                    vapor_element_mass = collect_data(path=f"{run_name}/total_vapor_element_mass",
                                                       x_header='mass fraction vaporized')
 
                     # get the composition at the VMF
@@ -186,20 +199,19 @@ for run in runs:
                     vapor_element_mass_fraction_at_vmf = normalize(vapor_element_mass_at_vmf)
                     magma_element_mass_fraction_at_vmf = normalize(magma_element_mass_at_vmf)
 
+
                     # first, calculate the total ejecta mass for each element
                     ejecta_mass = {element: total_ejecta_mass * val / 100 for element, val in
-                                   bse_element_mass_fraction.items()}
+                                   ConvertComposition().oxide_wt_pct_to_cation_wt_pct(bulk_ejecta_composition, include_oxygen=True).items()}
                     # first, calculate the mass of the 100% vaporized ejecta for each element
                     vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in
-                                      bse_element_mass_fraction.items()}
+                                      ConvertComposition().oxide_wt_pct_to_cation_wt_pct(bulk_ejecta_composition, include_oxygen=True).items()}
                     # remove the vaporized mass from the ejecta mass
                     ejecta_mass = {element: ejecta_mass[element] - vaporized_mass[element] for element in
                                    ejecta_mass.keys()}
                     # next, calculate remove the mass of the intermediate VMF vapor from the ejecta mass
                     intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100
-                                                                    for
-                                                                    element, val in
-                                                                    vapor_element_mass_fraction_at_vmf.items()}
+                                                for element, val in vapor_element_mass_fraction_at_vmf.items()}
                     ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element]
                                    for
                                    element in ejecta_mass.keys()}
@@ -227,29 +239,16 @@ for run in runs:
                 else:
                     print(f"No solution found, trying again... ({solution_count}, error: {error})")
 
-        bulk_ejecta_oxide_outfile = f"ejecta_bulk_oxide_compositions.csv"
-        bulk_ejecta_elements_outfile = f"ejecta_bulk_element_compositions.csv"
-        bulk_theia_oxide_outfile = f"theia_bulk_oxide_compositions.csv"
-        bulk_theia_elements_outfile = f"theia_bulk_element_compositions.csv"
-        for i in [bulk_ejecta_oxide_outfile, bulk_theia_oxide_outfile]:
-            # write the header
-            with open(i, "w") as f:
-                f.write(f"Run Name,Lunar Model,Recondensation Model,{','.join([oxide for oxide in oxides_ordered])}\n")
-        for i in [bulk_ejecta_elements_outfile, bulk_theia_elements_outfile]:
-            # write the header
-            with open(i, "w") as f:
-                f.write(f"Run Name,Lunar Model,Recondensation Model,{','.join([element for element in elements_ordered])}\n")
-
-        print(f"Solution found! {solution_count} iterations")
-        with open(bulk_ejecta_oxide_outfile, "a") as f:
-            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(ejecta_mass_fraction[oxide]) for oxide in oxides_ordered])}\n")
-        f.close()
-        with open(bulk_ejecta_elements_outfile, "a") as f:
-            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(ejecta_mass[element]) for element in elements_ordered])}\n")
-        f.close()
-        with open(bulk_theia_oxide_outfile, "a") as f:
-            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(theia_oxide_contribution[oxide]) for oxide in oxides_ordered])}\n")
-        f.close()
-        with open(bulk_theia_elements_outfile, "a") as f:
-            f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(theia_element_contribution[element]) for element in elements_ordered])}\n")
-        f.close()
+            print(f"Solution found! {solution_count} iterations")
+            with open(bulk_ejecta_oxide_outfile, "a") as f:
+                f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(ejecta_mass_fraction[oxide]) for oxide in oxides_ordered])}\n")
+            f.close()
+            with open(bulk_ejecta_elements_outfile, "a") as f:
+                f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(ejecta_mass[element]) for element in elements_ordered])}\n")
+            f.close()
+            with open(bulk_theia_oxide_outfile, "a") as f:
+                f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(theia_oxide_contribution[oxide]) for oxide in oxides_ordered])}\n")
+            f.close()
+            with open(bulk_theia_elements_outfile, "a") as f:
+                f.write(f"{run['run_name']},{lunar_bulk_model},{recondense},{','.join([str(theia_element_contribution[element]) for element in elements_ordered])}\n")
+            f.close()
