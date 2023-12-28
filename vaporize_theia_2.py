@@ -24,7 +24,7 @@ plt.style.use('seaborn-colorblind')
 # increase font size
 plt.rcParams.update({"font.size": 20})
 # turn off all double scaling warnings
-warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 runs = [
     {
@@ -85,12 +85,12 @@ def get_composition_at_vmf(d: dict, vmf_val: float):
     return interpolated_composition
 
 
-error = 1e99
-residuals = {oxide: 0.0 for oxide in bse_composition.keys()}
-
 for run in runs:
     for lunar_bulk_model in lunar_bulk_compositions.columns:
         for recondense in ['no_recondensation', 'full_recondensation']:
+            run['run_name'] = f"{run['run_name']}_{lunar_bulk_model}_{recondense}"
+            error = 1e99
+            residuals = {oxide: 0.0 for oxide in bse_composition.keys()}
             bulk_ejecta_composition = copy.copy(bse_composition)
             ejecta_mass_fraction = {oxide: 0.0 for oxide in oxides_ordered}
             bulk_theia_composition = {oxide: 0.0 for oxide in oxides_ordered}
@@ -100,12 +100,14 @@ for run in runs:
             FOUND_SOLUTION = False
             while (error > 10 ** -5 and run['new_simulation']) or FOUND_SOLUTION:
                 if not FOUND_SOLUTION:
-                    bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] - residuals[oxide] for oxide in
-                                               residuals.keys()}
+                    bulk_ejecta_composition = normalize({oxide: bulk_ejecta_composition[oxide] - residuals[oxide] for oxide in
+                                               residuals.keys()})
+                    if "Fe2O3" not in bulk_ejecta_composition:
+                        bulk_ejecta_composition["Fe2O3"] = 0.0
                 if run['new_simulation']:
                     # ======================================= RUN MAGMApy IMULATION ====================================
                     c = Composition(
-                        composition=bse_composition
+                        composition=bulk_ejecta_composition
                     )
 
                     g = GasPressure(
@@ -122,12 +124,11 @@ for run in runs:
 
                     t = ThermoSystem(composition=c, gas_system=g, liquid_system=l)
 
-                    if FOUND_SOLUTION:
-                        reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
+                    reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
 
                     print(f"Starting MAGMApy loop")
                     count = 1
-                    while t.weight_fraction_vaporized < 0.25:
+                    while t.weight_fraction_vaporized < 0.15:
                         # print("Running MAGMApy iteration", count)
                         l.calculate_activities(temperature=run['temperature'])
                         g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
@@ -135,8 +136,8 @@ for run in runs:
                             l.calculate_activities(temperature=run['temperature'])
                             g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
                         t.vaporize()
-                        l.counter = 0  # reset Fe2O3 counter for next vaporizaiton step
-                        if (count % 50 == 0 or count == 1) and FOUND_SOLUTION:
+                        l.counter = 0  # reset Fe2O3 counter for next vaporization step
+                        if (count % 20 == 0 or count == 1):
                             reports.create_composition_report(iteration=count)
                             reports.create_liquid_report(iteration=count)
                             reports.create_gas_report(iteration=count)
@@ -230,12 +231,12 @@ for run in runs:
                     print("Found solution!")
                     FOUND_SOLUTION = True
                 else:
-                    print(f"No solution found, trying again... ({solution_count})")
+                    print(f"No solution found, trying again... ({solution_count}, error: {error})")
 
-        bulk_ejecta_oxide_outfile = f"{run['run_name']}/ejecta_bulk_oxide_compositions.csv"
-        bulk_ejecta_elements_outfile = f"{run['run_name']}/ejecta_bulk_element_compositions.csv"
-        bulk_theia_oxide_outfile = f"{run['run_name']}/theia_bulk_oxide_compositions.csv"
-        bulk_theia_elements_outfile = f"{run['run_name']}/theia_bulk_element_compositions.csv"
+        bulk_ejecta_oxide_outfile = f"ejecta_bulk_oxide_compositions.csv"
+        bulk_ejecta_elements_outfile = f"ejecta_bulk_element_compositions.csv"
+        bulk_theia_oxide_outfile = f"theia_bulk_oxide_compositions.csv"
+        bulk_theia_elements_outfile = f"theia_bulk_element_compositions.csv"
         for i in [bulk_ejecta_oxide_outfile, bulk_theia_oxide_outfile]:
             # write the header
             with open(i, "w") as f:
