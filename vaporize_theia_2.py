@@ -195,6 +195,7 @@ for run in runs:
 
                     run[run_name] = {}
                     run[run_name].update({'bulk_ejecta_composition': bulk_ejecta_composition})
+                    run[run_name].update({'target_lunar_bulk_composition': lunar_bulk_compositions[lunar_bulk_model].to_dict()})
 
                     # store the bulk masses
                     run[run_name].update({'total_ejecta_mass': total_ejecta_mass, 'bse_sourced_mass': total_bse_sourced_mass, 'theia_sourced_mass': total_theia_sourced_mass, 'total_100_pct_vaporized_mass': total_100_pct_vaporized_mass, 'intermediate_pct_vmf_mass': intermediate_pct_vmf_mass, 'intermediate_pct_vmf_mass_vapor': intermediate_pct_vmf_mass_vapor, 'intermediate_pct_vmf_mass_magma': intermediate_pct_vmf_mass_magma})
