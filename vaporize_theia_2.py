@@ -247,6 +247,7 @@ for run in runs:
                     residuals = {oxide: abs(ejecta_mass_fraction[oxide] - lunar_bulk_compositions[lunar_bulk_model].loc[oxide])
                                  for oxide in oxides_ordered}
                     error = sum(residuals.values())
+                    run[run_name].update({'error': error, 'residuals': residuals})
                     print(f"Error: {error}, residuals: {residuals}")
                     solution_count += 1
 
