@@ -26,14 +26,25 @@ plt.rcParams.update({"font.size": 20})
 runs = [
     {
         "run_name": "Canonical Model 2",
-        "temperature": 2079.86,  # K
-        "vmf": 3.65,  # %
+        "temperature": 2657.97,  # K
+        "vmf": 3.80,  # %
         "0% VMF mass frac": 87.41,  # %
         "100% VMF mass frac": 0.66,  # %
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 0.74,  # %
-        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+    },
+    {
+        "run_name": "Half Earths Model 2",
+        "temperature": 3514.15,  # K
+        "vmf": 14.50,  # %
+        "0% VMF mass frac": 81.3,  # %
+        "100% VMF mass frac": 1.9,  # %
+        "disk_theia_mass_fraction": 51.97,  # %
+        "disk_mass": 1.70,  # lunar masses
+        "vapor_loss_fraction": 16.0,  # %
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 
@@ -111,7 +122,7 @@ for run in runs:
         reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
 
         count = 1
-        while t.weight_fraction_vaporized < 0.2:
+        while t.weight_fraction_vaporized < 0.3:
             l.calculate_activities(temperature=run['temperature'])
             g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
             if l.counter == 1:
@@ -122,7 +133,7 @@ for run in runs:
             print(
                 "[~] At iteration: {} (Magma Fraction Vaporized: {} %)".format(
                     count, t.weight_fraction_vaporized * 100.0))
-            if count % 50 == 0 or count == 1:
+            if count % 25 == 0 or count == 1:
                 reports.create_composition_report(iteration=count)
                 reports.create_liquid_report(iteration=count)
                 reports.create_gas_report(iteration=count)
