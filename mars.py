@@ -250,6 +250,13 @@ for run_index, run in enumerate(runs):
             element: val - lost_vapor_elements_at_vmf[element] for element, val in vapor_elements_at_vmf.items()
         }
 
+        element_vmf = {
+            element: vapor_elements_at_vmf[element] / (vapor_elements_at_vmf[element] + melt_elements_at_vmf[element]) * 100 for element in cations_ordered
+        }
+        hydrodynamic_loss_fraction = {
+            element: lost_vapor_elements_at_vmf[element] / (vapor_elements_at_vmf[element] + melt_elements_at_vmf[element]) * 100 for element in cations_ordered
+        }
+
         rc = recondense_vapor(
             melt_absolute_cation_masses=melt_elements_at_vmf,
             vapor_absolute_cation_mass=vapor_elements_at_vmf,
@@ -274,7 +281,20 @@ for run_index, run in enumerate(runs):
             f.write("vapor," + ",".join(str(vapor_elements_at_vmf[i]) for i in cations_ordered) + "\n")
             f.write("lost vapor," + ",".join(str(lost_vapor_elements_at_vmf[i]) for i in cations_ordered) + "\n")
             f.write("retained vapor," + ",".join(str(retained_vapor_elements_at_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("element VMF," + ",".join(str(element_vmf[i]) for i in cations_ordered) + "\n")
+            f.write("hydrodynamic loss fraction," + ",".join(str(hydrodynamic_loss_fraction[i]) for i in cations_ordered) + "\n")
         f.close()
+
+        run['results'] = {
+            "melt_oxide_at_vmf": melt_oxide_at_vmf,
+            "recondensed_melt_oxide_at_vmf": recondensed_melt_oxide_at_vmf,
+            "melt_elements_at_vmf": melt_elements_at_vmf,
+            "vapor_elements_at_vmf": vapor_elements_at_vmf,
+            "lost_vapor_elements_at_vmf": lost_vapor_elements_at_vmf,
+            "retained_vapor_elements_at_vmf": retained_vapor_elements_at_vmf,
+            "element_vmf": element_vmf,
+            "hydrodynamic_loss_fraction": hydrodynamic_loss_fraction,
+        }
 
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
@@ -320,4 +340,40 @@ legend = axs[0].legend(loc='lower left')
 for line in legend.get_lines():
     line.set_linewidth(5.0)  # make lines thicker
 plt.tight_layout()
-plt.show()
+plt.savefig("mars_disk_composition.png", format='png', dpi=200)
+
+# make a 2 column 1 row figure
+fig, axs = plt.subplots(1, 2, figsize=(12, 6), sharex='all', sharey='all')
+axs = axs.flatten()
+
+for run_index, run in enumerate(runs):
+    # on the left plot, plot the element VMF
+    axs[0].plot(
+        [format_species_string(i) for i in cations_ordered],
+        np.array([run['results']['element_vmf'][i] for i in cations_ordered]),
+        linewidth=2.0,
+        color=colors[run_index],
+        marker='o',
+        markersize=6,
+        label="Run " + run['run_name'],
+    )
+    # on the right plot, plot the hydrodynamic loss fraction
+    axs[1].plot(
+        [format_species_string(i) for i in cations_ordered],
+        np.array([run['results']['hydrodynamic_loss_fraction'][i] for i in cations_ordered]),
+        linewidth=2.0,
+        color=colors[run_index],
+        marker='o',
+        markersize=6,
+        label="Run " + run['run_name'],
+    )
+
+axs[0].set_ylabel("Element VMF (%)", fontsize=16)
+axs[1].set_ylabel("Hydrodynamic Loss Fraction (%)", fontsize=16)
+axs[1].legend(loc='lower right')
+for ax in axs:
+    ax.grid()
+    ax.set_yscale("log")
+
+plt.tight_layout()
+plt.savefig("mars_element_vmf_and_loss_frac.png", format='png', dpi=200)

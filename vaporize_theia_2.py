@@ -28,14 +28,25 @@ plt.rcParams.update({"font.size": 20})
 
 runs = [
     {
-        "run_name": "Canonical Model 2 (Theia Mixing)",
-        "temperature": 2079.86,  # K
-        "vmf": 3.65,  # %
+        "run_name": "Canonical Model 2",
+        "temperature": 2657.97,  # K
+        "vmf": 3.80,  # %
         "0% VMF mass frac": 87.41,  # %
         "100% VMF mass frac": 0.66,  # %
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 0.74,  # %
+        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+    },
+    {
+        "run_name": "Half Earths Model 2",
+        "temperature": 3514.15,  # K
+        "vmf": 14.50,  # %
+        "0% VMF mass frac": 81.3,  # %
+        "100% VMF mass frac": 1.9,  # %
+        "disk_theia_mass_fraction": 51.97,  # %
+        "disk_mass": 1.70,  # lunar masses
+        "vapor_loss_fraction": 16.0,  # %
         "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     }
 ]
