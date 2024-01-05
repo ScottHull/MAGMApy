@@ -12,6 +12,7 @@ import numpy as np
 import warnings
 import pandas as pd
 import copy
+from math import sqrt
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -124,8 +125,8 @@ def __run_model(run, lunar_bulk_model):
         print(f"Running {run['run_name']} with {lunar_bulk_model} lunar bulk composition")
         solution_count = 1
         while (error > 0.15 and run['new_simulation']):
-            bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] + residuals[oxide] if (
-                        bulk_ejecta_composition[oxide] + residuals[oxide] > 0) else bulk_ejecta_composition[oxide] for
+            bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] + sqrt(residuals[oxide]) if (
+                        bulk_ejecta_composition[oxide] + sqrt(residuals[oxide]) > 0) else bulk_ejecta_composition[oxide] for
                                        oxide in oxides_ordered}
             bulk_ejecta_composition['Fe2O3'] = 0.0
             bulk_ejecta_composition = normalize(
@@ -155,7 +156,7 @@ def __run_model(run, lunar_bulk_model):
 
                 print(f"Starting MAGMApy loop")
                 count = 1
-                while t.weight_fraction_vaporized < 0.15:
+                while t.weight_fraction_vaporized < 0.30:
                     # print("Running MAGMApy iteration", count)
                     l.calculate_activities(temperature=run['temperature'])
                     g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
@@ -227,6 +228,17 @@ def __run_model(run, lunar_bulk_model):
                                ConvertComposition().oxide_wt_pct_to_cation_wt_pct(bulk_ejecta_composition,
                                                                                   include_oxygen=True).items()}
 
+                bse_element_mass = {element: total_bse_sourced_mass * val / 100 for element, val in
+                                    bse_element_mass_fraction.items()}
+                theia_element_mass = {element: ejecta_mass[element] - bse_element_mass[element] for element in
+                                        ejecta_mass.keys()}
+                theia_composition = normalize(ConvertComposition().cations_mass_to_oxides_weight_percent(theia_element_mass,
+                                                                                                        oxides=oxides_ordered))
+
+                run[run_name].update({'bse_element_mass': bse_element_mass,
+                                        'theia_element_mass': theia_element_mass,
+                                        'theia_composition': theia_composition})
+
                 run[run_name].update({'total_ejecta_element_mass_before_vaporization': copy.copy(ejecta_mass)})
 
                 # next, calculate the total vapor mass from the 100% and intermediate vaporized pools
@@ -291,8 +303,10 @@ def __run_model(run, lunar_bulk_model):
 
         print(f"Solution found! {solution_count} iterations")
 
+# num_workers = len(lunar_bulk_compositions.columns)
+num_workers = 1
 for run in runs:
-    with ThreadPoolExecutor(max_workers=len(lunar_bulk_compositions.columns)) as executor:
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
         futures = {}
         for lbc in lunar_bulk_compositions.columns:
             futures.update({executor.submit(__run_model, run, lbc): run['run_name'] + "_" + str(lbc)})
@@ -303,3 +317,6 @@ for run in runs:
                 data = future.result()
             except Exception as exc:
                 print('%r generated an exception: %s' % (r, exc))
+    if num_workers == 1:
+        for lbc in lunar_bulk_compositions.columns:
+            __run_model(run, lbc)
