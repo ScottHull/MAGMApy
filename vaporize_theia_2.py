@@ -125,8 +125,8 @@ def __run_model(run, lunar_bulk_model):
         print(f"Running {run['run_name']} with {lunar_bulk_model} lunar bulk composition")
         solution_count = 1
         while (error > 0.15 and run['new_simulation']):
-            bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] + sqrt(residuals[oxide]) if (
-                        bulk_ejecta_composition[oxide] + sqrt(residuals[oxide]) > 0) else bulk_ejecta_composition[oxide] for
+            bulk_ejecta_composition = {oxide: bulk_ejecta_composition[oxide] + residuals[oxide] if (
+                    bulk_ejecta_composition[oxide] + residuals[oxide] > 0) else bulk_ejecta_composition[oxide] for
                                        oxide in oxides_ordered}
             bulk_ejecta_composition['Fe2O3'] = 0.0
             bulk_ejecta_composition = normalize(
@@ -231,13 +231,14 @@ def __run_model(run, lunar_bulk_model):
                 bse_element_mass = {element: total_bse_sourced_mass * val / 100 for element, val in
                                     bse_element_mass_fraction.items()}
                 theia_element_mass = {element: ejecta_mass[element] - bse_element_mass[element] for element in
-                                        ejecta_mass.keys()}
-                theia_composition = normalize(ConvertComposition().cations_mass_to_oxides_weight_percent(theia_element_mass,
-                                                                                                        oxides=oxides_ordered))
+                                      ejecta_mass.keys()}
+                theia_composition = normalize(
+                    ConvertComposition().cations_mass_to_oxides_weight_percent(theia_element_mass,
+                                                                               oxides=oxides_ordered))
 
                 run[run_name].update({'bse_element_mass': bse_element_mass,
-                                        'theia_element_mass': theia_element_mass,
-                                        'theia_composition': theia_composition})
+                                      'theia_element_mass': theia_element_mass,
+                                      'theia_composition': theia_composition})
 
                 run[run_name].update({'total_ejecta_element_mass_before_vaporization': copy.copy(ejecta_mass)})
 
@@ -291,9 +292,9 @@ def __run_model(run, lunar_bulk_model):
 
                 # calculate error residuals
                 residuals = {
-                    oxide: abs(ejecta_mass_fraction[oxide] - lunar_bulk_compositions[lunar_bulk_model].loc[oxide])
+                    oxide: lunar_bulk_compositions[lunar_bulk_model].loc[oxide] - ejecta_mass_fraction[oxide]
                     for oxide in oxides_ordered}
-                error = sum(residuals.values())
+                error = sum([abs(i) for i in residuals.values()])
                 run[run_name].update({'error': error, 'residuals': residuals})
                 print(f"Error: {error}, residuals: {residuals}")
                 solution_count += 1
@@ -303,20 +304,22 @@ def __run_model(run, lunar_bulk_model):
 
         print(f"Solution found! {solution_count} iterations")
 
+
 # num_workers = len(lunar_bulk_compositions.columns)
 num_workers = 1
 for run in runs:
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = {}
-        for lbc in lunar_bulk_compositions.columns:
-            futures.update({executor.submit(__run_model, run, lbc): run['run_name'] + "_" + str(lbc)})
+    if num_workers > 1:
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {}
+            for lbc in lunar_bulk_compositions.columns:
+                futures.update({executor.submit(__run_model, run, lbc): run['run_name'] + "_" + str(lbc)})
 
-        for future in as_completed(futures):
-            r = futures[future]
-            try:
-                data = future.result()
-            except Exception as exc:
-                print('%r generated an exception: %s' % (r, exc))
-    if num_workers == 1:
+            for future in as_completed(futures):
+                r = futures[future]
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (r, exc))
+    else:
         for lbc in lunar_bulk_compositions.columns:
             __run_model(run, lbc)
