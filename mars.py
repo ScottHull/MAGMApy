@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 import matplotlib.cm as cm
+import matplotlib.ticker as tck
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import labellines
@@ -58,8 +59,8 @@ runs = [
     },
     {
         "run_name": "L",
-        "temperature": 2012.3179846705427,  # K
-        "vmf": 0.3130122528353621,  # %
+        "temperature": 2103.03,  # K
+        "vmf": 0.42,  # %
         "impactor%": 71.23136432 / 100,  # %
         "vapor_loss_fraction": 88 / 100,  # %
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
@@ -172,6 +173,14 @@ def mix_target_impactor_composition(target_composition, impactor_composition, im
         mixed_composition[k] = v * target_mass_fraction + impactor_composition[k] * impactor_mass_fraction
     return mixed_composition
 
+global_element_vmfs = {}
+global_element_loss_fractions = {}
+global_mixed_bulk_composition = {}
+for i in [global_element_vmfs, global_element_loss_fractions]:
+    i.update({"run_name": []})
+    i.update({element: [] for element in cations_ordered})
+global_mixed_bulk_composition.update({"run_name": []})
+global_mixed_bulk_composition.update({oxide: [] for oxide in oxides_ordered})
 
 # make a 1 column 3 row figure
 fig, axs = plt.subplots(3, 1, figsize=(8, 12), sharex='all', sharey='all')
@@ -267,8 +276,6 @@ for run_index, run in enumerate(runs):
         recondensed_melt_oxide_at_vmf = rc['recondensed_melt_oxide_mass_fraction']
         recondensed_melt_element_mass_at_vmf = rc['recondensed_melt_mass']
 
-        print(f"Run {run_name} ({comp_name})", melt_elements_at_vmf['K'] / (melt_elements_at_vmf['K'] + vapor_elements_at_vmf['K']))
-
         if os.path.exists(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv"):
             os.remove(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv")
         with open(f"{run_name} ({comp_name})/{run_name} ({comp_name})_compositions.csv", "w") as f:
@@ -295,6 +302,35 @@ for run_index, run in enumerate(runs):
             "element_vmf": element_vmf,
             "hydrodynamic_loss_fraction": hydrodynamic_loss_fraction,
         }
+
+        for element in cations_ordered:
+            val = element_vmf[element]
+            if val < 0.01:
+                # turn into a scientific notation string
+                val = "{:.2e}".format(val)
+            else:
+                val = str(round(val, 2))
+            global_element_vmfs[element].append(val)
+            val = hydrodynamic_loss_fraction[element]
+            if val < 0.01:
+                # turn into a scientific notation string
+                val = "{:.2e}".format(val)
+            else:
+                val = str(round(val, 2))
+            global_element_vmfs[element].append
+            global_element_loss_fractions[element].append(val)
+        for oxide in oxides_ordered:
+            val = mixed_composition[oxide]
+            if val < 0.01:
+                # turn into a scientific notation string
+                val = "{:.2e}".format(val)
+            else:
+                val = str(round(val, 2))
+            global_mixed_bulk_composition[oxide].append(val)
+        global_mixed_bulk_composition["run_name"].append(f'{run_name} ({comp_name})')
+
+        global_element_vmfs["run_name"].append(f'{run_name} ({comp_name})')
+        global_element_loss_fractions["run_name"].append(f'{run_name} ({comp_name})')
 
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
@@ -371,9 +407,35 @@ for run_index, run in enumerate(runs):
 axs[0].set_ylabel("Element VMF (%)", fontsize=16)
 axs[1].set_ylabel("Hydrodynamic Loss Fraction (%)", fontsize=16)
 axs[1].legend(loc='lower right')
-for ax in axs:
+letters = string.ascii_lowercase
+for index, ax in enumerate(axs):
     ax.grid()
     ax.set_yscale("log")
+    ax.yaxis.set_minor_locator(tck.LogLocator(numticks=999, subs="auto"))
+    # annotate the letter in the upper left corner
+    ax.text(
+        0.05, 0.90, f"{letters[index]}", transform=ax.transAxes, fontweight='bold', size=20
+    )
 
 plt.tight_layout()
 plt.savefig("mars_element_vmf_and_loss_frac.png", format='png', dpi=200)
+
+# output the globals to a latex table
+vmf_table = pd.DataFrame(global_element_vmfs).to_latex(index=False)
+if "mars_element_vmf.tex" in os.listdir():
+    os.remove("mars_element_vmf.tex")
+with open("mars_element_vmf.tex", "w") as f:
+    f.write(vmf_table)
+f.close()
+hydrodynamic_loss_table = pd.DataFrame(global_element_loss_fractions).to_latex(index=False)
+if "mars_hydrodynamic_loss.tex" in os.listdir():
+    os.remove("mars_hydrodynamic_loss.tex")
+with open("mars_hydrodynamic_loss.tex", "w") as f:
+    f.write(hydrodynamic_loss_table)
+f.close()
+mixed_bulk_composition_table = pd.DataFrame(global_mixed_bulk_composition).to_latex(index=False)
+if "mars_mixed_bulk_composition.tex" in os.listdir():
+    os.remove("mars_mixed_bulk_composition.tex")
+with open("mars_mixed_bulk_composition.tex", "w") as f:
+    f.write(mixed_bulk_composition_table)
+f.close()
