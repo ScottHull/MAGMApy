@@ -62,7 +62,7 @@ runs = [
         "temperature": 2103.03,  # K
         "vmf": 0.42,  # %
         "impactor%": 71.23136432 / 100,  # %
-        "vapor_loss_fraction": 88 / 100,  # %
+        "vapor_loss_fraction": 85 / 100,  # %
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
 ]
@@ -176,11 +176,16 @@ def mix_target_impactor_composition(target_composition, impactor_composition, im
 global_element_vmfs = {}
 global_element_loss_fractions = {}
 global_mixed_bulk_composition = {}
+global_disk_bulk_composition_no_recondensation = {}
+global_disk_bulk_composition_with_recondensation = {}
 for i in [global_element_vmfs, global_element_loss_fractions]:
     i.update({"run_name": []})
     i.update({element: [] for element in cations_ordered})
 global_mixed_bulk_composition.update({"run_name": []})
 global_mixed_bulk_composition.update({oxide: [] for oxide in oxides_ordered})
+for i in [global_disk_bulk_composition_no_recondensation, global_disk_bulk_composition_with_recondensation]:
+    i.update({"run_name": []})
+    i.update({oxide: [] for oxide in oxides_ordered})
 
 # make a 1 column 3 row figure
 fig, axs = plt.subplots(3, 1, figsize=(8, 12), sharex='all', sharey='all')
@@ -329,8 +334,26 @@ for run_index, run in enumerate(runs):
             global_mixed_bulk_composition[oxide].append(val)
         global_mixed_bulk_composition["run_name"].append(f'{run_name} ({comp_name})')
 
+        for oxide in oxides_ordered:
+            val = melt_oxide_at_vmf[oxide]
+            if val < 0.01:
+                # turn into a scientific notation string
+                val = "{:.2e}".format(val)
+            else:
+                val = str(round(float(val), 2))
+            global_disk_bulk_composition_no_recondensation[oxide].append(val)
+            val = recondensed_melt_oxide_at_vmf[oxide]
+            if val < 0.01:
+                # turn into a scientific notation string
+                val = "{:.2e}".format(val)
+            else:
+                val = str(round(val, 2))
+            global_disk_bulk_composition_with_recondensation[oxide].append(val)
+
         global_element_vmfs["run_name"].append(f'{run_name} ({comp_name})')
         global_element_loss_fractions["run_name"].append(f'{run_name} ({comp_name})')
+        global_disk_bulk_composition_no_recondensation["run_name"].append(f'{run_name} ({comp_name})')
+        global_disk_bulk_composition_with_recondensation["run_name"].append(f'{run_name} ({comp_name})')
 
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
@@ -438,4 +461,16 @@ if "mars_mixed_bulk_composition.tex" in os.listdir():
     os.remove("mars_mixed_bulk_composition.tex")
 with open("mars_mixed_bulk_composition.tex", "w") as f:
     f.write(mixed_bulk_composition_table)
+f.close()
+disk_bulk_composition_no_recondensation_table = pd.DataFrame(global_disk_bulk_composition_no_recondensation).to_latex(index=False)
+if "mars_disk_bulk_composition_no_recondensation.tex" in os.listdir():
+    os.remove("mars_disk_bulk_composition_no_recondensation.tex")
+with open("mars_disk_bulk_composition_no_recondensation.tex", "w") as f:
+    f.write(disk_bulk_composition_no_recondensation_table)
+f.close()
+disk_bulk_composition_with_recondensation_table = pd.DataFrame(global_disk_bulk_composition_with_recondensation).to_latex(index=False)
+if "mars_disk_bulk_composition_with_recondensation.tex" in os.listdir():
+    os.remove("mars_disk_bulk_composition_with_recondensation.tex")
+with open("mars_disk_bulk_composition_with_recondensation.tex", "w") as f:
+    f.write(disk_bulk_composition_with_recondensation_table)
 f.close()
