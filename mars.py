@@ -178,12 +178,16 @@ global_element_loss_fractions = {}
 global_mixed_bulk_composition = {}
 global_disk_bulk_composition_no_recondensation = {}
 global_disk_bulk_composition_with_recondensation = {}
+global_disk_bulk_composition_no_recondensation_relative_to_ic = {}
+global_disk_bulk_composition_with_recondensation_relative_to_ic = {}
 for i in [global_element_vmfs, global_element_loss_fractions]:
     i.update({"run_name": []})
     i.update({element: [] for element in cations_ordered})
 global_mixed_bulk_composition.update({"run_name": []})
 global_mixed_bulk_composition.update({oxide: [] for oxide in oxides_ordered})
-for i in [global_disk_bulk_composition_no_recondensation, global_disk_bulk_composition_with_recondensation]:
+for i in [global_disk_bulk_composition_no_recondensation, global_disk_bulk_composition_with_recondensation,
+          global_disk_bulk_composition_no_recondensation_relative_to_ic,
+          global_disk_bulk_composition_with_recondensation_relative_to_ic]:
     i.update({"run_name": []})
     i.update({oxide: [] for oxide in oxides_ordered})
 
@@ -335,7 +339,7 @@ for run_index, run in enumerate(runs):
         global_mixed_bulk_composition["run_name"].append(f'{run_name} ({comp_name})')
 
         for oxide in oxides_ordered:
-            val = melt_oxide_at_vmf[oxide]
+            val = melt_oxide_at_vmf[oxide] * 100
             if val < 0.01:
                 # turn into a scientific notation string
                 val = "{:.2e}".format(val)
@@ -350,10 +354,29 @@ for run_index, run in enumerate(runs):
                 val = str(round(val, 2))
             global_disk_bulk_composition_with_recondensation[oxide].append(val)
 
+        for oxide in oxides_ordered:
+            val = melt_oxide_at_vmf[oxide] * 100 / bulk_composition[oxide]
+            if val < 0.01:
+                # turn into a scientific notation string
+                val = "{:.2e}".format(val)
+            else:
+                val = str(round(float(val), 2))
+            global_disk_bulk_composition_no_recondensation_relative_to_ic[oxide].append(val)
+            val = recondensed_melt_oxide_at_vmf[oxide] * 100 / bulk_composition[oxide]
+            if val < 0.01:
+                # turn into a scientific notation string
+                val = "{:.2e}".format(val)
+            else:
+                val = str(round(val, 2))
+            global_disk_bulk_composition_with_recondensation_relative_to_ic[oxide].append(val)
+
+
         global_element_vmfs["run_name"].append(f'{run_name} ({comp_name})')
         global_element_loss_fractions["run_name"].append(f'{run_name} ({comp_name})')
         global_disk_bulk_composition_no_recondensation["run_name"].append(f'{run_name} ({comp_name})')
         global_disk_bulk_composition_with_recondensation["run_name"].append(f'{run_name} ({comp_name})')
+        global_disk_bulk_composition_no_recondensation_relative_to_ic["run_name"].append(f'{run_name} ({comp_name})')
+        global_disk_bulk_composition_with_recondensation_relative_to_ic["run_name"].append(f'{run_name} ({comp_name})')
 
         axs[comp_index].plot(
             [format_species_string(i) for i in oxides_ordered],
@@ -473,4 +496,16 @@ if "mars_disk_bulk_composition_with_recondensation.tex" in os.listdir():
     os.remove("mars_disk_bulk_composition_with_recondensation.tex")
 with open("mars_disk_bulk_composition_with_recondensation.tex", "w") as f:
     f.write(disk_bulk_composition_with_recondensation_table)
+f.close()
+disk_bulk_composition_no_recondensation_relative_to_ic_table = pd.DataFrame(global_disk_bulk_composition_no_recondensation_relative_to_ic).to_latex(index=False)
+if "mars_disk_bulk_composition_no_recondensation_relative_to_ic.tex" in os.listdir():
+    os.remove("mars_disk_bulk_composition_no_recondensation_relative_to_ic.tex")
+with open("mars_disk_bulk_composition_no_recondensation_relative_to_ic.tex", "w") as f:
+    f.write(disk_bulk_composition_no_recondensation_relative_to_ic_table)
+f.close()
+disk_bulk_composition_with_recondensation_relative_to_ic_table = pd.DataFrame(global_disk_bulk_composition_with_recondensation_relative_to_ic).to_latex(index=False)
+if "mars_disk_bulk_composition_with_recondensation_relative_to_ic.tex" in os.listdir():
+    os.remove("mars_disk_bulk_composition_with_recondensation_relative_to_ic.tex")
+with open("mars_disk_bulk_composition_with_recondensation_relative_to_ic.tex", "w") as f:
+    f.write(disk_bulk_composition_with_recondensation_relative_to_ic_table)
 f.close()
