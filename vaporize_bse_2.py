@@ -14,6 +14,7 @@ import copy
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.ticker as tck
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import labellines
@@ -35,7 +36,7 @@ runs = [
         "100% VMF mass frac": 0.66,  # %
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
-        "vapor_loss_fraction": 0.74,  # %
+        "vapor_loss_fraction": 74.0,  # %
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
@@ -151,6 +152,11 @@ for run in runs:
     intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run['vmf'] / 100  # define intermediate pct VMF mass vapor
     intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
 
+    assert np.isclose(
+        total_ejecta_mass,
+        total_100_pct_vaporized_mass + intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma
+    )
+
     # read in the data
     melt_oxide_mass_fraction = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
                                             x_header='mass fraction vaporized')
@@ -195,8 +201,8 @@ for run in runs:
     retained_mass = {element: total_vapor_element_mass[element] - lost_mass[element] for element in ejecta_mass.keys()}
     fully_recondensed_ejecta_mass = {element: ejecta_mass[element] + retained_mass[element] for element in ejecta_mass.keys()}
 
-    element_vmf = {element: total_vapor_element_mass[element] / total_ejecta_mass * 100 for element in ejecta_mass.keys()}
-    lost_vapor_mass_fraction = {element: lost_mass[element] / total_vapor_element_mass[element] * 100 for element in ejecta_mass.keys()}
+    element_vmf = {element: total_vapor_element_mass[element] / initial_element_masses[element] * 100 for element in ejecta_mass.keys()}
+    lost_vapor_mass_fraction = {element: lost_mass[element] / initial_element_masses[element] * 100 for element in ejecta_mass.keys()}
 
     print(sum(initial_element_masses.values()), sum(ejecta_mass.values()) + sum(total_vapor_element_mass.values()))
 
@@ -292,6 +298,10 @@ axs[1].set_ylabel("Element Loss Fraction (%)")
 for ax in axs:
     ax.grid()
     ax.set_yscale('log')
+    # turn on minor ticks on the y-axis
+    ax.yaxis.set_minor_locator(tck.LogLocator(numticks=999, subs="auto"))
+    # make the ticks larger
+    ax.tick_params(which='minor', width=2, length=4)
 
 axs[0].legend()
 plt.tight_layout()
