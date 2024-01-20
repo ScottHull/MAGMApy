@@ -23,6 +23,9 @@ plt.style.use('seaborn-colorblind')
 # increase font size
 plt.rcParams.update({"font.size": 20})
 
+# get the color cycle as a list
+prop_cycle = plt.rcParams['axes.prop_cycle']
+
 runs = [
     {
         "run_name": "Canonical Model 2",
@@ -33,7 +36,7 @@ runs = [
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
         "vapor_loss_fraction": 0.74,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
         "run_name": "Half Earths Model 2",
@@ -44,7 +47,7 @@ runs = [
         "disk_theia_mass_fraction": 51.97,  # %
         "disk_mass": 1.70,  # lunar masses
         "vapor_loss_fraction": 16.0,  # %
-        "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
+        "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     }
 ]
 
@@ -174,6 +177,8 @@ for run in runs:
 
     # first, calculate the total ejecta mass for each element
     ejecta_mass = {element: total_ejecta_mass * val / 100 for element, val in bse_element_mass_fraction.items()}
+    initial_element_masses = copy.deepcopy(ejecta_mass)
+
     # first, calculate the mass of the 100% vaporized ejecta for each element
     vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in bse_element_mass_fraction.items()}
     # remove the vaporized mass from the ejecta mass
@@ -181,32 +186,73 @@ for run in runs:
     # next, calculate remove the mass of the intermediate VMF vapor from the ejecta mass
     intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100 for element, val in vapor_element_mass_fraction_at_vmf.items()}
     ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element] for element in ejecta_mass.keys()}
+    total_melt_mass = copy.copy(ejecta_mass)
+
+    # calculate the total vapor mass for each element
+    total_vapor_element_mass = {element: vaporized_mass[element] + intermediate_pct_vmf_mass_vapor_element_mass[element] for element in vaporized_mass.keys()}
+    # calculate the lost and retained mass for each element
+    lost_mass = {element: total_vapor_element_mass[element] * run['vapor_loss_fraction'] / 100 for element in ejecta_mass.keys()}
+    retained_mass = {element: total_vapor_element_mass[element] - lost_mass[element] for element in ejecta_mass.keys()}
+    fully_recondensed_ejecta_mass = {element: ejecta_mass[element] + retained_mass[element] for element in ejecta_mass.keys()}
+
+    element_vmf = {element: total_vapor_element_mass[element] / total_ejecta_mass * 100 for element in ejecta_mass.keys()}
+    lost_vapor_mass_fraction = {element: lost_mass[element] / total_vapor_element_mass[element] * 100 for element in ejecta_mass.keys()}
+
+    print(sum(initial_element_masses.values()), sum(ejecta_mass.values()) + sum(total_vapor_element_mass.values()))
 
     # convert the ejecta mass back to oxide mass fraction
     ejecta_mass_fraction = normalize(ConvertComposition().cations_mass_to_oxides_weight_percent(ejecta_mass, oxides=bse_composition.keys()))
+    recondensed_ejecta_mass_fraction = normalize(ConvertComposition().cations_mass_to_oxides_weight_percent(fully_recondensed_ejecta_mass, oxides=bse_composition.keys()))
 
     run['ejecta_mass_fraction'] = ejecta_mass_fraction
+    run['recondensed_ejecta_mass_fraction'] = recondensed_ejecta_mass_fraction
+    run['element_vmf'] = element_vmf
+    run['lost_vapor_mass_fraction'] = lost_vapor_mass_fraction
 
 fig, ax = plt.subplots(figsize=(10, 10))
 # for each oxide, shade between the min and max value of each oxide in all of the lunar bulk composition models
 ax.fill_between(
     [format_species_string(oxide) for oxide in oxides_ordered],
-    np.array([min(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in lunar_bulk_compositions.index]),
-    np.array([max(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in lunar_bulk_compositions.index]),
+    np.array([min(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered]),
+    np.array([max(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered]),
     color='lightgrey',
     alpha=0.8,
 )
 ax.axhline(1, color='k', linestyle='--', linewidth=2)
-for run in runs:
+for index, run in enumerate(runs):
+    # plot the disk composition (no recondensation)
     ax.plot(
         [format_species_string(oxide) for oxide in oxides_ordered],
         [run['ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered],
         label=run['run_name'],
         marker='o',
         # linestyle='--',
+        color=prop_cycle.by_key()['color'][index],
         linewidth=3,
         markersize=10,
     )
+    # plot the disk composition (with recondensation)
+    ax.plot(
+        [format_species_string(oxide) for oxide in oxides_ordered],
+        [run['recondensed_ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered],
+        label=run['run_name'],
+        marker='o',
+        linestyle='--',
+        color=prop_cycle.by_key()['color'][index],
+        linewidth=3,
+        markersize=10,
+    )
+
+# plot the BSE composition
+ax.plot(
+    [format_species_string(oxide) for oxide in oxides_ordered],
+    [bse_composition[oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered],
+    marker='o',
+    linewidth=3,
+    markersize=10,
+    color=prop_cycle.by_key()['color'][2],
+    label="BSE",
+)
 
 ax.set_ylabel("Disk / BSM (Oxide wt. %)")
 ax.set_yscale('log')
@@ -215,3 +261,39 @@ ax.legend()
 # increase font size
 plt.tight_layout()
 plt.show()
+
+# now we will plot the mass fraction of each element in the vapor and magma at the VMF
+fig, axs = plt.subplots(1, 2, figsize=(20, 10), sharex='all')
+axs = axs.flatten()
+
+for index, run in enumerate(runs):
+    axs[0].plot(
+        [format_species_string(cation) for cation in cations_ordered],
+        [run['element_vmf'][cation] for cation in cations_ordered],
+        label=run['run_name'],
+        marker='o',
+        color=prop_cycle.by_key()['color'][index],
+        linewidth=3,
+        markersize=10,
+    )
+    axs[1].plot(
+        [format_species_string(cation) for cation in cations_ordered],
+        [run['lost_vapor_mass_fraction'][cation] for cation in cations_ordered],
+        label=run['run_name'],
+        marker='o',
+        color=prop_cycle.by_key()['color'][index],
+        linewidth=3,
+        markersize=10,
+    )
+
+axs[0].set_ylabel("Element VMF (%)")
+axs[1].set_ylabel("Element Loss Fraction (%)")
+
+for ax in axs:
+    ax.grid()
+    ax.set_yscale('log')
+
+axs[0].legend()
+plt.tight_layout()
+plt.show()
+

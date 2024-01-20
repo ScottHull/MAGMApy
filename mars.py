@@ -509,3 +509,8 @@ if "mars_disk_bulk_composition_with_recondensation_relative_to_ic.tex" in os.lis
 with open("mars_disk_bulk_composition_with_recondensation_relative_to_ic.tex", "w") as f:
     f.write(disk_bulk_composition_with_recondensation_relative_to_ic_table)
 f.close()
+
+disk_bulk_composition_no_recondensation_relative_to_ic_table = pd.DataFrame(global_disk_bulk_composition_no_recondensation_relative_to_ic)
+disk_bulk_composition_no_recondensation_relative_to_ic_table.to_csv("mars_disk_bulk_composition_no_recondensation_relative_to_ic.csv", index=False)
+disk_bulk_composition_with_recondensation_relative_to_ic_table = pd.DataFrame(global_disk_bulk_composition_with_recondensation_relative_to_ic)
+disk_bulk_composition_with_recondensation_relative_to_ic_table.to_csv("mars_disk_bulk_composition_with_recondensation_relative_to_ic.csv", index=False)
