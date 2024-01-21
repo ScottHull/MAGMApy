@@ -67,7 +67,8 @@ bse_composition = normalize({  # Visscher and Fegley (2013)
     'ZnO': 6.7e-3,
 })
 
-bse_element_mass_fraction = normalize(ConvertComposition().oxide_wt_pct_to_cation_wt_pct(bse_composition, include_oxygen=True))
+bse_element_mass_fraction = normalize(
+    ConvertComposition().oxide_wt_pct_to_cation_wt_pct(bse_composition, include_oxygen=True))
 
 # read in the lunar bulk compositions
 lunar_bulk_compositions = pd.read_csv("data/lunar_bulk_compositions.csv", index_col="Oxide")
@@ -77,6 +78,7 @@ oxides_ordered = [
 ]
 cations_ordered = ["Al", "Ti", "Ca", "Mg", "Fe", "Si", "K", "Na", "Zn"]
 
+
 def format_species_string(species):
     """
     Splits by _ and converts all numbers to subscripts.
@@ -85,6 +87,7 @@ def format_species_string(species):
     """
     formatted = species.split("_")[0]
     return rf"$\rm {formatted.replace('2', '_{2}').replace('3', '_{3}')}$"
+
 
 def get_composition_at_vmf(d: dict, vmf_val: float):
     """
@@ -102,6 +105,7 @@ def get_composition_at_vmf(d: dict, vmf_val: float):
             [i[s] for i in d.values()]
         )(vmf_val)
     return interpolated_composition
+
 
 for run in runs:
     if run['new_simulation']:
@@ -148,13 +152,19 @@ for run in runs:
     total_ejecta_mass = run['disk_mass'] * MASS_MOON  # define total ejecta mass, kg
     total_100_pct_vaporized_mass = total_ejecta_mass * run[
         '100% VMF mass frac'] / 100  # define total 100% vaporized mass
-    intermediate_pct_vmf_mass = total_ejecta_mass * (100 - run['0% VMF mass frac'] - run['100% VMF mass frac']) / 100  # define intermediate pct VMF mass
-    intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run['vmf'] / 100  # define intermediate pct VMF mass vapor
-    intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
+    intermediate_pct_vmf_mass = total_ejecta_mass * (
+                100 - run['0% VMF mass frac'] - run['100% VMF mass frac']) / 100  # define intermediate pct VMF mass
+    no_vaporization_mass = total_ejecta_mass * run['0% VMF mass frac'] / 100  # define no vaporization mass
+    intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run[
+        'vmf'] / 100  # define intermediate pct VMF mass vapor
+    intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (
+                100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
+
+    assert np.isclose(intermediate_pct_vmf_mass, intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma)
 
     assert np.isclose(
         total_ejecta_mass,
-        total_100_pct_vaporized_mass + intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma
+        total_100_pct_vaporized_mass + intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma + no_vaporization_mass
     )
 
     # read in the data
@@ -186,29 +196,44 @@ for run in runs:
     initial_element_masses = copy.deepcopy(ejecta_mass)
 
     # first, calculate the mass of the 100% vaporized ejecta for each element
-    vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in bse_element_mass_fraction.items()}
+    vaporized_mass = {element: total_100_pct_vaporized_mass * val / 100 for element, val in
+                      bse_element_mass_fraction.items()}
     # remove the vaporized mass from the ejecta mass
     ejecta_mass = {element: ejecta_mass[element] - vaporized_mass[element] for element in ejecta_mass.keys()}
     # next, calculate remove the mass of the intermediate VMF vapor from the ejecta mass
-    intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100 for element, val in vapor_element_mass_fraction_at_vmf.items()}
-    ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element] for element in ejecta_mass.keys()}
+    intermediate_pct_vmf_mass_vapor_element_mass = {element: intermediate_pct_vmf_mass_vapor * val / 100 for
+                                                    element, val in vapor_element_mass_fraction_at_vmf.items()}
+    ejecta_mass = {element: ejecta_mass[element] - intermediate_pct_vmf_mass_vapor_element_mass[element] for element in
+                   ejecta_mass.keys()}
     total_melt_mass = copy.copy(ejecta_mass)
 
     # calculate the total vapor mass for each element
-    total_vapor_element_mass = {element: vaporized_mass[element] + intermediate_pct_vmf_mass_vapor_element_mass[element] for element in vaporized_mass.keys()}
+    total_vapor_element_mass = {element: vaporized_mass[element] + intermediate_pct_vmf_mass_vapor_element_mass[element]
+                                for element in vaporized_mass.keys()}
     # calculate the lost and retained mass for each element
-    lost_mass = {element: total_vapor_element_mass[element] * run['vapor_loss_fraction'] / 100 for element in ejecta_mass.keys()}
+    lost_mass = {element: total_vapor_element_mass[element] * run['vapor_loss_fraction'] / 100 for element in
+                 ejecta_mass.keys()}
     retained_mass = {element: total_vapor_element_mass[element] - lost_mass[element] for element in ejecta_mass.keys()}
-    fully_recondensed_ejecta_mass = {element: ejecta_mass[element] + retained_mass[element] for element in ejecta_mass.keys()}
+    fully_recondensed_ejecta_mass = {element: ejecta_mass[element] + retained_mass[element] for element in
+                                     ejecta_mass.keys()}
 
-    element_vmf = {element: total_vapor_element_mass[element] / initial_element_masses[element] * 100 for element in ejecta_mass.keys()}
-    lost_vapor_mass_fraction = {element: lost_mass[element] / initial_element_masses[element] * 100 for element in ejecta_mass.keys()}
+    element_vmf = {element: total_vapor_element_mass[element] / initial_element_masses[element] * 100 for element in
+                   ejecta_mass.keys()}
+    lost_vapor_mass_fraction = {element: lost_mass[element] / initial_element_masses[element] * 100 for element in
+                                ejecta_mass.keys()}
 
-    print(sum(initial_element_masses.values()), sum(ejecta_mass.values()) + sum(total_vapor_element_mass.values()))
+    assert np.isclose(sum(initial_element_masses.values()),
+                      sum(ejecta_mass.values()) + sum(total_vapor_element_mass.values()),
+                      total_ejecta_mass,
+                      total_100_pct_vaporized_mass + intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma + no_vaporization_mass
+                      )
 
     # convert the ejecta mass back to oxide mass fraction
-    ejecta_mass_fraction = normalize(ConvertComposition().cations_mass_to_oxides_weight_percent(ejecta_mass, oxides=bse_composition.keys()))
-    recondensed_ejecta_mass_fraction = normalize(ConvertComposition().cations_mass_to_oxides_weight_percent(fully_recondensed_ejecta_mass, oxides=bse_composition.keys()))
+    ejecta_mass_fraction = normalize(
+        ConvertComposition().cations_mass_to_oxides_weight_percent(ejecta_mass, oxides=bse_composition.keys()))
+    recondensed_ejecta_mass_fraction = normalize(
+        ConvertComposition().cations_mass_to_oxides_weight_percent(fully_recondensed_ejecta_mass,
+                                                                   oxides=bse_composition.keys()))
 
     run['ejecta_mass_fraction'] = ejecta_mass_fraction
     run['recondensed_ejecta_mass_fraction'] = recondensed_ejecta_mass_fraction
@@ -219,8 +244,10 @@ fig, ax = plt.subplots(figsize=(10, 10))
 # for each oxide, shade between the min and max value of each oxide in all of the lunar bulk composition models
 ax.fill_between(
     [format_species_string(oxide) for oxide in oxides_ordered],
-    np.array([min(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered]),
-    np.array([max(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered]),
+    np.array([min(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in
+              oxides_ordered]),
+    np.array([max(lunar_bulk_compositions.loc[oxide]) / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in
+              oxides_ordered]),
     color='lightgrey',
     alpha=0.8,
 )
@@ -229,7 +256,8 @@ for index, run in enumerate(runs):
     # plot the disk composition (no recondensation)
     ax.plot(
         [format_species_string(oxide) for oxide in oxides_ordered],
-        [run['ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered],
+        [run['ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in
+         oxides_ordered],
         label=run['run_name'],
         marker='o',
         # linestyle='--',
@@ -240,7 +268,8 @@ for index, run in enumerate(runs):
     # plot the disk composition (with recondensation)
     ax.plot(
         [format_species_string(oxide) for oxide in oxides_ordered],
-        [run['recondensed_ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide in oxides_ordered],
+        [run['recondensed_ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide
+         in oxides_ordered],
         label=run['run_name'],
         marker='o',
         linestyle='--',
@@ -273,6 +302,7 @@ fig, axs = plt.subplots(1, 2, figsize=(20, 10), sharex='all')
 axs = axs.flatten()
 
 for index, run in enumerate(runs):
+    print(run['run_name'], [run['element_vmf'][cation] for cation in cations_ordered])
     axs[0].plot(
         [format_species_string(cation) for cation in cations_ordered],
         [run['element_vmf'][cation] for cation in cations_ordered],
@@ -297,13 +327,12 @@ axs[1].set_ylabel("Element Loss Fraction (%)")
 
 for ax in axs:
     ax.grid()
-    ax.set_yscale('log')
+    # ax.set_yscale('log')
     # turn on minor ticks on the y-axis
-    ax.yaxis.set_minor_locator(tck.LogLocator(numticks=999, subs="auto"))
-    # make the ticks larger
-    ax.tick_params(which='minor', width=2, length=4)
+    # ax.yaxis.set_minor_locator(tck.LogLocator(numticks=999, subs="auto"))
+    # # make the ticks larger
+    # ax.tick_params(which='minor', width=2, length=4)
 
 axs[0].legend()
 plt.tight_layout()
 plt.show()
-
