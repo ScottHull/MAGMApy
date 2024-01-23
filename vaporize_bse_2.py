@@ -78,6 +78,14 @@ oxides_ordered = [
 ]
 cations_ordered = ["Al", "Ti", "Ca", "Mg", "Fe", "Si", "K", "Na", "Zn"]
 
+global_disk_compositions_no_recondensation = {'run_name': [i['run_name'] for i in runs]}
+global_disk_compisitions_with_recondensation = {'run_name': [i['run_name'] for i in runs]}
+for i in [global_disk_compositions_no_recondensation, global_disk_compisitions_with_recondensation]:
+    i.update({oxide: [] for oxide in oxides_ordered})
+global_element_vmf = {'run_name': [i['run_name'] for i in runs]}
+global_element_loss_fraction = {'run_name': [i['run_name'] for i in runs]}
+for i in [global_element_vmf, global_element_loss_fraction]:
+    i.update({cation: [] for cation in cations_ordered})
 
 def format_species_string(species):
     """
@@ -295,7 +303,8 @@ ax.grid()
 ax.legend()
 # increase font size
 plt.tight_layout()
-plt.show()
+# plt.show()
+plt.savefig("bse_melt_spider_plot.png", format='png', dpi=200)
 
 # now we will plot the mass fraction of each element in the vapor and magma at the VMF
 fig, axs = plt.subplots(1, 2, figsize=(20, 10), sharex='all')
@@ -334,5 +343,27 @@ for ax in axs:
 
 axs[0].legend()
 plt.tight_layout()
-plt.show()
-plt.savefig("")
+# plt.show()
+plt.savefig("bse_vaporize_element_vapor_mass_fraction.png", format='png', dpi=200)
+
+# output the disk composition (no recondensation) to a LaTex table
+disk_composition_no_recondensation = pd.DataFrame(global_disk_compositions_no_recondensation).to_latex(index=False)
+if "bse_disk_comp_no_recondensation.tex" in os.listdir():
+    os.remove("bse_disk_comp_no_recondensation.tex")
+with open("bse_disk_comp_no_recondensation.tex", "w") as f:
+    f.write(disk_composition_no_recondensation)
+disk_composition_with_recondensation = pd.DataFrame(global_disk_compisitions_with_recondensation).to_latex(index=False)
+if "bse_disk_comp_with_recondensation.tex" in os.listdir():
+    os.remove("bse_disk_comp_with_recondensation.tex")
+with open("bse_disk_comp_with_recondensation.tex", "w") as f:
+    f.write(disk_composition_with_recondensation)
+element_vmf = pd.DataFrame(global_element_vmf).to_latex(index=False)
+if "bse_element_vmf.tex" in os.listdir():
+    os.remove("bse_element_vmf.tex")
+with open("bse_element_vmf.tex", "w") as f:
+    f.write(element_vmf)
+element_loss_fraction = pd.DataFrame(global_element_loss_fraction).to_latex(index=False)
+if "bse_element_loss_fraction.tex" in os.listdir():
+    os.remove("bse_element_loss_fraction.tex")
+with open("bse_element_loss_fraction.tex", "w") as f:
+    f.write(element_loss_fraction)

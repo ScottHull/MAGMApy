@@ -176,6 +176,7 @@ def __run_model(run, lunar_bulk_model):
 
                 # calculate the mass distribution between the desired populations (in kg)
                 total_ejecta_mass = run['disk_mass'] * MASS_MOON  # define total ejecta mass, kg
+                unvaporized_ejecta_mass = total_ejecta_mass * run['0% VMF mass frac'] / 100  # define unvaporized mass
                 total_100_pct_vaporized_mass = total_ejecta_mass * run[
                     '100% VMF mass frac'] / 100  # define total 100% vaporized mass
                 intermediate_pct_vmf_mass = total_ejecta_mass * (100 - run['0% VMF mass frac'] - run[
@@ -186,6 +187,11 @@ def __run_model(run, lunar_bulk_model):
                         100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
                 total_bse_sourced_mass = total_ejecta_mass * (1 - run['disk_theia_mass_fraction'] / 100)
                 total_theia_sourced_mass = total_ejecta_mass * run['disk_theia_mass_fraction'] / 100
+
+                # make sure the total mass is conserved
+                assert np.iclose(total_ejecta_mass,
+                    unvaporized_ejecta_mass + total_100_pct_vaporized_mass + intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma
+                 )
 
                 # read in the data
                 melt_oxide_mass_fraction = collect_data(path=f"{run_name}/magma_oxide_mass_fraction",
