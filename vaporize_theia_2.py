@@ -36,7 +36,7 @@ runs = [
         "100% VMF mass frac": 0.66,  # %
         "disk_theia_mass_fraction": 66.78,  # %
         "disk_mass": 1.02,  # lunar masses
-        "vapor_loss_fraction": 0.74,  # %
+        "vapor_loss_fraction": 74,  # %
         "new_simulation": True,  # True to run a new simulation, False to load a previous simulation
     },
     {
@@ -156,7 +156,7 @@ def __run_model(run, lunar_bulk_model):
 
                 print(f"Starting MAGMApy loop")
                 count = 1
-                while t.weight_fraction_vaporized < 0.30:
+                while t.weight_fraction_vaporized < 0.80:
                     # print("Running MAGMApy iteration", count)
                     l.calculate_activities(temperature=run['temperature'])
                     g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
