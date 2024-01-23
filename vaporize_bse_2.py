@@ -29,7 +29,7 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 
 runs = [
     {
-        "run_name": "Canonical Model 2",
+        "run_name": "Canonical Model",
         "temperature": 2657.97,  # K
         "vmf": 3.80,  # %
         "0% VMF mass frac": 87.41,  # %
@@ -40,7 +40,7 @@ runs = [
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
-        "run_name": "Half Earths Model 2",
+        "run_name": "Half Earths Model",
         "temperature": 3514.15,  # K
         "vmf": 14.50,  # %
         "0% VMF mass frac": 81.3,  # %
@@ -270,7 +270,7 @@ for index, run in enumerate(runs):
         [format_species_string(oxide) for oxide in oxides_ordered],
         [run['recondensed_ejecta_mass_fraction'][oxide] / lunar_bulk_compositions["O'Neill 1991"].loc[oxide] for oxide
          in oxides_ordered],
-        label=run['run_name'],
+        # label=run['run_name'],
         marker='o',
         linestyle='--',
         color=prop_cycle.by_key()['color'][index],
@@ -289,7 +289,7 @@ ax.plot(
     label="BSE",
 )
 
-ax.set_ylabel("Disk / BSM (Oxide wt. %)")
+ax.set_ylabel("Disk / BSE (Oxide wt. %)")
 ax.set_yscale('log')
 ax.grid()
 ax.legend()
@@ -302,7 +302,6 @@ fig, axs = plt.subplots(1, 2, figsize=(20, 10), sharex='all')
 axs = axs.flatten()
 
 for index, run in enumerate(runs):
-    print(run['run_name'], [run['element_vmf'][cation] for cation in cations_ordered])
     axs[0].plot(
         [format_species_string(cation) for cation in cations_ordered],
         [run['element_vmf'][cation] for cation in cations_ordered],
@@ -336,3 +335,4 @@ for ax in axs:
 axs[0].legend()
 plt.tight_layout()
 plt.show()
+plt.savefig("")
