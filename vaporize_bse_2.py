@@ -10,6 +10,7 @@ from isotopes.rayleigh import FullSequenceRayleighDistillation_SingleReservior
 import os
 import numpy as np
 import pandas as pd
+import string
 import copy
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
@@ -17,6 +18,7 @@ import matplotlib.cm as cm
 import matplotlib.ticker as tck
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from random import uniform
 import labellines
 
 # use colorblind-friendly colors
@@ -96,6 +98,14 @@ def format_species_string(species):
     formatted = species.split("_")[0]
     return rf"$\rm {formatted.replace('2', '_{2}').replace('3', '_{3}')}$"
 
+def append_to_global(global_dict, key, val):
+    # append the value to the global dictionary as a string
+    # if the value is a float, round to 2 decimal places and if it is < 0.01, then use scientific notation
+    if val < 0.1:
+        global_dict[key].append("{:.2e}".format(val))
+    else:
+        global_dict[key].append("{:.2f}".format(val))
+
 
 def get_composition_at_vmf(d: dict, vmf_val: float):
     """
@@ -138,7 +148,7 @@ for run in runs:
         reports = Report(composition=c, liquid_system=l, gas_system=g, thermosystem=t, to_dir=run['run_name'])
 
         count = 1
-        while t.weight_fraction_vaporized < 0.3:
+        while t.weight_fraction_vaporized < 0.8:
             l.calculate_activities(temperature=run['temperature'])
             g.calculate_pressures(temperature=run['temperature'], liquid_system=l)
             if l.counter == 1:
@@ -247,6 +257,13 @@ for run in runs:
     run['recondensed_ejecta_mass_fraction'] = recondensed_ejecta_mass_fraction
     run['element_vmf'] = element_vmf
     run['lost_vapor_mass_fraction'] = lost_vapor_mass_fraction
+
+    for oxide in oxides_ordered:
+        append_to_global(global_disk_compositions_no_recondensation, oxide, ejecta_mass_fraction[oxide])
+        append_to_global(global_disk_compisitions_with_recondensation, oxide, recondensed_ejecta_mass_fraction[oxide])
+    for element in cations_ordered:
+        append_to_global(global_element_vmf, element, element_vmf[element])
+        append_to_global(global_element_loss_fraction, element, lost_vapor_mass_fraction[element])
 
 fig, ax = plt.subplots(figsize=(10, 10))
 # for each oxide, shade between the min and max value of each oxide in all of the lunar bulk composition models
@@ -367,3 +384,80 @@ if "bse_element_loss_fraction.tex" in os.listdir():
     os.remove("bse_element_loss_fraction.tex")
 with open("bse_element_loss_fraction.tex", "w") as f:
     f.write(element_loss_fraction)
+
+
+# increase font size
+plt.rcParams.update({"font.size": 20})
+# make a 2x2 figure to plot the melt and fractional vapor mass fraction for each element
+fig, axs = plt.subplots(2, 2, figsize=(12, 12), sharex='all')
+
+for index, run in enumerate(runs):
+    melt_composition = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
+                                            x_header='mass fraction vaporized')
+    # vapor_composition = collect_data(path=f"{run['run_name']}/partial_pressures",
+    #                                     x_header='mass fraction vaporized')
+    vapor_composition = collect_data(path=f"{run['run_name']}/total_vapor_species_mass_fraction",
+                                        x_header='mass fraction vaporized')
+    total_vapor_pressure = {vmf: sum(vapor_composition[vmf].values()) for vmf in vapor_composition.keys()}
+
+    # plot the melt composition on the left column
+    melt_species = list(melt_composition[list(melt_composition.keys())[0]].keys())
+    vapor_species = list(vapor_composition[list(vapor_composition.keys())[0]].keys())
+    # generate a color spectrum for each species
+    melt_colors = cm.get_cmap('tab10', len(melt_species))
+    vapor_colors = cm.get_cmap('tab10', len(vapor_species))
+    for i, species in enumerate(melt_species):
+        axs[index, 0].plot(
+            [j * 100 for j in melt_composition.keys()],
+            [melt_composition[j][species] * 100 for j in melt_composition.keys()],
+            label=format_species_string(species),
+            color=melt_colors(i),
+            linewidth=2,
+        )
+    for i, species in enumerate(vapor_species):
+        axs[index, 1].plot(
+            [j * 100 for j in vapor_composition.keys()],
+            [vapor_composition[j][species] * 100 for j in vapor_composition.keys()],
+            label=format_species_string(species),
+            color=vapor_colors(i),
+            linewidth=2,
+        )
+    # axs[index, 1].plot(
+    #     np.array(list(total_vapor_pressure.keys())) * 100,
+    #     total_vapor_pressure.values(),
+    #     label="Total Pressure",
+    #     color='k',
+    #     linewidth=2,
+    # )
+
+    axs[index, 0].set_ylabel("Melt Composition (wt. %)")
+    axs[index, 1].set_ylabel("Vapor Composition (wt. %)")
+    axs[index, 0].set_ylim(10 ** -2, 100)
+    axs[index, 1].set_ylim(10 ** -2, 100)
+    axs[index, 0].axvline(run['vmf'], color='k', linestyle='--', linewidth=2)
+    axs[index, 1].axvline(run['vmf'], color='k', linestyle='--', linewidth=2)
+
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs.flatten()):
+    ax.grid()
+    labellines.labelLines(ax.get_lines(), zorder=2.5, align=True,
+                          xvals=[uniform(10 ** -4, 10 ** 0) for i in ax.get_lines()], fontsize=14)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(10**-2, 75)
+    # annotate a letter in the upper right hand corner of each subplot
+    ax.annotate(
+        f"{letters[index]}",
+        xy=(0.95, 0.95),
+        xycoords='axes fraction',
+        fontsize=20,
+        fontweight='bold',
+        horizontalalignment='right',
+        verticalalignment='top',
+    )
+
+for ax in axs.flatten()[-2:]:
+    ax.set_xlabel("VMF (%)")
+
+plt.tight_layout()
+plt.savefig("bse_melt_vapor_composition.png", format='png', dpi=200)
