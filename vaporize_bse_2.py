@@ -89,6 +89,7 @@ global_element_loss_fraction = {'run_name': [i['run_name'] for i in runs]}
 for i in [global_element_vmf, global_element_loss_fraction]:
     i.update({cation: [] for cation in cations_ordered})
 
+
 def format_species_string(species):
     """
     Splits by _ and converts all numbers to subscripts.
@@ -97,6 +98,7 @@ def format_species_string(species):
     """
     formatted = species.split("_")[0]
     return rf"$\rm {formatted.replace('2', '_{2}').replace('3', '_{3}')}$"
+
 
 def append_to_global(global_dict, key, val):
     # append the value to the global dictionary as a string
@@ -171,12 +173,12 @@ for run in runs:
     total_100_pct_vaporized_mass = total_ejecta_mass * run[
         '100% VMF mass frac'] / 100  # define total 100% vaporized mass
     intermediate_pct_vmf_mass = total_ejecta_mass * (
-                100 - run['0% VMF mass frac'] - run['100% VMF mass frac']) / 100  # define intermediate pct VMF mass
+            100 - run['0% VMF mass frac'] - run['100% VMF mass frac']) / 100  # define intermediate pct VMF mass
     no_vaporization_mass = total_ejecta_mass * run['0% VMF mass frac'] / 100  # define no vaporization mass
     intermediate_pct_vmf_mass_vapor = intermediate_pct_vmf_mass * run[
         'vmf'] / 100  # define intermediate pct VMF mass vapor
     intermediate_pct_vmf_mass_magma = intermediate_pct_vmf_mass * (
-                100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
+            100 - run['vmf']) / 100  # define intermediate pct VMF mass magma
 
     assert np.isclose(intermediate_pct_vmf_mass, intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma)
 
@@ -385,7 +387,6 @@ if "bse_element_loss_fraction.tex" in os.listdir():
 with open("bse_element_loss_fraction.tex", "w") as f:
     f.write(element_loss_fraction)
 
-
 # increase font size
 plt.rcParams.update({"font.size": 20})
 # make a 2x2 figure to plot the melt and fractional vapor mass fraction for each element
@@ -393,11 +394,11 @@ fig, axs = plt.subplots(2, 2, figsize=(12, 12), sharex='all')
 
 for index, run in enumerate(runs):
     melt_composition = collect_data(path=f"{run['run_name']}/magma_oxide_mass_fraction",
-                                            x_header='mass fraction vaporized')
+                                    x_header='mass fraction vaporized')
     # vapor_composition = collect_data(path=f"{run['run_name']}/partial_pressures",
     #                                     x_header='mass fraction vaporized')
     vapor_composition = collect_data(path=f"{run['run_name']}/total_vapor_species_mass_fraction",
-                                        x_header='mass fraction vaporized')
+                                     x_header='mass fraction vaporized')
     total_vapor_pressure = {vmf: sum(vapor_composition[vmf].values()) for vmf in vapor_composition.keys()}
 
     # plot the melt composition on the left column
@@ -444,7 +445,7 @@ for index, ax in enumerate(axs.flatten()):
                           xvals=[uniform(10 ** -4, 10 ** 0) for i in ax.get_lines()], fontsize=14)
     ax.set_xscale('log')
     ax.set_yscale('log')
-    ax.set_xlim(10**-2, 75)
+    ax.set_xlim(10 ** -2, 75)
     # annotate a letter in the upper right hand corner of each subplot
     ax.annotate(
         f"{letters[index]}",
