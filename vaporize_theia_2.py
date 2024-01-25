@@ -624,6 +624,104 @@ plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 
 
 # ======================= OUTPUT THEIA AND EJECTA BULK COMPOSITIONS TO LATEX TABLE =======================
-global_ejecta = {}
-global_theia = {}
-for s in lunar_bulk_compositions
+global_ejecta_no_recondensation_canonical = {}
+global_ejecta_full_recondensation_canonical = {}
+global_theia_no_recondensation_canonical = {}
+global_theia_full_recondensation_canonical = {}
+global_ejecta_no_recondensation_half_earths = {}
+global_ejecta_full_recondensation_half_earths = {}
+global_theia_no_recondensation_half_earths = {}
+global_theia_full_recondensation_half_earths = {}
+for i in [global_ejecta_no_recondensation_canonical, global_ejecta_full_recondensation_canonical,
+            global_theia_no_recondensation_canonical, global_theia_full_recondensation_canonical,
+            global_ejecta_no_recondensation_half_earths, global_ejecta_full_recondensation_half_earths,
+            global_theia_no_recondensation_half_earths, global_theia_full_recondensation_half_earths]:
+    i.update({'run_name': [s for s in lunar_bulk_compositions.keys()]})
+    i.update({oxide: [] for oxide in oxides_ordered})
+    
+def format_val(val):
+    """
+    Take the value and return as a string.  If val < 0.1, then return as scientific notation.  Otherwise, return as
+    decimal.
+    :param val: 
+    :return: 
+    """
+    if val < 0.1:
+        return f"{val:.2e}"
+    else:
+        return f"{val:.2f}"
+    
+for run in runs:
+    for recondense in ['no_recondensation', 'full_recondensation']:
+        for s in lunar_bulk_compositions.keys():
+            fname = f"{run['run_name']}_{s}_{recondense}_theia_mixing_model.csv"
+            data = literal_eval(open(fname, 'r').read())
+            ejecta_composition = data['bulk_ejecta_composition']
+            theia_composition = data['theia_composition']
+            if "no_recondensation" in fname:
+                if "Canonical" in fname:
+                    for oxide in oxides_ordered:
+                        global_ejecta_no_recondensation_canonical[oxide].append(format_val(ejecta_composition[oxide]))
+                        global_theia_no_recondensation_canonical[oxide].append(format_val(theia_composition[oxide]))
+                elif "Half Earths" in fname:
+                    for oxide in oxides_ordered:
+                        global_ejecta_no_recondensation_half_earths[oxide].append(format_val(ejecta_composition[oxide]))
+                        global_theia_no_recondensation_half_earths[oxide].append(format_val(theia_composition[oxide]))
+            elif "full_recondensation" in fname:
+                if "Canonical" in fname:
+                    for oxide in oxides_ordered:
+                        global_ejecta_full_recondensation_canonical[oxide].append(format_val(ejecta_composition[oxide]))
+                        global_theia_full_recondensation_canonical[oxide].append(format_val(theia_composition[oxide]))
+                elif "Half Earths" in fname:
+                    for oxide in oxides_ordered:
+                        global_ejecta_full_recondensation_half_earths[oxide].append(format_val(ejecta_composition[oxide]))
+                        global_theia_full_recondensation_half_earths[oxide].append(format_val(theia_composition[oxide]))
+
+global_ejecta_no_recondensation_canonical_df = pd.DataFrame(global_ejecta_no_recondensation_canonical).to_latex(index=False)
+if "global_ejecta_no_recondensation_canonical.tex" in os.listdir():
+    os.remove("global_ejecta_no_recondensation_canonical.tex")
+with open("global_ejecta_no_recondensation_canonical.tex", "w") as f:
+    f.write(global_ejecta_no_recondensation_canonical_df)
+f.close()
+global_ejecta_full_recondensation_canonical_df = pd.DataFrame(global_ejecta_full_recondensation_canonical).to_latex(index=False)
+if "global_ejecta_full_recondensation_canonical.tex" in os.listdir():
+    os.remove("global_ejecta_full_recondensation_canonical.tex")
+with open("global_ejecta_full_recondensation_canonical.tex", "w") as f:
+    f.write(global_ejecta_full_recondensation_canonical_df)
+f.close()
+global_theia_no_recondensation_canonical_df = pd.DataFrame(global_theia_no_recondensation_canonical).to_latex(index=False)
+if "global_theia_no_recondensation_canonical.tex" in os.listdir():
+    os.remove("global_theia_no_recondensation_canonical.tex")
+with open("global_theia_no_recondensation_canonical.tex", "w") as f:
+    f.write(global_theia_no_recondensation_canonical_df)
+f.close()
+global_theia_full_recondensation_canonical_df = pd.DataFrame(global_theia_full_recondensation_canonical).to_latex(index=False)
+if "global_theia_full_recondensation_canonical.tex" in os.listdir():
+    os.remove("global_theia_full_recondensation_canonical.tex")
+with open("global_theia_full_recondensation_canonical.tex", "w") as f:
+    f.write(global_theia_full_recondensation_canonical_df)
+f.close()
+global_ejecta_no_recondensation_half_earths_df = pd.DataFrame(global_ejecta_no_recondensation_half_earths).to_latex(index=False)
+if "global_ejecta_no_recondensation_half_earths.tex" in os.listdir():
+    os.remove("global_ejecta_no_recondensation_half_earths.tex")
+with open("global_ejecta_no_recondensation_half_earths.tex", "w") as f:
+    f.write(global_ejecta_no_recondensation_half_earths_df)
+f.close()
+global_ejecta_full_recondensation_half_earths_df = pd.DataFrame(global_ejecta_full_recondensation_half_earths).to_latex(index=False)
+if "global_ejecta_full_recondensation_half_earths.tex" in os.listdir():
+    os.remove("global_ejecta_full_recondensation_half_earths.tex")
+with open("global_ejecta_full_recondensation_half_earths.tex", "w") as f:
+    f.write(global_ejecta_full_recondensation_half_earths_df)
+f.close()
+global_theia_no_recondensation_half_earths_df = pd.DataFrame(global_theia_no_recondensation_half_earths).to_latex(index=False)
+if "global_theia_no_recondensation_half_earths.tex" in os.listdir():
+    os.remove("global_theia_no_recondensation_half_earths.tex")
+with open("global_theia_no_recondensation_half_earths.tex", "w") as f:
+    f.write(global_theia_no_recondensation_half_earths_df)
+f.close()
+global_theia_full_recondensation_half_earths_df = pd.DataFrame(global_theia_full_recondensation_half_earths).to_latex(index=False)
+if "global_theia_full_recondensation_half_earths.tex" in os.listdir():
+    os.remove("global_theia_full_recondensation_half_earths.tex")
+with open("global_theia_full_recondensation_half_earths.tex", "w") as f:
+    f.write(global_theia_full_recondensation_canonical_df)
+f.close()
