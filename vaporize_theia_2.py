@@ -294,9 +294,9 @@ def __run_model(run, lunar_bulk_model):
                 run[run_name].update({'total_ejecta_mass_after_vapor_removal_without_recondensation': ejecta_mass})
 
                 # calculate the lost and retained vapor mass following hydrodynamic escape
-                lost_vapor_mass = {element: ejecta_mass[element] * run['vapor_loss_fraction'] / 100 for element in
+                lost_vapor_mass = {element: total_vapor_mass[element] * run['vapor_loss_fraction'] / 100 for element in
                                    ejecta_mass.keys()}
-                retained_vapor_mass = {element: ejecta_mass[element] - lost_vapor_mass[element] for element in
+                retained_vapor_mass = {element: total_vapor_mass[element] - lost_vapor_mass[element] for element in
                                        ejecta_mass.keys()}
 
                 run[run_name].update({'lost_vapor_mass': lost_vapor_mass, 'retained_vapor_mass': retained_vapor_mass})
@@ -632,12 +632,26 @@ global_ejecta_no_recondensation_half_earths = {}
 global_ejecta_full_recondensation_half_earths = {}
 global_theia_no_recondensation_half_earths = {}
 global_theia_full_recondensation_half_earths = {}
+global_element_vmf_canonical_no_reconensation = {}
+global_element_vmf_half_earths_no_reconensation = {}
+global_element_loss_fraction_canonical_no_reconensation = {}
+global_element_loss_fraction_half_earth_no_reconensations = {}
+global_element_vmf_canonical_full_reconensation = {}
+global_element_vmf_half_earths_full_reconensation = {}
+global_element_loss_fraction_canonical_full_reconensation = {}
+global_element_loss_fraction_half_earth_full_reconensations = {}
 for i in [global_ejecta_no_recondensation_canonical, global_ejecta_full_recondensation_canonical,
             global_theia_no_recondensation_canonical, global_theia_full_recondensation_canonical,
             global_ejecta_no_recondensation_half_earths, global_ejecta_full_recondensation_half_earths,
             global_theia_no_recondensation_half_earths, global_theia_full_recondensation_half_earths]:
     i.update({'run_name': [s for s in lunar_bulk_compositions.keys()]})
     i.update({oxide: [] for oxide in oxides_ordered})
+for i in [global_element_vmf_canonical_no_reconensation, global_element_vmf_half_earths_no_reconensation,
+            global_element_loss_fraction_canonical_no_reconensation, global_element_loss_fraction_half_earth_no_reconensations,
+            global_element_vmf_canonical_full_reconensation, global_element_vmf_half_earths_full_reconensation,
+            global_element_loss_fraction_canonical_full_reconensation, global_element_loss_fraction_half_earth_full_reconensations]:
+    i.update({'run_name': [s for s in lunar_bulk_compositions.keys()]})
+    i.update({element: [] for element in elements_ordered[:-1]})
     
 def format_val(val):
     """
@@ -658,24 +672,44 @@ for run in runs:
             data = literal_eval(open(fname, 'r').read())
             ejecta_composition = data['bulk_ejecta_composition']
             theia_composition = data['theia_composition']
+            # next, we are going to calculate the VMF and hydrodynamic loss fraction of each element
+            ejecta_element_mass = {element: val / 100 * data['total_ejecta_mass'] for element, val in
+                                   normalize(ConvertComposition().oxide_wt_pct_to_cation_wt_pct(data['bulk_ejecta_composition'], include_oxygen=True)).items()}
+            elemental_vmf = {element: data['total_vapor_mass'][element] / ejecta_element_mass[element] * 100 for element in ejecta_element_mass.keys()}
+
+            elemental_hydrodynamic_loss_fraction = {element: (data['total_vapor_mass'][element] * run['vapor_loss_fraction'] / 100) / ejecta_element_mass[element] * 100 for element in ejecta_element_mass.keys()}
+
             if "no_recondensation" in fname:
                 if "Canonical" in fname:
                     for oxide in oxides_ordered:
                         global_ejecta_no_recondensation_canonical[oxide].append(format_val(ejecta_composition[oxide]))
                         global_theia_no_recondensation_canonical[oxide].append(format_val(theia_composition[oxide]))
+                    for cation in elements_ordered[:-1]:
+                        global_element_vmf_canonical_no_reconensation[cation].append(format_val(elemental_vmf[cation]))
+                        global_element_loss_fraction_canonical_no_reconensation[cation].append(format_val(elemental_hydrodynamic_loss_fraction[cation]))
                 elif "Half Earths" in fname:
                     for oxide in oxides_ordered:
                         global_ejecta_no_recondensation_half_earths[oxide].append(format_val(ejecta_composition[oxide]))
                         global_theia_no_recondensation_half_earths[oxide].append(format_val(theia_composition[oxide]))
+                    for cation in elements_ordered[:-1]:
+                        global_element_vmf_half_earths_no_reconensation[cation].append(format_val(elemental_vmf[cation]))
+                        global_element_loss_fraction_half_earth_no_reconensations[cation].append(format_val(elemental_hydrodynamic_loss_fraction[cation]))
             elif "full_recondensation" in fname:
                 if "Canonical" in fname:
                     for oxide in oxides_ordered:
                         global_ejecta_full_recondensation_canonical[oxide].append(format_val(ejecta_composition[oxide]))
                         global_theia_full_recondensation_canonical[oxide].append(format_val(theia_composition[oxide]))
+                    for cation in elements_ordered[:-1]:
+                        global_element_vmf_canonical_full_reconensation[cation].append(format_val(elemental_vmf[cation]))
+                        global_element_loss_fraction_canonical_full_reconensation[cation].append(format_val(elemental_hydrodynamic_loss_fraction[cation]))
                 elif "Half Earths" in fname:
                     for oxide in oxides_ordered:
                         global_ejecta_full_recondensation_half_earths[oxide].append(format_val(ejecta_composition[oxide]))
                         global_theia_full_recondensation_half_earths[oxide].append(format_val(theia_composition[oxide]))
+                    for cation in elements_ordered[:-1]:
+                        global_element_vmf_half_earths_full_reconensation[cation].append(format_val(elemental_vmf[cation]))
+                        global_element_loss_fraction_half_earth_full_reconensations[cation].append(format_val(elemental_hydrodynamic_loss_fraction[cation]))
+
 
 global_ejecta_no_recondensation_canonical_df = pd.DataFrame(global_ejecta_no_recondensation_canonical).to_latex(index=False)
 if "global_ejecta_no_recondensation_canonical.tex" in os.listdir():
@@ -724,4 +758,52 @@ if "global_theia_full_recondensation_half_earths.tex" in os.listdir():
     os.remove("global_theia_full_recondensation_half_earths.tex")
 with open("global_theia_full_recondensation_half_earths.tex", "w") as f:
     f.write(global_theia_full_recondensation_canonical_df)
+f.close()
+global_element_vmf_canonical_no_reconensation_df = pd.DataFrame(global_element_vmf_canonical_no_reconensation).to_latex(index=False)
+if "global_element_vmf_canonical_no_reconensation.tex" in os.listdir():
+    os.remove("global_element_vmf_canonical_no_reconensation.tex")
+with open("global_element_vmf_canonical_no_reconensation.tex", "w") as f:
+    f.write(global_element_vmf_canonical_no_reconensation_df)
+f.close()
+global_element_vmf_half_earths_no_reconensation_df = pd.DataFrame(global_element_vmf_half_earths_no_reconensation).to_latex(index=False)
+if "global_element_vmf_half_earths_no_reconensation.tex" in os.listdir():
+    os.remove("global_element_vmf_half_earths_no_reconensation.tex")
+with open("global_element_vmf_half_earths_no_reconensation.tex", "w") as f:
+    f.write(global_element_vmf_half_earths_no_reconensation_df)
+f.close()
+global_element_loss_fraction_canonical_no_reconensation_df = pd.DataFrame(global_element_loss_fraction_canonical_no_reconensation).to_latex(index=False)
+if "global_element_loss_fraction_canonical_no_reconensation.tex" in os.listdir():
+    os.remove("global_element_loss_fraction_canonical_no_reconensation.tex")
+with open("global_element_loss_fraction_canonical_no_reconensation.tex", "w") as f:
+    f.write(global_element_loss_fraction_canonical_no_reconensation_df)
+f.close()
+global_element_loss_fraction_half_earth_no_reconensations_df = pd.DataFrame(global_element_loss_fraction_half_earth_no_reconensations).to_latex(index=False)
+if "global_element_loss_fraction_half_earth_no_reconensations.tex" in os.listdir():
+    os.remove("global_element_loss_fraction_half_earth_no_reconensations.tex")
+with open("global_element_loss_fraction_half_earth_no_reconensations.tex", "w") as f:
+    f.write(global_element_loss_fraction_half_earth_no_reconensations_df)
+f.close()
+global_element_vmf_canonical_full_reconensation_df = pd.DataFrame(global_element_vmf_canonical_full_reconensation).to_latex(index=False)
+if "global_element_vmf_canonical_full_reconensation.tex" in os.listdir():
+    os.remove("global_element_vmf_canonical_full_reconensation.tex")
+with open("global_element_vmf_canonical_full_reconensation.tex", "w") as f:
+    f.write(global_element_vmf_canonical_full_reconensation_df)
+f.close()
+global_element_vmf_half_earths_full_reconensation_df = pd.DataFrame(global_element_vmf_half_earths_full_reconensation).to_latex(index=False)
+if "global_element_vmf_half_earths_full_reconensation.tex" in os.listdir():
+    os.remove("global_element_vmf_half_earths_full_reconensation.tex")
+with open("global_element_vmf_half_earths_full_reconensation.tex", "w") as f:
+    f.write(global_element_vmf_half_earths_full_reconensation_df)
+f.close()
+global_element_loss_fraction_canonical_full_reconensation_df = pd.DataFrame(global_element_loss_fraction_canonical_full_reconensation).to_latex(index=False)
+if "global_element_loss_fraction_canonical_full_reconensation.tex" in os.listdir():
+    os.remove("global_element_loss_fraction_canonical_full_reconensation.tex")
+with open("global_element_loss_fraction_canonical_full_reconensation.tex", "w") as f:
+    f.write(global_element_loss_fraction_canonical_full_reconensation_df)
+f.close()
+global_element_loss_fraction_half_earth_full_reconensations_df = pd.DataFrame(global_element_loss_fraction_half_earth_full_reconensations).to_latex(index=False)
+if "global_element_loss_fraction_half_earth_full_reconensations.tex" in os.listdir():
+    os.remove("global_element_loss_fraction_half_earth_full_reconensations.tex")
+with open("global_element_loss_fraction_half_earth_full_reconensations.tex", "w") as f:
+    f.write(global_element_loss_fraction_half_earth_full_reconensations_df)
 f.close()
