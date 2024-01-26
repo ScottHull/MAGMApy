@@ -250,7 +250,8 @@ def __run_model(run, lunar_bulk_model):
                      'total_100_pct_vaporized_mass': total_100_pct_vaporized_mass,
                      'intermediate_pct_vmf_mass': intermediate_pct_vmf_mass,
                      'intermediate_pct_vmf_mass_vapor': intermediate_pct_vmf_mass_vapor,
-                     'intermediate_pct_vmf_mass_magma': intermediate_pct_vmf_mass_magma})
+                     'intermediate_pct_vmf_mass_magma': intermediate_pct_vmf_mass_magma,
+                     'unvaporized_ejecta_mass': unvaporized_ejecta_mass})
 
                 # first, calculate the total ejecta mass for each element
                 ejecta_mass = {element: total_ejecta_mass * val / 100 for element, val in
@@ -672,6 +673,26 @@ for run in runs:
             data = literal_eval(open(fname, 'r').read())
             ejecta_composition = data['bulk_ejecta_composition']
             theia_composition = data['theia_composition']
+            total_ejecta_mass = data['total_ejecta_mass']
+            bse_source_mass = data['bse_sourced_mass']
+            theia_source_mass = data['theia_sourced_mass']
+
+            fully_vaporized_element_mass = data['fully_vaporized_element_vapor_mass']
+            intermediate_vaporized_element_mass = data['intermediate_vaporized_element_vapor_mass']
+
+            # do some mass balance checks
+            # first, make sure that bukl ejecta = bse source mass + theia source mass
+            assert np.isclose(
+                total_ejecta_mass, bse_source_mass + theia_source_mass
+            )
+            total_vapor_mass = sum(data['total_vapor_mass'].values())
+            total_melt_mass_no_recondensation = sum(data['total_ejecta_mass_after_vapor_removal_without_recondensation'].values())
+            # make sure that the total ejecta mass after vapor removal is equal to the total vapor mass plus the total melt mass
+            assert np.isclose(
+                total_ejecta_mass, total_vapor_mass + total_melt_mass_no_recondensation
+            )
+
+
             # next, we are going to calculate the VMF and hydrodynamic loss fraction of each element
             ejecta_element_mass = {element: val / 100 * data['total_ejecta_mass'] for element, val in
                                    normalize(ConvertComposition().oxide_wt_pct_to_cation_wt_pct(data['bulk_ejecta_composition'], include_oxygen=True)).items()}
