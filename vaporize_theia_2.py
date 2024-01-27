@@ -21,6 +21,7 @@ from math import sqrt
 import seaborn as sns
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator, LogLocator
 import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -622,6 +623,83 @@ for line in legend.get_lines():
 fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
+
+
+
+# ======================= PLOT THEIA EJECTA VMF AND LOSS FRACTION =======================
+# make a 2 column 4 row figure
+fig, axs = plt.subplots(4, 2, figsize=(16, 20), sharex='all', sharey='all')
+axs = axs.flatten()
+for i, s in enumerate(lunar_bulk_compositions.keys()):
+    label = s
+    if "Fractional" or "Equilibrium" in s:
+        # add a newline in the space preceding the word "Equilibrium" or "Fractional"
+        label = s.replace("Fractional", "\nFractional").replace("Equilibrium", "\nEquilibrium")
+    axs[0].plot([], [], color=colors[i], marker='o', markersize=8, linewidth=4.0, label=label)
+    for run in runs:
+        for recondense in ['no_recondensation', 'full_recondensation']:
+            to_index = 0
+            fname = f"{run['run_name']}_{s}_{recondense}_theia_mixing_model.csv"
+            if "Half Earths" in fname:
+                to_index += 1
+            if "full_recondensation" in fname:
+                to_index += 2
+            data = literal_eval(open(fname, 'r').read())
+            ejecta_element_mass = {element: val / 100 * data['total_ejecta_mass'] for element, val in
+                                   normalize(ConvertComposition().oxide_wt_pct_to_cation_wt_pct(
+                                       data['bulk_ejecta_composition'], include_oxygen=True)).items()}
+            elemental_vmf = {element: data['total_vapor_mass'][element] / ejecta_element_mass[element] * 100 for element
+                             in ejecta_element_mass.keys()}
+
+            elemental_hydrodynamic_loss_fraction = {
+                element: (data['total_vapor_mass'][element] * run['vapor_loss_fraction'] / 100) / ejecta_element_mass[
+                    element] * 100 for element in ejecta_element_mass.keys()}
+            axs[to_index].plot(
+                elements_ordered[:-1], [elemental_vmf[element] for element in elements_ordered[:-1]],
+                color=colors[list(lunar_bulk_compositions).index(s)], marker='o', markersize=8,
+                linewidth=2.0
+            )
+            axs[to_index + 4].plot(
+                elements_ordered[:-1], [elemental_hydrodynamic_loss_fraction[element] for element in
+                                        elements_ordered[:-1]],
+                color=colors[list(lunar_bulk_compositions).index(s)], marker='o', markersize=8,
+                linewidth=2.0
+            )
+
+for index, ax in enumerate(axs[0:4]):
+    if index % 2 == 0:
+        ax.set_ylabel("VMF (%)", fontsize=20)
+for index, ax in enumerate(axs[4:]):
+    if index % 2 == 0:
+        ax.set_ylabel("Vapor Mass Loss Fraction (%)", fontsize=20)
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    ax.grid()
+    ax.set_yscale('log')
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    # add minor ticks to the y axis
+    # ax.yaxis.set_minor_locator(AutoMinorLocator())
+    ax.xaxis.set_minor_locator(LogLocator(numticks=999, subs="auto"))
+    # make the ticks larger
+    ax.tick_params(axis='y', which='both', width=2, length=6)
+    # annotate each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+
+for index, i in enumerate([
+    "Canonical (No Recondensation)", "Canonical (Recondensed)", "Half-Earths (No Recondensation)",
+    "Half-Earths (Recondensed)"]):
+    axs[index].set_title(i, fontsize=20)
+    axs[index + 4].set_title(i, fontsize=20)
+
+plt.tight_layout()
+legend = fig.legend(loc=7, fontsize=16)
+for line in legend.get_lines():
+    line.set_linewidth(4.0)
+fig.subplots_adjust(right=0.74)
+plt.savefig("theia_mixing_vmf_and_loss_fraction.png", dpi=200)
 
 
 # ======================= OUTPUT THEIA AND EJECTA BULK COMPOSITIONS TO LATEX TABLE =======================
