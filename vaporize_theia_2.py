@@ -213,7 +213,7 @@ def __run_model(run, lunar_bulk_model):
                 total_theia_sourced_mass = total_ejecta_mass * run['disk_theia_mass_fraction'] / 100
 
                 # make sure the total mass is conserved
-                assert np.iclose(total_ejecta_mass,
+                assert np.isclose(total_ejecta_mass,
                                  unvaporized_ejecta_mass + total_100_pct_vaporized_mass + intermediate_pct_vmf_mass_vapor + intermediate_pct_vmf_mass_magma
                                  )
 
