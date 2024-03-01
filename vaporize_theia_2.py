@@ -483,6 +483,9 @@ for m, model in zip(markers,
 
 for ax in axs:
     ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    # make the ticks larger
+    ax.tick_params(axis='y', which='both', width=2, length=6)
     ax.grid()
 axs[0].set_xlabel("Mg/Si (mass ratio)", fontsize=20)
 axs[1].set_xlabel("Al/Si (mass ratio)", fontsize=20)
@@ -700,6 +703,23 @@ for line in legend.get_lines():
     line.set_linewidth(4.0)
 fig.subplots_adjust(right=0.74)
 plt.savefig("theia_mixing_vmf_and_loss_fraction.png", dpi=200)
+
+
+# ======================= PLOT ALL BULK LUNAR COMPOSITIONS RELATIVE TO BSE =======================
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111)
+ax.axhline(1, color="black", linewidth=3, alpha=1, label="BSE")
+for index, s in enumerate(lunar_bulk_compositions.keys()):
+    ax.plot(
+        [format_species_string(i) for i in oxides_ordered], [lunar_bulk_compositions[s][oxide] / bse_composition[oxide] for oxide in oxides_ordered],
+        color=colors[index], marker='o', markersize=8, linewidth=4.0, label=s
+    )
+ax.set_ylabel("Lunar Bulk Composition / BSE Composition", fontsize=20)
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.grid()
+ax.legend(fontsize=14)
+plt.tight_layout()
+plt.savefig("lunar_bulk_compositions.png", format='png', dpi=200)
 
 
 # ======================= OUTPUT THEIA AND EJECTA BULK COMPOSITIONS TO LATEX TABLE =======================

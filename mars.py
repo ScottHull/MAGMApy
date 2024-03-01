@@ -39,6 +39,7 @@ runs = [
         "vmf": 0.7785655850744196,  # %
         "impactor%": 70.758 / 100,  # %
         "vapor_loss_fraction": 92 / 100,  # %
+        "results": {},
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
@@ -47,6 +48,7 @@ runs = [
         "vmf": 0.44644432484432994,  # %
         "impactor%": 65.81413641 / 100,  # %
         "vapor_loss_fraction": 88 / 100,  # %
+        "results": {},
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
@@ -55,6 +57,7 @@ runs = [
         "vmf": 0.2747740008124389,  # %
         "impactor%": 16.6080938 / 100,  # %
         "vapor_loss_fraction": 89 / 100,  # %
+        "results": {},
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
     {
@@ -63,6 +66,7 @@ runs = [
         "vmf": 0.42,  # %
         "impactor%": 71.23136432 / 100,  # %
         "vapor_loss_fraction": 85 / 100,  # %
+        "results": {},
         "new_simulation": False,  # True to run a new simulation, False to load a previous simulation
     },
 ]
@@ -301,7 +305,7 @@ for run_index, run in enumerate(runs):
             f.write("hydrodynamic loss fraction," + ",".join(str(hydrodynamic_loss_fraction[i]) for i in cations_ordered) + "\n")
         f.close()
 
-        run['results'] = {
+        run['results'][comp_name] = {
             "melt_oxide_at_vmf": melt_oxide_at_vmf,
             "recondensed_melt_oxide_at_vmf": recondensed_melt_oxide_at_vmf,
             "melt_elements_at_vmf": melt_elements_at_vmf,
@@ -425,36 +429,40 @@ plt.tight_layout()
 plt.savefig("mars_disk_composition.png", format='png', dpi=200)
 
 # make a 2 column 1 row figure
-fig, axs = plt.subplots(1, 2, figsize=(12, 6), sharex='all', sharey='all')
-axs = axs.flatten()
+fig, axs = plt.subplots(3, 2, figsize=(12, 6 * 3), sharex='all', sharey='all')
 
-for run_index, run in enumerate(runs):
-    # on the left plot, plot the element VMF
-    axs[0].plot(
-        [format_species_string(i) for i in cations_ordered],
-        np.array([run['results']['element_vmf'][i] for i in cations_ordered]),
-        linewidth=2.0,
-        color=colors[run_index],
-        marker='o',
-        markersize=6,
-        label="Run " + run['run_name'],
-    )
-    # on the right plot, plot the hydrodynamic loss fraction
-    axs[1].plot(
-        [format_species_string(i) for i in cations_ordered],
-        np.array([run['results']['hydrodynamic_loss_fraction'][i] for i in cations_ordered]),
-        linewidth=2.0,
-        color=colors[run_index],
-        marker='o',
-        markersize=6,
-        label="Run " + run['run_name'],
-    )
+for comp_index, comp_name in enumerate(['BSM', "D-type", "Mixed"]):
+    for run_index, run in enumerate(runs):
+        # on the left plot, plot the element VMF
+        axs[comp_index, 0].plot(
+            [format_species_string(i) for i in cations_ordered],
+            np.array([run['results'][comp_name]['element_vmf'][i] for i in cations_ordered]),
+            linewidth=2.0,
+            color=colors[run_index],
+            marker='o',
+            markersize=6,
+            label="Run " + run['run_name'],
+        )
+        # on the right plot, plot the hydrodynamic loss fraction
+        axs[comp_index, 1].plot(
+            [format_species_string(i) for i in cations_ordered],
+            np.array([run['results'][comp_name]['hydrodynamic_loss_fraction'][i] for i in cations_ordered]),
+            linewidth=2.0,
+            color=colors[run_index],
+            marker='o',
+            markersize=6,
+            label="Run " + run['run_name'],
+        )
 
-axs[0].set_ylabel("Element VMF (%)", fontsize=16)
-axs[1].set_ylabel("Hydrodynamic Loss Fraction (%)", fontsize=16)
-axs[1].legend(loc='lower right')
+    axs[comp_index, 0].set_ylabel("Element VMF (%)", fontsize=16)
+    axs[comp_index, 1].set_ylabel("Hydrodynamic Loss Fraction (%)", fontsize=16)
+    axs[comp_index, 0].text(
+        0.70, 0.08, f"{comp_name}", transform=axs[comp_index, 0].transAxes, fontweight='bold', size=22
+
+    )
+axs.flatten()[-1].legend(loc='lower right')
 letters = string.ascii_lowercase
-for index, ax in enumerate(axs):
+for index, ax in enumerate(axs.flatten()):
     ax.grid()
     ax.set_yscale("log")
     ax.yaxis.set_minor_locator(tck.LogLocator(numticks=999, subs="auto"))
