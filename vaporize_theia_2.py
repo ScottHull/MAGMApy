@@ -496,6 +496,93 @@ plt.savefig("enstatite_theia_si_in_core.png", dpi=300)
 
 
 
+# ================= PLOT MG/SI AND AL/SI FOR BULK THEIA ASSUMING ENSTATITE START AND VARIABLE CORE MASS ==============
+fig, axs = plt.subplots(6, 2, figsize=(20, 30))
+axs = axs.flatten()
+# add chondrites
+# plot_chondrites(ax)
+found_models = []
+# generate a list of 4 different markers
+markers = ['o', 's', 'D', '^']
+bse_element_masses = ConvertComposition().oxide_wt_to_cation_wt(bse_composition)
+bse_mg_si = bse_element_masses["Mg"] / bse_element_masses["Si"]
+bse_al_si = bse_element_masses["Al"] / bse_element_masses["Si"]
+bulk_earth_mg = 15.4
+bulk_earth_al = 1.59
+bulk_earth_si = 16.1
+ax.scatter(
+    bse_al_si, bse_mg_si, color="k", s=300, marker="*"
+)
+# annotate the BSE and bulk Earth
+ax.annotate(
+    "BSE", xy=(bse_al_si, bse_mg_si), xycoords="data", xytext=(bse_al_si + 0.002, bse_mg_si + 0.002), fontsize=14
+)
+# plot the Mg/Si vs Mg/Al for each of the modelled BST compositions
+for index, s in enumerate(lunar_bulk_compositions.keys()):
+    for run in runs:
+        for recondense in ['no_recondensation', 'full_recondensation']:
+            fname = f"{run['run_name']}_{s}_{recondense}_theia_mixing_model.csv"
+            data = literal_eval(open(fname, 'r').read())
+            label = None
+            marker = None
+            if s not in found_base_models:
+                label = s
+                found_base_models.append(s)
+                axs[1].scatter([], [], color=colors[list(lunar_bulk_compositions).index(s)], s=100, marker="s", label=label)
+            if "no_recondensation" in fname and "Canonical" in fname:
+                marker = markers[0]
+            elif "full_recondensation" in fname and "Canonical" in fname:
+                marker = markers[1]
+            elif "no_recondensation" in fname and "Half Earths" in fname:
+                marker = markers[2]
+            elif "full_recondensation" in fname and "Half Earths" in fname:
+                marker = markers[3]
+            # read in the theia composition file
+            theia_composition = data['theia_composition']
+            # get the enstatite-based Theia Mg/Si and Mg/Al ratios as a function of Si core wt%
+            shade = None
+            if index == 0:
+                shade = axs[1]
+            to_index = 0
+            min_core_frac, max_core_frac = 0.05, 0.50
+            core_frac_inc = (max_core_frac - min_core_frac) / 6
+            for core_frac_index, core_mass_frac in enumerate(np.arange(min_core_frac, max_core_frac, core_frac_inc)):
+                pct_si_in_core, mg_si_bulk_theia, al_si_bulk_theia = get_enstatite_bulk_theia_core_si_pct(theia_composition,
+                                                                      ax=shade, core_fraction=round(core_mass_frac, 2))
+                # scatter the Mg/Si vs Al/Si
+                axs[to_index].scatter(mg_si_bulk_theia, pct_si_in_core, color=colors[list(lunar_bulk_compositions).index(s)], s=100,
+                               marker=marker, edgecolor='k')
+                axs[to_index + 1].scatter(al_si_bulk_theia, pct_si_in_core, color=colors[list(lunar_bulk_compositions).index(s)], s=100,
+                               marker=marker, edgecolor='k')
+                axs[to_index].annotate(
+                    str(round(core_mass_frac * 100, 2)) + " %", xy=(0.80, 0.95), xycoords="axes fraction", horizontalalignment="left",
+                    verticalalignment="top",
+                    fontweight="bold", fontsize=20
+                )
+                to_index += 2
+for m, model in zip(markers,
+                    ["Canonical (No Recondensation)", "Canonical (Recondensed)", "Half-Earths (No Recondensation)",
+                     "Half-Earths (Recondensed)"]):
+    axs[1].scatter([], [], color='k', s=100, marker=m, label=model)
+
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    # make the ticks larger
+    ax.tick_params(axis='y', which='both', width=2, length=6)
+    ax.grid()
+axs[0].set_xlabel("Mg/Si (mass ratio)", fontsize=20)
+axs[1].set_xlabel("Al/Si (mass ratio)", fontsize=20)
+axs[0].set_ylabel("Si Core Mass Fraction (%)", fontsize=20)
+axs[1].legend(fontsize=14)
+plt.tight_layout()
+plt.savefig("enstatite_theia_si_in_core_variable_core_mass_frac.png", dpi=300)
+
+
+
+
+
+
 # ======================= PLOT BULK EJECTA COMPOSITIONS =======================
 fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
 axs = axs.flatten()
@@ -558,6 +645,75 @@ for line in legend.get_lines():
 fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_ejecta_compositions.png", dpi=300)
+
+
+
+
+# ======================= PLOT BULK EJECTA COMPOSITIONS (NO RECONDENSATION) =======================
+fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
+axs = axs.flatten()
+# axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=18)
+# axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=18)
+for index, ax in enumerate(axs):
+    ax.grid()
+    label = None
+    if index == 1:
+        label = "BSE"
+    ax.axhline(y=1, color="black", linewidth=4, alpha=1, label=label)
+for i, s in enumerate(lunar_bulk_compositions.keys()):
+    for run_index, run in enumerate(runs):
+        for recondense in ['no_recondensation']:
+            fname = f"{run['run_name']}_{s}_{recondense}_theia_mixing_model.csv"
+            data = literal_eval(open(fname, 'r').read())
+            ejecta_composition = data['bulk_ejecta_composition']
+            to_index = 0
+            label = None
+            # if "no_recondensation" in fname:
+            #     to_index = 0
+            # if "Half Earths" in fname:
+            #     to_index += 2
+            if run_index == 1:
+                label = s
+            axs[run_index].plot(
+                oxides_ordered, [ejecta_composition[oxide] / bse_composition[oxide] for oxide in oxides_ordered],
+                color=colors[list(lunar_bulk_compositions).index(s)], marker='o', markersize=8,
+                linewidth=2.0, label=label
+            )
+
+# set minimum plotted x value
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+    # ax.annotate(
+    #     annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left",
+    #     verticalalignment="top",
+    #     fontsize=18
+    # )
+
+# fig.supylabel("Bulk Composition / BSE Composition", fontsize=18)
+for ax in [axs[0]]:
+    ax.set_ylabel("Bulk Composition / BSE Composition", fontsize=18)
+# replace the x-axis labels with the formatted oxide names
+for ax in axs[-2:]:
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides_ordered], rotation=45)
+# set the axis font size to be 16 for each subplot
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=18)
+
+plt.tight_layout()
+legend = fig.legend(loc='upper right', fontsize=12)
+for line in legend.get_lines():
+    line.set_linewidth(4.0)
+# add legend to the right of the figure
+plt.savefig("theia_mixing_ejecta_compositions_no_recondensation.png", dpi=300)
+
+
+
+
 
 # ======================= PLOT BULK THEIA COMPOSITIONS =======================
 fig, axs = plt.subplots(2, 2, figsize=(25, 15), sharex='all', sharey='all')
@@ -626,6 +782,80 @@ for line in legend.get_lines():
 fig.subplots_adjust(right=0.76)
 # add legend to the right of the figure
 plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
+
+
+
+
+# ======================= PLOT BULK THEIA COMPOSITIONS (NO RECONDENSATION) =======================
+fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
+axs = axs.flatten()
+# axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=18)
+# axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=18)
+for index, ax in enumerate(axs):
+    ax.grid()
+    label = None
+    if index == 1:
+        label = "BSE"
+    ax.axhline(y=1, color="black", linewidth=4, alpha=1, label=label)
+for i, s in enumerate(lunar_bulk_compositions.keys()):
+    for run_index, run in enumerate(runs):
+        for recondense in ['no_recondensation']:
+            fname = f"{run['run_name']}_{s}_{recondense}_theia_mixing_model.csv"
+            data = literal_eval(open(fname, 'r').read())
+            theia_composition = data['theia_composition']
+            label = None
+            # if "no_recondensation" in fname:
+            #     to_index = 0
+            # if "Half Earths" in fname:
+            #     to_index += 2
+            if run_index == 1:
+                label = s
+            axs[run_index].plot(
+                oxides_ordered, [theia_composition[oxide] / bse_composition[oxide] for oxide in oxides_ordered],
+                color=colors[list(lunar_bulk_compositions).index(s)], marker='o', markersize=8,
+                linewidth=2.0, label=label
+            )
+
+
+for ax in axs:
+    ax.fill_between(oxides_ordered, [0 for oxide in oxides_ordered], [-1e99 for oxide in oxides_ordered],
+                    alpha=0.2, color='red')
+
+# set minimum plotted x value
+letters = list(string.ascii_lowercase)
+for index, ax in enumerate(axs):
+    # label each subplot with a letter in the upper-left corner
+    ax.annotate(
+        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+    # ax.annotate(
+    #     annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left",
+    #     verticalalignment="top",
+    #     fontsize=18
+    # )
+
+# fig.supylabel("Bulk Composition / BSE Composition", fontsize=18)
+for ax in [axs[0]]:
+    ax.set_ylabel("Bulk Composition / BSE Composition", fontsize=18)
+# replace the x-axis labels with the formatted oxide names
+for ax in axs[-2:]:
+    ax.set_xticklabels([format_species_string(oxide) for oxide in oxides_ordered], rotation=45)
+# set the axis font size to be 16 for each subplot
+for ax in axs:
+    ax.tick_params(axis='both', which='major', labelsize=18)
+    ax.set_ylim(bottom=-1.0, top=4.2)
+
+plt.tight_layout()
+# legend = fig.legend(loc=7, fontsize=17)
+legend = axs[1].legend(loc='upper right', fontsize=12)
+for line in legend.get_lines():
+    line.set_linewidth(4.0)
+# add legend to the right of the figure
+plt.savefig("theia_mixing_theia_compositions_no_recondensation.png", dpi=300)
+
+
+
 
 
 

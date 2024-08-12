@@ -277,6 +277,7 @@ ax.fill_between(
               oxides_ordered]),
     color='lightgrey',
     alpha=0.8,
+    label="Lunar Bulk Composition\nModelled Range"
 )
 ax.axhline(1, color='k', linestyle='--', linewidth=2)
 for index, run in enumerate(runs):
