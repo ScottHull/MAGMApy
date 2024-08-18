@@ -786,8 +786,70 @@ plt.savefig("theia_mixing_theia_compositions.png", dpi=300)
 
 
 
+
+# =================== COMBINE BULK EJECTA AND THEIA COMPOSITIONS INTO A SINGLE PLOT ===================
+fig, axs = plt.subplots(2, 2, figsize=(20, 20), sharex='all')
+axs = axs.flatten()
+for index, s in enumerate(lunar_bulk_compositions.keys()):
+    for run in runs:
+        for recondense in ['no_recondensation']:
+            fname = f"{run['run_name']}_{s}_{recondense}_theia_mixing_model.csv"
+            data = literal_eval(open(fname, 'r').read())
+            ejecta_composition = data['bulk_ejecta_composition']
+            to_index = 0
+            label = None
+            if "no_recondensation" in fname:
+                to_index = 0
+            if "Half Earths" in fname:
+                to_index += 1
+            if to_index == 1:
+                label = s
+            axs[to_index].plot(
+                oxides_ordered, [ejecta_composition[oxide] / bse_composition[oxide] for oxide in oxides_ordered],
+                color=colors[list(lunar_bulk_compositions).index(s)], marker='o', markersize=8,
+                linewidth=2.0, label=label
+            )
+for index, s in enumerate(lunar_bulk_compositions.keys()):
+    for run in runs:
+        for recondense in ['no_recondensation']:
+            fname = f"{run['run_name']}_{s}_{recondense}_theia_mixing_model.csv"
+            data = literal_eval(open(fname, 'r').read())
+            theia_composition = data['theia_composition']
+            label = None
+            to_index = 2
+            label = None
+            if "no_recondensation" in fname:
+                to_index = 2
+            if "Half Earths" in fname:
+                to_index += 1
+            # if to_index == 0:
+            #     label = s
+            axs[to_index].plot(
+                oxides_ordered, [theia_composition[oxide] / bse_composition[oxide] for oxide in oxides_ordered],
+                color=colors[list(lunar_bulk_compositions).index(s)], marker='o', markersize=8,
+                linewidth=2.0
+            )
+
+fig.supylabel("Bulk Composition / BSE Composition", fontsize=18)
+for ax in axs[-2:]:
+    ax.fill_between(oxides_ordered, [0 for oxide in oxides_ordered], [-1e99 for oxide in oxides_ordered],
+                    alpha=0.2, color='red')
+
+for ax, l in zip(axs, ["(a) Canonical", "(b) Half-Earths", "(c) Canonical", "(d) Half-Earths"]):
+    ax.annotate(
+        l, xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        fontweight="bold", fontsize=20
+    )
+    ax.grid()
+
+plt.tight_layout()
+plt.savefig("combined_ejecta_and_theia_compositions.png", dpi=300)
+
+
+
+
 # ======================= PLOT BULK THEIA COMPOSITIONS (NO RECONDENSATION) =======================
-fig, axs = plt.subplots(1, 2, figsize=(16, 9), sharex='all', sharey='all')
+fig, axs = plt.subplots(2, 2, figsize=(16, 9), sharex='all', sharey='all')
 axs = axs.flatten()
 # axs[0].set_title("Ejecta Bulk Composition (Without Recondensation)", fontsize=18)
 # axs[1].set_title("Ejecta Bulk Composition (With Recondensation)", fontsize=18)
@@ -821,23 +883,13 @@ for ax in axs:
     ax.fill_between(oxides_ordered, [0 for oxide in oxides_ordered], [-1e99 for oxide in oxides_ordered],
                     alpha=0.2, color='red')
 
-# set minimum plotted x value
-letters = list(string.ascii_lowercase)
-for index, ax in enumerate(axs):
-    # label each subplot with a letter in the upper-left corner
+for ax, l in zip(axs, ["(a) Canonical", "(b) Half-Earths", "(c) Canonical", "(d) Half-Earths"]):
     ax.annotate(
-        letters[index], xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
+        l, xy=(0.05, 0.95), xycoords="axes fraction", horizontalalignment="left", verticalalignment="top",
         fontweight="bold", fontsize=20
     )
-    # ax.annotate(
-    #     annotate_models[index], xy=(0.05, 0.90), xycoords="axes fraction", horizontalalignment="left",
-    #     verticalalignment="top",
-    #     fontsize=18
-    # )
+    ax.grid()
 
-# fig.supylabel("Bulk Composition / BSE Composition", fontsize=18)
-for ax in [axs[0]]:
-    ax.set_ylabel("Bulk Composition / BSE Composition", fontsize=18)
 # replace the x-axis labels with the formatted oxide names
 for ax in axs[-2:]:
     ax.set_xticklabels([format_species_string(oxide) for oxide in oxides_ordered], rotation=45)
@@ -852,7 +904,7 @@ legend = axs[1].legend(loc='upper right', fontsize=12)
 for line in legend.get_lines():
     line.set_linewidth(4.0)
 # add legend to the right of the figure
-plt.savefig("theia_mixing_theia_compositions_no_recondensation.png", dpi=300)
+# plt.savefig("combined_ejecta_and_theia_compositions.png", dpi=300)
 
 
 

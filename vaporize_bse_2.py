@@ -317,7 +317,7 @@ ax.plot(
     label="BSE",
 )
 
-ax.set_ylabel("Disk / BSE (Oxide wt. %)")
+ax.set_ylabel("Disk / Bulk Moon (Oxide wt. %)")
 ax.set_yscale('log')
 ax.grid()
 ax.legend()

@@ -474,6 +474,54 @@ for index, ax in enumerate(axs.flatten()):
 plt.tight_layout()
 plt.savefig("mars_element_vmf_and_loss_frac.png", format='png', dpi=200)
 
+
+
+fig, axs = plt.subplots(1, 3, figsize=(18, 6), sharex='all', sharey='all')
+axs = axs.flatten()
+
+print(global_disk_bulk_composition_no_recondensation)
+
+for run_index, run in enumerate(runs):
+    models = ['BSM', "D-type", "Mixed"]
+    for comp_index, comp_name in enumerate(models):
+        name = f'{run["run_name"]} ({comp_name})'
+        index = global_disk_bulk_composition_no_recondensation["run_name"].index(name)
+        no_recondense_composition = [float(global_disk_bulk_composition_no_recondensation[i][index]) for i in oxides_ordered]
+        recondense_composition = [float(global_disk_bulk_composition_with_recondensation[i][index]) for i in oxides_ordered]
+        # plot the disk composition results in raw wt%
+        axs[comp_index].plot(
+            [format_species_string(i) for i in oxides_ordered],
+            np.array(no_recondense_composition),
+            linewidth=2.0,
+            color=colors[run_index],
+            marker='o',
+            label=f"Run {run['run_name']}"
+        )
+        axs[comp_index].plot(
+            [format_species_string(i) for i in oxides_ordered],
+            np.array(recondense_composition),
+            linewidth=2.0,
+            color=colors[run_index],
+            linestyle="--",
+            marker='D',
+        )
+
+letters = string.ascii_lowercase
+for index, ax in enumerate(axs):
+    ax.set_title(models[index], fontsize=22)
+    ax.grid()
+    ax.set_yscale("log")
+    ax.set_ylim(10 ** -2, 10 ** 2)
+    # ax.text(
+    #     0.05, 0.90, f"{letters[index]}", transform=ax.transAxes, fontweight='bold', size=20
+    # )
+
+axs[-1].legend(loc='upper right')
+axs[0].set_ylabel("Disk Composition (wt%)", fontsize=16)
+plt.tight_layout()
+plt.savefig("mars_disk_composition_wt_pct.png", format='png', dpi=200)
+
+
 # output the globals to a latex table
 vmf_table = pd.DataFrame(global_element_vmfs).to_latex(index=False)
 if "mars_element_vmf.tex" in os.listdir():
